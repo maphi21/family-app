@@ -109,15 +109,6 @@
 
   .page-sub{ font-size:13.5px; color:var(--ink-secondary); margin:0 0 18px; }
 
-  .rewards-summary{
-    display:flex; align-items:center; gap:12px;
-    background:var(--surface-card); border-radius:16px; padding:12px 14px; box-shadow:var(--shadow-card);
-    margin-bottom:16px;
-  }
-  .rewards-summary .avatar{ width:36px; height:36px; font-size:14px; }
-  .rewards-summary-name{ font-size:13.5px; font-weight:800; }
-  .rewards-summary-points{ font-size:12px; font-weight:700; color:var(--ink-secondary); }
-
   .reward-list{ display:flex; flex-direction:column; gap:8px; }
   .reward-row{
     display:flex; align-items:center; justify-content:space-between; gap:12px;
@@ -142,6 +133,25 @@
   }
   .reward-row-btn:active{ transform:scale(.96); }
   .reward-row-btn:disabled{ opacity:.4; cursor:not-allowed; }
+
+  .lb-list{ display:flex; flex-direction:column; gap:10px; }
+  .lb-row{
+    display:flex; align-items:center; gap:14px;
+    background:var(--surface-card); border-radius:16px; padding:14px 16px; box-shadow:var(--shadow-card);
+  }
+  .lb-rank{
+    width:28px; height:28px; border-radius:999px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:800; background:var(--track); color:var(--ink-secondary);
+  }
+  .lb-rank.first{ background:#ffc93c; color:#22262b; }
+  .lb-info{ flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+  .lb-name{ font-size:14.5px; font-weight:800; letter-spacing:-0.01em; }
+  .lb-bar-track{ height:7px; background:var(--track); border-radius:999px; overflow:hidden; }
+  .lb-bar-fill{ height:100%; border-radius:999px; transition:width .3s ease; }
+  .lb-points{ display:flex; flex-direction:column; align-items:flex-end; gap:1px; flex-shrink:0; }
+  .lb-total{ font-size:16px; font-weight:800; color:var(--ink); white-space:nowrap; }
+  .lb-now{ font-size:10.5px; font-weight:600; color:var(--ink-faint); white-space:nowrap; }
 
   .tab-bar{
     position:fixed; left:0; right:0; bottom:0; z-index:65; display:flex;
@@ -218,8 +228,12 @@
 
   <div class="page" id="pageRewards">
     <p class="page-sub">Spend hard-earned points on real rewards.</p>
-    <div id="rewardsSummary"></div>
     <div class="reward-list" id="rewardList"></div>
+  </div>
+
+  <div class="page" id="pageLeaderboard">
+    <p class="page-sub">Ranked by total points ever earned.</p>
+    <div class="lb-list" id="lbList"></div>
   </div>
 </div>
 
@@ -228,6 +242,7 @@
 <nav class="tab-bar" id="tabBar">
   <button class="tab-btn active" data-page="pageHabits" id="tabHabits"></button>
   <button class="tab-btn" data-page="pageRewards" id="tabRewards"></button>
+  <button class="tab-btn" data-page="pageLeaderboard" id="tabLeaderboard"></button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -548,6 +563,11 @@
   function banknoteSvg(){
     return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 12h.01M18 12h.01"/></svg>';
   }
+  function trophySvg(size){
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">`
+      + '<path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10"/><path d="M17 4v6a5 5 0 0 1-10 0V4"/>'
+      + '<path d="M7 4H4.5a2.5 2.5 0 0 0 0 5H7"/><path d="M17 4h2.5a2.5 2.5 0 0 1 0 5H17"/></svg>';
+  }
 
   function renderCard(p){
     const totalPoints = computeTotalPoints(p.id);
@@ -623,19 +643,6 @@
     }).join('');
   }
 
-  // Who's redeeming is driven by the same pinned switcher used on Habits —
-  // this just reflects that choice, it doesn't offer its own picker.
-  function renderRewardsSummary(){
-    const p = ROSTER.find((r) => r.id === state.selectedId);
-    const points = computeSpendablePoints(state.selectedId);
-    const cash = state.people[state.selectedId].piggyReward;
-    return `<div class="rewards-summary">`
-      + `<div class="avatar" style="background:${p.color};">${p.initial}</div>`
-      + `<div><div class="rewards-summary-name">${escapeHtml(p.name)}</div>`
-      + `<div class="rewards-summary-points">${points} pts${cash > 0 ? ` &middot; &pound;${cash} saved` : ''}</div></div>`
-      + `</div>`;
-  }
-
   function renderRewardRow(reward){
     const points = computeSpendablePoints(state.selectedId);
     const affordable = points >= reward.cost;
@@ -651,6 +658,29 @@
       + `</div>`;
   }
 
+  function renderLeaderboard(){
+    const ranked = [...ROSTER].sort((a, b) => computeTotalPoints(b.id) - computeTotalPoints(a.id));
+    const maxTotal = Math.max(1, ...ranked.map((p) => computeTotalPoints(p.id)));
+    return ranked.map((p, i) => {
+      const total = computeTotalPoints(p.id);
+      const now = computeSpendablePoints(p.id);
+      const rank = i + 1;
+      const barPct = Math.round((total / maxTotal) * 100);
+      return `<div class="lb-row">`
+        + `<div class="lb-rank ${rank === 1 ? 'first' : ''}">#${rank}</div>`
+        + `<div class="avatar" style="background:${p.color};">${p.initial}</div>`
+        + `<div class="lb-info">`
+        +   `<div class="lb-name">${escapeHtml(p.name)}</div>`
+        +   `<div class="lb-bar-track"><div class="lb-bar-fill" style="width:${barPct}%;background:${p.color};"></div></div>`
+        + `</div>`
+        + `<div class="lb-points">`
+        +   `<div class="lb-total">${total}</div>`
+        +   `<div class="lb-now">${now} now</div>`
+        + `</div>`
+        + `</div>`;
+    }).join('');
+  }
+
   // The mobile top bar (header + switcher) is fixed, so page content needs
   // padding-top matching its real rendered height — measured rather than
   // guessed, since it varies with font metrics and the safe-area inset.
@@ -664,10 +694,11 @@
     document.getElementById('todayLabel').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
     document.getElementById('switcher').innerHTML = renderSwitcher();
     document.getElementById('cards').innerHTML = ROSTER.map((p) => renderCard(p)).join('');
-    document.getElementById('rewardsSummary').innerHTML = renderRewardsSummary();
     document.getElementById('rewardList').innerHTML = REWARDS.map((r) => renderRewardRow(r)).join('');
+    document.getElementById('lbList').innerHTML = renderLeaderboard();
     document.getElementById('tabHabits').innerHTML = circleCheckSvg(20) + '<span>Habits</span>';
     document.getElementById('tabRewards').innerHTML = giftSvg(20) + '<span>Rewards</span>';
+    document.getElementById('tabLeaderboard').innerHTML = trophySvg(20) + '<span>Ranking</span>';
     syncTopBarHeight();
   }
 
