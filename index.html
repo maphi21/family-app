@@ -192,6 +192,22 @@
   .ledger-in{ color:#2a9c58; }
   .ledger-out{ color:#e84e3d; }
 
+  .activity-list{
+    display:flex; flex-direction:column;
+    background:var(--surface-card); border-radius:16px; padding:4px 16px; box-shadow:var(--shadow-card);
+  }
+  .activity-row{
+    display:flex; align-items:flex-start; gap:12px;
+    padding:12px 0; border-bottom:1px solid var(--track);
+  }
+  .activity-row:last-child{ border-bottom:none; }
+  .activity-avatar{ width:28px; height:28px; font-size:11px; flex-shrink:0; margin-top:1px; }
+  .activity-body{ flex:1; min-width:0; }
+  .activity-msg{ font-size:13px; font-weight:600; color:var(--ink); line-height:1.4; }
+  .activity-msg b{ font-weight:800; }
+  .activity-time{ font-size:11px; font-weight:600; color:var(--ink-faint); margin-top:2px; }
+  .activity-empty{ font-size:13px; color:var(--ink-faint); text-align:center; padding:32px 0; }
+
   .lb-list{ display:flex; flex-direction:column; gap:10px; }
   .lb-row{
     display:flex; align-items:center; gap:14px;
@@ -304,6 +320,11 @@
     <p class="page-sub">Ranked by total points ever earned.</p>
     <div class="lb-list" id="lbList"></div>
   </div>
+
+  <div class="page" id="pageSettings">
+    <p class="page-sub">Everything that's happened, across the whole family.</p>
+    <div class="activity-list" id="activityList"></div>
+  </div>
 </div>
 
 <footer class="note">Saved on this device only &mdash; each phone or iPad keeps its own copy. Add to your Home Screen for one-tap access.</footer>
@@ -312,6 +333,7 @@
   <button class="tab-btn active" data-page="pageHabits" id="tabHabits"></button>
   <button class="tab-btn" data-page="pageRewards" id="tabRewards"></button>
   <button class="tab-btn" data-page="pageLeaderboard" id="tabLeaderboard"></button>
+  <button class="tab-btn" data-page="pageSettings" id="tabSettings"></button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -420,7 +442,7 @@
       if (raw) saved = JSON.parse(raw);
     } catch (e) { /* localStorage unavailable — fall through to fresh state */ }
 
-    const s = { people:{}, selectedId:null };
+    const s = { people:{}, selectedId:null, activityLog:(saved && Array.isArray(saved.activityLog)) ? saved.activityLog : [] };
     ROSTER.forEach((p) => {
       s.people[p.id] = (saved && saved.people && saved.people[p.id]) || defaultPersonState();
       // Migrate saves from before the ledger existed: seed one opening entry per
@@ -558,6 +580,14 @@
     return roundMoney(p.pocketWeekly * weeklyRatioSoFar(personId));
   }
 
+  const MAX_ACTIVITY_LOG = 150;
+  // Family-wide, not per-person — the settings-page ledger of everything
+  // that's happened. Newest first; trimmed so storage doesn't grow forever.
+  function logActivity(personId, msg){
+    state.activityLog.unshift({ personId, msg, at: new Date().toISOString() });
+    if (state.activityLog.length > MAX_ACTIVITY_LOG) state.activityLog.length = MAX_ACTIVITY_LOG;
+  }
+
   // Writing the same id again *replaces* that entry rather than duplicating —
   // makes system-generated entries (a weekly payout) safe to re-apply, since a
   // retried or re-run payout corrects in place instead of double-paying.
@@ -594,7 +624,9 @@
       showToast(`Enter an amount up to £${balance.toFixed(2)}.`, 'danger');
       return;
     }
-    piggyLedgerAdd(ps, -amount, (note || '').trim() || 'Withdrawn', null, dateKey(new Date()));
+    const cleanNote = (note || '').trim();
+    piggyLedgerAdd(ps, -amount, cleanNote || 'Withdrawn', null, dateKey(new Date()));
+    logActivity(personId, `withdrew &pound;${amount.toFixed(2)} from the piggy bank${cleanNote ? ` (${escapeHtml(cleanNote)})` : ''}`);
     saveState();
     render();
     showToast(`£${amount.toFixed(2)} withdrawn for ${p.name}.`, 'success');
@@ -645,6 +677,7 @@
           const payout = roundMoney(p.pocketWeekly * (sum / 7));
           const pct = Math.round((sum / 7) * 100);
           piggyLedgerAdd(ps, payout, `Weekly allowance (${pct}% of habits done)`, `payout:${p.id}:${ps.weekAnchor}`, ps.weekAnchor);
+          if (payout > 0) logActivity(p.id, `earned &pound;${payout.toFixed(2)} weekly allowance (${pct}% of habits done)`);
         }
         ps.weekAnchor = thisMonday;
         changed = true;
@@ -656,6 +689,7 @@
         if (ps.bdayAwardedYear !== year) {
           awardPoints(ps, BIRTHDAY_BONUS);
           ps.bdayAwardedYear = year;
+          logActivity(p.id, `earned +${BIRTHDAY_BONUS} pts birthday bonus`);
           changed = true;
         }
       }
@@ -667,8 +701,13 @@
   function toggleHabit(personId, habitId){
     const def = habitDefOf(personId, habitId);
     const hs = habitStateOf(personId, habitId);
-    if (def.freq === 'daily') hs.done = !hs.done;
-    else hs.count = (hs.count + 1) % (def.target + 1);
+    if (def.freq === 'daily') {
+      hs.done = !hs.done;
+      logActivity(personId, hs.done ? `marked <b>${escapeHtml(def.name)}</b> done` : `unmarked <b>${escapeHtml(def.name)}</b>`);
+    } else {
+      hs.count = (hs.count + 1) % (def.target + 1);
+      logActivity(personId, `logged <b>${escapeHtml(def.name)}</b> (${hs.count}/${def.target} this week)`);
+    }
     saveState();
     render();
   }
@@ -701,6 +740,7 @@
     ps.bankedPoints -= reward.cost;
     if (reward.cash) piggyLedgerAdd(ps, reward.cash, `Redeemed: ${reward.name}`, null, dateKey(new Date()));
     ps.rewardInventory[rewardId] = (ps.rewardInventory[rewardId] || 0) + 1;
+    logActivity(personId, `redeemed <b>${escapeHtml(reward.name)}</b> for ${reward.cost} pts`);
     saveState();
     render();
     showToast(`${reward.name} redeemed for ${p.name}!`, 'success');
@@ -717,6 +757,7 @@
     const owned = ps.rewardInventory[rewardId] || 0;
     if (owned <= 0) return;
     ps.rewardInventory[rewardId] = owned - 1;
+    logActivity(personId, `used <b>${escapeHtml(reward.name)}</b>`);
     saveState();
     render();
     showToast(`${p.name} used ${reward.name}.`, 'success');
@@ -770,6 +811,10 @@
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">`
       + '<path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10"/><path d="M17 4v6a5 5 0 0 1-10 0V4"/>'
       + '<path d="M7 4H4.5a2.5 2.5 0 0 0 0 5H7"/><path d="M17 4h2.5a2.5 2.5 0 0 1 0 5H17"/></svg>';
+  }
+  function settingsSvg(size){
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">`
+      + '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82A1.65 1.65 0 0 0 3 13.09H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
   }
 
   function renderCard(p){
@@ -959,6 +1004,32 @@
     }).join('');
   }
 
+  function formatActivityTime(iso){
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const now = new Date();
+    const dKey = dateKey(d), todayKeyStr = dateKey(now), yestKeyStr = addDaysKey(todayKeyStr, -1);
+    const time = d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+    if (dKey === todayKeyStr) return `Today, ${time}`;
+    if (dKey === yestKeyStr) return `Yesterday, ${time}`;
+    return `${d.toLocaleDateString('en-GB', { day:'numeric', month:'short' })}, ${time}`;
+  }
+
+  function renderActivityLog(){
+    if (!state.activityLog.length) return '<div class="activity-empty">Nothing yet &mdash; habits, redemptions, and payouts will show up here.</div>';
+    return state.activityLog.map((e) => {
+      const p = ROSTER.find((r) => r.id === e.personId);
+      if (!p) return '';
+      return `<div class="activity-row">`
+        + `<div class="avatar activity-avatar" style="background:${p.color};">${p.initial}</div>`
+        + `<div class="activity-body">`
+        +   `<div class="activity-msg"><b>${escapeHtml(p.name)}</b> ${e.msg}</div>`
+        +   `<div class="activity-time">${formatActivityTime(e.at)}</div>`
+        + `</div>`
+        + `</div>`;
+    }).join('');
+  }
+
   // The mobile top bar (header + switcher) is fixed, so page content needs
   // padding-top matching its real rendered height — measured rather than
   // guessed, since it varies with font metrics and the safe-area inset.
@@ -977,9 +1048,11 @@
     document.getElementById('rewardList').innerHTML = REWARDS.map((r) => renderRewardRow(r)).join('');
     document.getElementById('piggySection').innerHTML = renderPiggySection();
     document.getElementById('lbList').innerHTML = renderLeaderboard();
+    document.getElementById('activityList').innerHTML = renderActivityLog();
     document.getElementById('tabHabits').innerHTML = circleCheckSvg(20) + '<span>Habits</span>';
     document.getElementById('tabRewards').innerHTML = giftSvg(20) + '<span>Rewards</span>';
     document.getElementById('tabLeaderboard').innerHTML = trophySvg(20) + '<span>Ranking</span>';
+    document.getElementById('tabSettings').innerHTML = settingsSvg(20) + '<span>Settings</span>';
     syncTopBarHeight();
   }
 
