@@ -1,0 +1,2518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Family HQ">
+<meta name="theme-color" content="#ffc93c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23ffc93c'/%3E%3Cpath d='M32 14 L52 32 h-6 v18 H18 V32 h-6 Z' fill='%2322262b'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<title>Family HQ · Phipps House</title>
+<style>
+  /* ==========================================================================
+     Phipps House design system — tokens
+     Mirrors tokens/colors.css, typography.css, spacing.css, radius.css,
+     shadows.css and motion.css from the design-system project, inlined so this
+     stays a single self-contained file you can drop on any static host.
+     Update these values here if the design system's tokens change.
+     ========================================================================== */
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&family=JetBrains+Mono:wght@500&display=swap');
+
+  :root{
+    /* colors */
+    --yellow-50:#fff9e8; --yellow-300:#ffdd7a; --yellow-500:#ffc93c; --yellow-600:#f0ac00; --yellow-700:#a67800;
+    --blue-50:#e9f6fe; --blue-300:#8fd2f5; --blue-500:#2fa9e5; --blue-600:#1c8bc4; --blue-700:#146590;
+    --coral-50:#fff0ee; --coral-300:#ffab9f; --coral-500:#ff6b5b; --coral-600:#e84e3d; --coral-700:#b8382a;
+    --green-50:#eaf9ef; --green-300:#8fe0ab; --green-500:#3dbe72; --green-600:#2a9c58; --green-700:#1f7643;
+    --grape-50:#f4eefe; --grape-300:#c9aef9; --grape-500:#9b6bf0; --grape-600:#7d4dd6; --grape-700:#5f38a8;
+    --ink-900:#22262b; --ink-700:#3d434b; --ink-500:#6b7280; --ink-300:#a8afb8; --ink-100:#e4e7eb;
+    --paper-0:#fffdf8; --paper-50:#fffbf0; --paper-100:#fef5e2;
+    --white:#ffffff;
+    --text-primary:var(--ink-900); --text-secondary:var(--ink-500); --text-inverse:var(--white); --text-on-brand:var(--ink-900);
+    --surface-page:var(--paper-0); --surface-card:var(--white); --surface-sunken:var(--paper-100); --surface-border:var(--ink-100);
+    --brand-primary:var(--yellow-500); --brand-primary-hover:var(--yellow-600);
+    --accent-blue:var(--blue-500); --accent-coral:var(--coral-500); --accent-green:var(--green-500); --accent-grape:var(--grape-500);
+    --cat-chores:var(--yellow-500); --cat-kitchen:var(--coral-500); --cat-family:var(--blue-500); --cat-home:var(--green-500); --cat-finance:var(--grape-500);
+    --state-success:var(--green-500); --state-warning:var(--yellow-600); --state-danger:var(--coral-600); --state-info:var(--blue-500);
+
+    /* typography */
+    --font-sans:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
+    --font-mono:'JetBrains Mono',ui-monospace,monospace;
+    --text-display-xl:800 56px/1.05 var(--font-sans);
+    --text-display-lg:800 40px/1.1 var(--font-sans);
+    --text-display-md:700 28px/1.2 var(--font-sans);
+    --text-title:700 20px/1.3 var(--font-sans);
+    --text-body-lg:500 17px/1.5 var(--font-sans);
+    --text-body:500 15px/1.5 var(--font-sans);
+    --text-label:600 13px/1.3 var(--font-sans);
+    --text-caption:500 12px/1.4 var(--font-sans);
+    --text-mono:500 13px/1.4 var(--font-mono);
+    --tracking-tight:-0.02em; --tracking-wide:0.04em;
+
+    /* spacing */
+    --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px;
+    --space-6:24px; --space-8:32px; --space-10:40px; --space-12:48px; --space-16:64px; --space-20:80px;
+
+    /* radius */
+    --radius-sm:8px; --radius-md:14px; --radius-lg:20px; --radius-xl:28px;
+    --radius-pill:999px; --radius-card:20px; --radius-control:12px;
+
+    /* shadows */
+    --shadow-sm:0 1px 2px rgba(34,38,43,0.06);
+    --shadow-card:0 2px 8px rgba(34,38,43,0.06),0 8px 24px rgba(34,38,43,0.06);
+    --shadow-raised:0 6px 20px rgba(34,38,43,0.10);
+    --shadow-brand:0 8px 24px rgba(255,201,60,0.35);
+    --shadow-focus:0 0 0 4px rgba(47,169,229,0.28);
+
+    /* motion */
+    --ease-bounce:cubic-bezier(.34,1.56,.64,1);
+    --ease-standard:cubic-bezier(.2,.8,.2,1);
+    --duration-fast:120ms; --duration-base:200ms; --duration-slow:360ms;
+  }
+
+  /* ==========================================================================
+     Base
+     ========================================================================== */
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html{-webkit-touch-callout:none;}
+  body{
+    margin:0; font:var(--text-body); font-family:var(--font-sans);
+    color:var(--text-primary);
+    background:var(--surface-page); /* flat colour field — the system uses no gradients or textures */
+    min-height:100vh;
+    padding-bottom:96px; /* clears the fixed bottom tab bar */
+    overscroll-behavior:none;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:0 var(--space-5);}
+
+  /* Lucide icons, recoloured via CSS mask so they always take the surrounding
+     brand/category colour rather than shipping as black artwork. */
+  .ico{
+    display:inline-block; flex-shrink:0; background-color:currentColor;
+    -webkit-mask-image:var(--ico); mask-image:var(--ico);
+    -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+    -webkit-mask-position:center; mask-position:center;
+    -webkit-mask-size:contain; mask-size:contain;
+    width:16px; height:16px; vertical-align:-0.16em;
+  }
+
+  /* ==========================================================================
+     Header — full-bleed brand colour block with the type-only wordmark
+     ========================================================================== */
+  header.top{
+    background:var(--brand-primary); color:var(--text-on-brand);
+    padding:var(--space-6) 0 var(--space-10);
+    margin-bottom:calc(var(--space-6) * -1);
+    border-radius:0 0 var(--radius-xl) var(--radius-xl);
+  }
+  header.top .row{display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:nowrap; gap:var(--space-3);}
+  header.top .row > div:first-child{min-width:0; flex:1;}
+  .eyebrow{
+    font:var(--text-caption); font-weight:700; text-transform:uppercase;
+    letter-spacing:var(--tracking-wide); color:var(--ink-700); margin-bottom:var(--space-1);
+  }
+  header.top h1{margin:0; font:var(--text-display-md); letter-spacing:var(--tracking-tight);}
+  header.top .sub{font:var(--text-caption); color:var(--ink-700); margin-top:var(--space-2);}
+
+  /* ==========================================================================
+     Buttons — pill radius, 700 weight, bounce press, no hover recolour
+     ========================================================================== */
+  .btn{
+    border:none; border-radius:var(--radius-pill); padding:12px 20px;
+    font:var(--text-body); font-weight:700; font-family:var(--font-sans);
+    cursor:pointer; white-space:nowrap;
+    display:inline-flex; align-items:center; justify-content:center; gap:var(--space-2);
+    transition:transform var(--duration-fast) var(--ease-bounce), opacity var(--duration-fast);
+  }
+  .btn:active{transform:scale(.96);}
+  .btn-sm{padding:8px 14px; font:var(--text-label);}
+  .btn-primary{background:var(--brand-primary); color:var(--text-on-brand); box-shadow:var(--shadow-brand);}
+  .btn-secondary{background:var(--surface-card); color:var(--text-primary); box-shadow:var(--shadow-sm);}
+  .btn-ghost{background:transparent; color:var(--text-primary); box-shadow:inset 0 0 0 1.5px var(--surface-border);}
+  .btn-danger{background:var(--state-danger); color:var(--white);}
+  .btn:disabled{opacity:.45; cursor:not-allowed;}
+
+  .icon-btn{
+    width:44px; height:44px; border-radius:var(--radius-pill); border:none; flex-shrink:0;
+    background:var(--surface-card); color:var(--text-primary); box-shadow:var(--shadow-sm);
+    cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
+    transition:transform var(--duration-fast) var(--ease-bounce);
+  }
+  .icon-btn:active{transform:scale(.96);}
+
+  /* ==========================================================================
+     Sections
+     ========================================================================== */
+  section{margin-top:var(--space-10);}
+  h2.section-title{
+    font:var(--text-title); margin:0 0 var(--space-1);
+    display:flex; align-items:center; gap:var(--space-3); justify-content:flex-start;
+  }
+  h2.section-title .title-text{flex:1;}
+  .sec-icon{
+    width:32px; height:32px; border-radius:var(--radius-sm); flex-shrink:0;
+    display:inline-flex; align-items:center; justify-content:center; color:var(--white);
+  }
+  .sec-chores{background:var(--cat-chores); color:var(--ink-900);}
+  .sec-kitchen{background:var(--cat-kitchen);}
+  .sec-family{background:var(--cat-family);}
+  .sec-home{background:var(--cat-home);}
+  .sec-finance{background:var(--cat-finance);}
+  .sec-neutral{background:var(--ink-500);}
+  p.section-sub{margin:0 0 var(--space-4); color:var(--text-secondary); font:var(--text-caption);}
+  .chevron{display:none; color:var(--text-secondary); transition:transform var(--duration-base) var(--ease-standard);}
+
+  /* Cards: white surface, 20px radius, soft two-layer shadow, no border */
+  .card{
+    background:var(--surface-card); border-radius:var(--radius-card);
+    padding:var(--space-5); box-shadow:var(--shadow-card);
+  }
+
+  /* ==========================================================================
+     Form controls
+     ========================================================================== */
+  input[type=text], input[type=number], input[type=date], select, textarea{
+    font:var(--text-body); font-family:var(--font-sans); color:var(--text-primary);
+    padding:12px 16px; border-radius:var(--radius-control);
+    border:1.5px solid var(--surface-border); background:var(--surface-card);
+    outline:none; width:100%;
+    transition:box-shadow var(--duration-fast) var(--ease-standard);
+  }
+  input:focus, select:focus, textarea:focus{box-shadow:var(--shadow-focus);}
+  input::placeholder, textarea::placeholder{color:var(--ink-300);}
+  select{-webkit-appearance:none; appearance:none; padding-right:var(--space-8);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 12px center;}
+
+  /* ==========================================================================
+     Leaderboard
+     ========================================================================== */
+  .leaderboard{display:flex; flex-direction:column; gap:var(--space-3);}
+  .lb-row{
+    display:flex; align-items:center; gap:var(--space-4);
+    background:var(--surface-card); border-radius:var(--radius-card);
+    padding:var(--space-3) var(--space-5); box-shadow:var(--shadow-card);
+  }
+  .lb-rank{
+    width:28px; height:28px; border-radius:var(--radius-pill); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font:var(--text-label); font-weight:800; background:var(--surface-sunken); color:var(--text-secondary);
+  }
+  .lb-rank.first{background:var(--brand-primary); color:var(--ink-900);}
+  .avatar{
+    border-radius:var(--radius-pill); display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-sans); font-weight:800; flex-shrink:0; letter-spacing:var(--tracking-tight);
+  }
+  .lb-avatar{width:42px; height:42px; font-size:16px;}
+  .lb-name{font:var(--text-body); font-weight:700; flex:0 0 110px;}
+  .lb-bar-track{flex:1; height:8px; background:var(--ink-100); border-radius:var(--radius-pill); overflow:hidden;}
+  .lb-bar-fill{height:100%; border-radius:var(--radius-pill); transition:width var(--duration-slow) var(--ease-standard);}
+  .lb-points{font:var(--text-label); font-weight:800; width:78px; text-align:right;}
+  .lb-streak{
+    font:var(--text-caption); font-weight:700; color:var(--text-secondary);
+    width:56px; display:flex; align-items:center; justify-content:flex-end; gap:var(--space-1);
+  }
+
+  /* Mobile profile picker (enabled by the phone breakpoint below) */
+  .profile-picker{display:none; gap:var(--space-2); overflow-x:auto; padding-bottom:var(--space-1); margin-bottom:var(--space-4);}
+  .profile-pill{
+    display:flex; align-items:center; gap:var(--space-2); flex-shrink:0; cursor:pointer;
+    background:var(--surface-card); border:1.5px solid var(--surface-border);
+    border-radius:var(--radius-pill); padding:5px 16px 5px 5px;
+    font:var(--text-label); color:var(--text-primary);
+    transition:all var(--duration-fast) var(--ease-standard);
+  }
+  .profile-pill .pill-avatar{width:26px; height:26px; font-size:12px;}
+  .profile-pill.active{background:var(--ink-900); color:var(--white); border-color:var(--ink-900);}
+  .profile-pill.everyone{padding-left:var(--space-4);}
+
+  /* ==========================================================================
+     Family cards — white surfaces with a per-person accent colour
+     ========================================================================== */
+  .fam-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:var(--space-4);}
+  .fam-card{
+    background:var(--surface-card); border-radius:var(--radius-card);
+    padding:var(--space-5); box-shadow:var(--shadow-card);
+    display:flex; flex-direction:column;
+  }
+  .fam-head{display:flex; align-items:center; gap:var(--space-3); margin-bottom:var(--space-3);}
+  .fam-avatar{width:48px; height:48px; font-size:18px;}
+  .fam-name{font:var(--text-body-lg); font-weight:800; letter-spacing:var(--tracking-tight); display:flex; align-items:center; gap:7px;}
+  .fam-role{font:var(--text-caption); color:var(--text-secondary);}
+  .rank-badge{
+    display:inline-flex; align-items:center; justify-content:center; min-width:24px; height:20px;
+    padding:0 7px; border-radius:var(--radius-pill); background:var(--surface-sunken); color:var(--text-secondary);
+    font:var(--text-caption); font-weight:800;
+  }
+  .rank-badge.first{background:var(--brand-primary); color:var(--ink-900);}
+  .badge{
+    display:inline-flex; align-items:center; gap:6px; padding:4px 12px;
+    border-radius:var(--radius-pill); font:var(--text-caption); font-weight:700;
+  }
+  .fam-title{align-self:flex-start; margin-bottom:var(--space-3);}
+  .fam-stats{display:flex; gap:var(--space-2); margin-bottom:var(--space-3); flex-wrap:wrap;}
+  .stat{
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--surface-sunken); border-radius:var(--radius-pill);
+    padding:5px 12px; font:var(--text-caption); font-weight:700;
+  }
+  .level-track{height:8px; background:var(--ink-100); border-radius:var(--radius-pill); overflow:hidden;}
+  .level-fill{height:100%; border-radius:var(--radius-pill); transition:width var(--duration-slow) var(--ease-standard);}
+  .level-caption{font:var(--text-caption); color:var(--text-secondary); margin:6px 0 var(--space-4);}
+
+  .habit-list{display:flex; flex-direction:column; gap:var(--space-2);}
+  .habit{
+    background:var(--surface-sunken); border-radius:var(--radius-control);
+    padding:10px var(--space-3) 9px; font:var(--text-body);
+    user-select:none;
+  }
+  .habit-main{display:flex; align-items:center; gap:var(--space-3); cursor:pointer; transition:transform var(--duration-fast) var(--ease-bounce);}
+  .habit-main:active{transform:scale(.98);}
+  .habit .box{
+    width:22px; height:22px; border-radius:var(--radius-sm); flex-shrink:0;
+    border:2px solid var(--ink-300); display:flex; align-items:center; justify-content:center;
+    color:var(--white); transition:all var(--duration-fast) var(--ease-bounce);
+  }
+  .habit.done .box{border-color:transparent;}
+  .habit .htext{flex:1;}
+  .habit.done .htext{text-decoration:line-through; opacity:.55;}
+  .habit .meta{font:var(--text-caption); color:var(--text-secondary); font-weight:600;}
+  .habit .del-x{
+    width:24px; height:24px; border-radius:var(--radius-pill); border:none; flex-shrink:0;
+    background:transparent; color:var(--ink-300); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  /* Per-habit weekly completion strip — reflects only this habit's own history, no
+     relation to piggy-bank money (that's the separate aggregate strip below). */
+  .habit-week{display:flex; justify-content:space-between; gap:2px; margin-top:8px; padding-left:34px;}
+  .hw-dot{display:flex; flex-direction:column; align-items:center; gap:3px; flex:1; font-size:9px; font-weight:800; color:var(--text-secondary);}
+  .hw-circle{width:16px; height:16px; border-radius:50%; border:1.5px solid var(--ink-100); background:transparent; transition:transform var(--duration-fast) var(--ease-bounce);}
+  .hw-circle.missed{background:var(--ink-100); border-color:transparent;}
+  .hw-circle.unknown{border-style:dotted;}
+  .hw-circle.future{border-style:dashed; opacity:.55;}
+  .hw-circle.today{border-color:var(--ink-900); border-width:2px;}
+  .hw-dot.clickable{cursor:pointer;}
+  .hw-dot.clickable:hover .hw-circle{transform:scale(1.18);}
+  .add-habit-row{display:flex; gap:var(--space-2); margin-top:var(--space-3);}
+  .add-habit-row input{flex:1; min-width:0; padding:10px 14px; font:var(--text-label);}
+  .add-habit-row button{flex-shrink:0;}
+
+  /* ==========================================================================
+     Household jobs table
+     ========================================================================== */
+  .chore-table{
+    width:100%; border-collapse:collapse; background:var(--surface-card);
+    border-radius:var(--radius-card); overflow:hidden; box-shadow:var(--shadow-card);
+  }
+  .chore-table th{
+    text-align:left; font:var(--text-caption); font-weight:700; text-transform:uppercase;
+    letter-spacing:var(--tracking-wide); color:var(--text-secondary);
+    padding:var(--space-3) var(--space-4); background:var(--surface-sunken);
+  }
+  .chore-table td{padding:var(--space-3) var(--space-4); border-top:1px solid var(--surface-border); font:var(--text-body); vertical-align:middle;}
+  select.assignee{padding:8px 30px 8px 12px; font:var(--text-label); width:auto; min-width:130px;}
+  .chore-check{
+    width:26px; height:26px; border-radius:var(--radius-sm); cursor:pointer; flex-shrink:0;
+    border:2px solid var(--ink-300); display:inline-flex; align-items:center; justify-content:center;
+    color:var(--white); background:transparent;
+    transition:all var(--duration-fast) var(--ease-bounce);
+  }
+  .chore-check.on{border-color:transparent; background:var(--cat-chores); color:var(--ink-900);}
+  .pts-tag{font:var(--text-label); font-weight:700; color:var(--grape-600);}
+  .job-del-btn{
+    border:none; background:var(--coral-50); color:var(--state-danger);
+    border-radius:var(--radius-control); padding:9px 12px; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    font:var(--text-label); font-weight:700;
+    transition:transform var(--duration-fast) var(--ease-bounce);
+  }
+  .job-del-btn:active{transform:scale(.96);}
+  .add-job-form{
+    display:grid; grid-template-columns:2fr 1fr 1fr 0.8fr auto; gap:var(--space-2);
+    margin-bottom:var(--space-3); background:var(--surface-card);
+    border-radius:var(--radius-card); padding:var(--space-4); box-shadow:var(--shadow-card);
+    align-items:center;
+  }
+  .add-job-form input, .add-job-form select{padding:10px 14px; font:var(--text-label);}
+  .add-job-form select{padding-right:var(--space-8);}
+  @media (max-width:720px){ .add-job-form{grid-template-columns:1fr 1fr;} }
+
+  /* ==========================================================================
+     Upcoming
+     ========================================================================== */
+  .bday-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:var(--space-4);}
+  .bday-card{display:flex; flex-direction:column; gap:var(--space-3);}
+  .bday-top{display:flex; align-items:center; gap:var(--space-3);}
+  .bday-avatar{width:38px; height:38px; font-size:14px;}
+  .bday-tile{
+    width:38px; height:38px; border-radius:var(--radius-md); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; color:var(--white);
+  }
+  .bday-name{font:var(--text-body); font-weight:700;}
+  .upcoming-type{font:var(--text-caption); color:var(--text-secondary); display:flex; align-items:center; gap:5px; margin-top:2px;}
+  .bday-count{align-self:flex-start; background:var(--surface-sunken); color:var(--ink-700);}
+  .bday-count.today{background:var(--brand-primary); color:var(--ink-900);}
+  input.bday-date{padding:9px 12px; font:var(--text-label);}
+  .bday-claimed{font:var(--text-caption); font-weight:700; color:var(--state-success); display:flex; align-items:center; gap:6px;}
+
+  /* ==========================================================================
+     To-do list
+     ========================================================================== */
+  .add-todo-row{display:flex; gap:var(--space-2); margin-bottom:var(--space-3);}
+  .add-todo-row input{flex:1; min-width:0;}
+  .todo-list{display:flex; flex-direction:column; gap:var(--space-2);}
+  .todo-item{
+    display:flex; align-items:center; gap:var(--space-3);
+    background:var(--surface-sunken); border-radius:var(--radius-control);
+    padding:12px var(--space-4); cursor:pointer;
+    transition:transform var(--duration-fast) var(--ease-bounce);
+  }
+  .todo-item:active{transform:scale(.99);}
+  .todo-check{
+    width:22px; height:22px; border-radius:var(--radius-sm); border:2px solid var(--ink-300);
+    flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--white);
+    transition:all var(--duration-fast) var(--ease-bounce);
+  }
+  .todo-item.done .todo-check{background:var(--cat-kitchen); border-color:transparent;}
+  .todo-text{flex:1; font:var(--text-body);}
+  .todo-item.done .todo-text{text-decoration:line-through; color:var(--text-secondary);}
+  .todo-del{
+    width:24px; height:24px; border-radius:var(--radius-pill); border:none; flex-shrink:0;
+    background:transparent; color:var(--ink-300); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ==========================================================================
+     Rewards
+     ========================================================================== */
+  .reward-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:var(--space-4);}
+  .reward-card{display:flex; flex-direction:column; gap:var(--space-3);}
+  .reward-title{font:var(--text-body); font-weight:700;}
+  .reward-cost{font:var(--text-caption); color:var(--text-secondary); display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .redeem-row{display:flex; gap:var(--space-2); margin-top:auto;}
+  select.redeemer{flex:1; min-width:0; padding:9px 30px 9px 12px; font:var(--text-label);}
+  .cash-tag{color:var(--green-600); font-weight:700; display:inline-flex; align-items:center; gap:4px;}
+  .reward-del-btn{width:100%;}
+
+  /* Piggy bank — summarised inline on each person's card */
+  .piggy-inline{margin-top:var(--space-4); padding-top:var(--space-4); border-top:1px solid var(--surface-border);}
+  .piggy-inline-top{display:flex; justify-content:space-between; align-items:baseline; font:var(--text-caption); font-weight:700; margin-bottom:var(--space-2); gap:var(--space-2);}
+  .piggy-label{display:inline-flex; align-items:center; gap:5px;}
+  .piggy-inline-track{height:6px; margin-bottom:var(--space-3);}
+  .day-dots{display:flex; justify-content:space-between; gap:var(--space-1);}
+  .day-dot{display:flex; flex-direction:column; align-items:center; gap:var(--space-1); flex:1;
+    font:var(--text-caption); font-size:10px; font-weight:800; color:var(--text-secondary);}
+  .day-dot .dot-circle{width:14px; height:14px; border-radius:var(--radius-pill); border:1.5px solid var(--ink-100);}
+  .day-dot-today .dot-circle{border-color:var(--ink-900); border-width:2px;}
+  .day-dot-today{color:var(--text-primary);}
+  .day-dot-future .dot-circle{border-style:dashed;}
+  .day-dot-future{opacity:.55;}
+
+  /* ==========================================================================
+     Activity log
+     ========================================================================== */
+  .log-list{display:flex; flex-direction:column; gap:var(--space-2); max-height:240px; overflow-y:auto;}
+  .log-item{
+    font:var(--text-caption); color:var(--text-primary); padding:10px var(--space-3);
+    background:var(--surface-sunken); border-radius:var(--radius-control);
+  }
+  .log-item span{color:var(--text-secondary);}
+  .log-item b{font-weight:700;}
+
+  footer.note{
+    max-width:1180px; margin:var(--space-12) auto 0; padding:var(--space-4) var(--space-5);
+    font:var(--text-caption); color:var(--text-secondary); text-align:center;
+  }
+
+  /* ==========================================================================
+     Toast
+     ========================================================================== */
+  .toast{
+    position:fixed; bottom:84px; left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--ink-900); color:var(--white);
+    padding:12px 18px; border-radius:var(--radius-lg);
+    font:var(--text-body); font-weight:600;
+    opacity:0; transition:opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-bounce);
+    pointer-events:none; z-index:120; box-shadow:var(--shadow-raised);
+    display:flex; align-items:center; gap:var(--space-3); max-width:calc(100% - 40px);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .toast.success{background:var(--state-success);}
+  .toast.danger{background:var(--state-danger);}
+
+  /* ==========================================================================
+     Admin dialog
+     ========================================================================== */
+  .admin-fab{
+    position:fixed; bottom:84px; right:var(--space-5); width:52px; height:52px;
+    border-radius:var(--radius-pill); background:var(--ink-900); color:var(--white);
+    border:none; box-shadow:var(--shadow-raised); cursor:pointer; z-index:60;
+    display:flex; align-items:center; justify-content:center;
+    transition:transform var(--duration-fast) var(--ease-bounce);
+  }
+  .admin-fab:active{transform:scale(.96);}
+
+  /* ==========================================================================
+     Bottom tab bar — the design system's stated nav pattern for this app
+     (fixed bottom bar, content scrolls beneath it). Switches between the two
+     top-level pages without a real navigation/routing layer.
+     ========================================================================== */
+  .page{display:none;}
+  .page.active{display:block;}
+  .tab-bar{
+    position:fixed; left:0; right:0; bottom:0; z-index:65;
+    display:flex; background:var(--surface-card); border-top:1px solid var(--surface-border);
+    box-shadow:0 -2px 12px rgba(34,38,43,.06);
+    padding:6px max(var(--space-4), env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom));
+  }
+  .tab-btn{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:none; border:none; padding:8px 4px; cursor:pointer;
+    color:var(--text-secondary); font:var(--text-caption); font-weight:700;
+    font-family:var(--font-sans);
+  }
+  .tab-btn .ico{width:22px; height:22px;}
+  .tab-btn.active{color:var(--ink-900);}
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(34,38,43,0.4);
+    display:none; align-items:center; justify-content:center; z-index:100; padding:var(--space-5);
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-box{
+    background:var(--surface-card); border-radius:var(--radius-xl);
+    padding:var(--space-6); max-width:400px; width:100%;
+    box-shadow:var(--shadow-raised); max-height:86vh; overflow-y:auto;
+  }
+  .modal-box h3{margin:0 0 var(--space-1); font:var(--text-display-md); letter-spacing:var(--tracking-tight);}
+  .modal-box p.hint{color:var(--text-secondary); font:var(--text-caption); margin:0 0 var(--space-4);}
+  .pin-display{
+    font:var(--text-mono); font-size:26px; letter-spacing:10px; text-align:center;
+    margin:var(--space-3) 0 var(--space-5); height:34px; color:var(--text-primary);
+  }
+  .pin-pad{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-3);}
+  .pin-key{
+    padding:16px 0; border-radius:var(--radius-control); border:1.5px solid var(--surface-border);
+    background:var(--surface-card); font:var(--text-body-lg); font-weight:700;
+    font-family:var(--font-sans); color:var(--text-primary); cursor:pointer;
+    transition:transform var(--duration-fast) var(--ease-bounce);
+  }
+  .pin-key:active{transform:scale(.96); background:var(--surface-sunken);}
+  .admin-panel-list{display:flex; flex-direction:column; gap:var(--space-3); margin-top:var(--space-4);}
+  .admin-panel-list .btn{width:100%;}
+  .modal-close{
+    width:100%; margin-top:var(--space-4); background:var(--surface-sunken); border:none;
+    border-radius:var(--radius-pill); padding:12px; font:var(--text-body); font-weight:700;
+    font-family:var(--font-sans); color:var(--text-primary); cursor:pointer;
+  }
+  .kiosk-row{
+    display:flex; align-items:center; justify-content:space-between; gap:var(--space-3);
+    background:var(--surface-sunken); border-radius:var(--radius-md); padding:var(--space-3) var(--space-4);
+  }
+  .switch{
+    width:46px; height:26px; border-radius:var(--radius-pill); background:var(--ink-100);
+    border:none; padding:3px; cursor:pointer; flex-shrink:0; display:inline-flex; align-items:center;
+    transition:background var(--duration-base) var(--ease-standard);
+  }
+  .switch.on{background:var(--accent-blue);}
+  .switch .knob{
+    width:20px; height:20px; border-radius:var(--radius-pill); background:var(--white);
+    box-shadow:var(--shadow-sm); transform:translateX(0);
+    transition:transform var(--duration-base) var(--ease-bounce);
+  }
+  .switch.on .knob{transform:translateX(20px);}
+  .panel{background:var(--surface-sunken); border-radius:var(--radius-md); padding:var(--space-4);}
+  .panel-title{font:var(--text-label); font-weight:800; margin-bottom:var(--space-1); display:flex; align-items:center; gap:var(--space-2);}
+  .panel input, .panel select, .panel textarea{background:var(--surface-card);}
+  .pocket-row{display:flex; align-items:center; justify-content:space-between; padding:6px 0; font:var(--text-label);}
+  .pocket-input-wrap{display:flex; align-items:center; gap:var(--space-1); font-weight:700;}
+  .pocket-input{width:74px; padding:7px 10px; font:var(--text-label);}
+  .adjust-row{padding:var(--space-3) 0; border-top:1px solid var(--surface-border);}
+  .adjust-row:first-of-type{border-top:none; padding-top:var(--space-1);}
+  .adjust-row-top{display:flex; align-items:center; justify-content:space-between; font:var(--text-label); margin-bottom:6px;}
+  .balance-negative{color:var(--state-danger);}
+  .adjust-row-controls{display:flex; gap:6px;}
+  .adjust-amount{width:70px; flex-shrink:0; padding:7px 10px; font:var(--text-caption);}
+  .adjust-note{flex:1; min-width:0; padding:7px 10px; font:var(--text-caption);}
+  .past-edit-controls{display:flex; gap:var(--space-2); margin-bottom:var(--space-2);}
+  .past-edit-controls select, .past-edit-controls input{flex:1; min-width:0; padding:9px 12px; font:var(--text-caption);}
+  .past-habit-row{
+    display:flex; align-items:center; gap:var(--space-3); padding:9px 0;
+    border-top:1px solid var(--surface-border); font:var(--text-caption); cursor:pointer;
+  }
+  .past-habit-row:first-child{border-top:none;}
+  .past-habit-row input{width:18px; height:18px; flex-shrink:0; accent-color:var(--cat-chores);}
+  textarea.sync-textarea{height:120px; font:var(--text-mono); font-family:var(--font-mono); font-size:11px; resize:vertical;}
+  .panel code{background:var(--white); border-radius:var(--radius-sm); padding:2px 6px; font:var(--text-mono); font-family:var(--font-mono);}
+  .ics-status{font-style:italic;}
+  .ledger-row{display:flex; align-items:flex-start; justify-content:space-between; gap:var(--space-3); padding:9px 0; border-top:1px solid var(--surface-border); font:var(--text-caption);}
+  .ledger-row:first-child{border-top:none;}
+  .ledger-reason{flex:1;}
+  .ledger-amount{font-weight:800; flex-shrink:0; white-space:nowrap;}
+
+  /* ==========================================================================
+     Phone-only refinements. Everything above is designed around an iPad (the
+     primary kiosk target); this only kicks in below any real iPad width.
+     ========================================================================== */
+  @media (max-width:640px){
+    .wrap{padding:0 var(--space-4);}
+    header.top{padding:var(--space-5) 0 var(--space-8);}
+    header.top h1{font:var(--text-title); font-size:24px; letter-spacing:var(--tracking-tight);}
+    section{margin-top:var(--space-8);}
+    h2.section-title{font-size:18px;}
+    .profile-picker{display:flex;}
+
+    /* Sections start condensed on mobile; tap the header to expand */
+    .collapsible .section-title{
+      cursor:pointer; padding:10px var(--space-3); margin:0 calc(var(--space-3) * -1) var(--space-1);
+      border-radius:var(--radius-md); background:var(--surface-card); box-shadow:var(--shadow-sm);
+    }
+    .collapsible .chevron{display:inline-block;}
+    .collapsible .section-body{display:none;}
+    .collapsible.expanded .section-body{display:block;}
+    .collapsible.expanded .chevron{transform:rotate(180deg);}
+    .collapsible.expanded .section-title{background:transparent; box-shadow:none; padding:0; margin:0 0 var(--space-1);}
+
+    /* household jobs: table -> stacked cards */
+    .chore-table thead{display:none;}
+    .chore-table, .chore-table tbody{display:block; width:100%;}
+    .chore-table tr{display:block; padding:var(--space-4); border-top:1px solid var(--surface-border);}
+    .chore-table tr:first-child{border-top:none;}
+    .chore-table td{display:flex; align-items:center; justify-content:space-between; padding:6px 0; border:none;}
+    .chore-table td::before{
+      content:attr(data-label); font:var(--text-caption); font-weight:700;
+      text-transform:uppercase; letter-spacing:var(--tracking-wide); color:var(--text-secondary);
+    }
+    .chore-table td.job-name-cell{font-weight:700; font-size:16px; padding-bottom:var(--space-2); display:block;}
+    .chore-table select.assignee{max-width:160px;}
+
+    .add-job-form{grid-template-columns:1fr 1fr;}
+    .add-job-form button{grid-column:1 / -1;}
+    .icon-btn{width:40px; height:40px;}
+    .admin-fab{width:56px; height:56px; bottom:80px; right:var(--space-4);}
+    .redeem-row{flex-direction:column; align-items:stretch;}
+    .redeem-row select, .redeem-row button{width:100%;}
+    .modal-box{padding:var(--space-5);}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap row">
+    <div>
+      <div class="eyebrow">Family hub</div>
+      <h1>Phipps House</h1>
+      <div class="sub" id="todayLabel">Loading…</div>
+    </div>
+    <button class="icon-btn" id="gearBtn" title="Settings" aria-label="Settings">
+      <i class="ico" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/settings.svg); width:20px; height:20px;"></i>
+    </button>
+  </div>
+</header>
+
+<div class="wrap">
+ <div class="page active" id="pageHome" data-page="home">
+
+  <section class="collapsible" data-section="leaderboard">
+    <h2 class="section-title section-toggle" data-toggle="leaderboard">
+      <span class="sec-icon sec-finance"><i class="ico" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/trophy.svg); width:18px; height:18px;"></i></span>
+      <span class="title-text">Leaderboard</span>
+      <i class="ico chevron" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/chevron-down.svg); width:18px; height:18px;"></i>
+    </h2>
+    <div class="section-body">
+      <p class="section-sub">Ranked by total points. Tap habits below to earn more.</p>
+      <div class="leaderboard" id="leaderboard"></div>
+    </div>
+  </section>
+
+  <section class="collapsible" data-section="habits">
+    <h2 class="section-title section-toggle" data-toggle="habits">
+      <span class="sec-icon sec-home"><i class="ico" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/circle-check.svg); width:18px; height:18px;"></i></span>
+      <span class="title-text">Today's habits</span>
+      <i class="ico chevron" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/chevron-down.svg); width:18px; height:18px;"></i>
+    </h2>
+    <div class="section-body">
+      <p class="section-sub">Tap a habit when it's done to earn points and build your streak. Longer streaks pay a bonus: 1.25× at 3 days, 1.5× at a week, 2× at two weeks, 3× at a month. Habits reset automatically at the start of each new day. Anyone with a weekly allowance set in settings also earns real pocket money, shown on their card below.</p>
+      <div class="profile-picker" id="profilePicker"></div>
+      <div class="fam-grid" id="famGrid"></div>
+    </div>
+  </section>
+
+  <section class="collapsible" data-section="jobs">
+    <h2 class="section-title section-toggle" data-toggle="jobs">
+      <span class="sec-icon sec-chores"><i class="ico" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/brush.svg); width:18px; height:18px;"></i></span>
+      <span class="title-text">Household jobs</span>
+      <i class="ico chevron" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/chevron-down.svg); width:18px; height:18px;"></i>
+    </h2>
+    <div class="section-body">
+      <p class="section-sub">Rotating chores — reassign anytime, tick off when done.</p>
+      <div id="addJobWrap"></div>
+      <div style="overflow-x:auto;">
+      <table class="chore-table">
+        <thead><tr><th>Job</th><th>Frequency</th><th>Assigned to</th><th>Points</th><th>Done</th><th></th></tr></thead>
+        <tbody id="choreBody"></tbody>
+      </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="collapsible" data-section="rewards">
+    <h2 class="section-title section-toggle" data-toggle="rewards">
+      <span class="sec-icon sec-finance"><i class="ico" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/gift.svg); width:18px; height:18px;"></i></span>
+      <span class="title-text">Rewards shop</span>
+      <i class="ico chevron" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/chevron-down.svg); width:18px; height:18px;"></i>
+    </h2>
+    <div class="section-body">
+      <p class="section-sub">Spend hard-earned points on real-world rewards.</p>
+      <div id="addRewardWrap"></div>
+      <div class="reward-grid" id="rewardGrid"></div>
+    </div>
+  </section>
+
+  <section class="collapsible" data-section="log">
+    <h2 class="section-title section-toggle" data-toggle="log">
+      <span class="sec-icon sec-neutral"><i class="ico" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/scroll-text.svg); width:18px; height:18px;"></i></span>
+      <span class="title-text">Activity log</span>
+      <i class="ico chevron" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/chevron-down.svg); width:18px; height:18px;"></i>
+    </h2>
+    <div class="section-body">
+      <div class="card">
+        <div class="log-list" id="logList"></div>
+      </div>
+    </div>
+  </section>
+
+ </div>
+
+ <div class="page" id="pagePlanner" data-page="planner">
+
+  <section class="collapsible" data-section="upcoming">
+    <h2 class="section-title section-toggle" data-toggle="upcoming">
+      <span class="sec-icon sec-family"><i class="ico" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/calendar-days.svg); width:18px; height:18px;"></i></span>
+      <span class="title-text">Upcoming</span>
+      <i class="ico chevron" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/chevron-down.svg); width:18px; height:18px;"></i>
+    </h2>
+    <div class="section-body">
+      <p class="section-sub">Birthdays (which earn a bonus) and anything else coming up, soonest first.</p>
+      <p class="section-sub ics-status" id="icsStatus"></p>
+      <div id="addEventWrap"></div>
+      <div class="bday-grid" id="upcomingGrid"></div>
+    </div>
+  </section>
+
+  <section class="collapsible" data-section="todos">
+    <h2 class="section-title section-toggle" data-toggle="todos">
+      <span class="sec-icon sec-kitchen"><i class="ico" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/list-todo.svg); width:18px; height:18px;"></i></span>
+      <span class="title-text">To-do list</span>
+      <i class="ico chevron" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/chevron-down.svg); width:18px; height:18px;"></i>
+    </h2>
+    <div class="section-body">
+      <p class="section-sub">One shared list for the whole house — anyone can add or tick things off.</p>
+      <div class="card">
+        <div class="add-todo-row">
+          <input type="text" id="newTodoText" placeholder="Add something to the list…" maxlength="80">
+          <button class="btn btn-primary" id="addTodoBtn">Add</button>
+        </div>
+        <div class="todo-list" id="todoList"></div>
+      </div>
+    </div>
+  </section>
+
+ </div>
+</div>
+
+<nav class="tab-bar" id="tabBar">
+  <button class="tab-btn active" data-page="home">
+    <i class="ico" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/house.svg); width:22px; height:22px;"></i>
+    <span>Home</span>
+  </button>
+  <button class="tab-btn" data-page="planner">
+    <i class="ico" style="--ico:url(https://unpkg.com/lucide-static@latest/icons/calendar-check.svg); width:22px; height:22px;"></i>
+    <span>Planner</span>
+  </button>
+</nav>
+
+<footer class="note" id="footerNote"></footer>
+
+<div class="toast" id="toast"></div>
+<button class="admin-fab" id="adminFab" title="Settings" aria-label="Settings"></button>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<script>
+(function(){
+  const HABIT_PTS = 10, DAILY_CHORE_PTS = 15, WEEKLY_CHORE_PTS = 25, BIRTHDAY_BONUS = 100;
+  const STORAGE_KEY = 'familyHQ_v2';
+  const ADMIN_PIN = '1234';
+
+  // ---- Lucide icons (design system: Lucide, 2px outline, recoloured via CSS mask,
+  // never emoji/unicode glyphs). `icon()` returns markup that inherits currentColor. ----
+  const LUCIDE = 'https://unpkg.com/lucide-static@latest/icons/';
+  function icon(name, size, extra){
+    return `<i class="ico" style="--ico:url(${LUCIDE}${name}.svg); width:${size||16}px; height:${size||16}px;${extra||''}"></i>`;
+  }
+
+  // Each person owns one accent colour from the palette. `on` is the text colour that
+  // sits on it — yellow needs ink rather than white, same rule as --text-on-brand.
+  const family = [
+    { id:'matt', name:'Matt', role:'Parent', initials:'M', color:'#2fa9e5', on:'#ffffff' },
+    { id:'jemma', name:'Jemma', role:'Parent', initials:'J', color:'#9b6bf0', on:'#ffffff' },
+    { id:'henry', name:'Henry', role:'Kid', initials:'H', color:'#3dbe72', on:'#ffffff' },
+    { id:'ted', name:'Ted', role:'Kid', initials:'T', color:'#ff6b5b', on:'#ffffff' },
+    { id:'lorraine', name:'Lorraine', role:'Grandma', initials:'L', color:'#ffc93c', on:'#22262b' },
+  ];
+  // Person accent at a given alpha — used for the week-at-a-glance dots.
+  function tint(hex, a){
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+  }
+
+  const defaultHabits = {
+    matt: ['Take vitamins','Exercise or move 20 min','Tidy your space','Screen-free wind down'],
+    jemma: ['Take vitamins','Exercise or move 20 min','Tidy your space','Screen-free wind down'],
+    henry: ['Take vitamins','Brush teeth morning and night','Read 20 minutes','Tidy your room'],
+    ted: ['Take vitamins','Brush teeth morning and night','Read 20 minutes','Tidy your room'],
+    lorraine: ['Take vitamins','Afternoon walk','Call a grandchild','Puzzle or crossword'],
+  };
+  // Weekly pocket money target per person — edit defaults here, or change any time in settings.
+  const defaultPocketWeekly = { matt:0, jemma:0, henry:5, ted:5, lorraine:0 };
+  function roundMoney(n){ return Math.round(n * 100) / 100; }
+
+  // ---- Real-date helpers ----
+  // Habits are ticked "for today" and must reset every real calendar day, but pocket money
+  // is paid out weekly and needs to know how many habits got done on each day of that week.
+  // Since today's ticks get wiped at the daily reset, each day's completion ratio is archived
+  // into `history` (separate persisted memory, keyed by date) the moment that day ends —
+  // that's the only place weekly payout math looks once "today" has moved on.
+  function pad2(n){ return n < 10 ? '0'+n : ''+n; }
+  function dateKey(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+  function parseDateKey(k){ const [y,m,d] = k.split('-').map(Number); return new Date(y, m-1, d); }
+  function addDaysKey(k, n){ const d = parseDateKey(k); d.setDate(d.getDate()+n); return dateKey(d); }
+  function todayKey(){ return dateKey(new Date()); }
+  function mondayOf(k){ const d = parseDateKey(k); const dow = (d.getDay()+6)%7; d.setDate(d.getDate()-dow); return dateKey(d); }
+  function datesInWeek(mondayKey){ const arr=[]; for(let i=0;i<7;i++) arr.push(addDaysKey(mondayKey,i)); return arr; }
+  function formatShort(k){ return parseDateKey(k).toLocaleDateString('en-GB',{day:'numeric',month:'short'}); }
+  function pruneHistory(s){ const cutoff = addDaysKey(todayKey(), -60); Object.keys(s.history).forEach(k => { if (k < cutoff) delete s.history[k]; }); }
+
+  // ---- Ledger: append-only record of every points/money movement ----
+  // The cached fields (points, piggyPocket, piggyReward) are a fast derived view for
+  // rendering; the ledger is the source of truth and can always be re-summed to check or
+  // repair them — a stored total can drift, a sum of history can't. Entries carry an `id`;
+  // writing the same id again *replaces* that entry rather than appending a duplicate, which
+  // makes system-generated events (a habit tick, a weekly payout) safe to re-apply — a
+  // retried write or a re-run of "force this week's payout" corrects in place instead of
+  // double-counting. Manual one-off entries (redemptions, admin adjustments) get a random id
+  // so each is its own event.
+  function recomputeBalancesFor(fam){
+    const sum = (account) => roundMoney((fam.ledger||[]).reduce((a,e)=> e.account===account ? a+e.delta : a, 0));
+    fam.points = Math.max(0, Math.round(sum('points')));
+    fam.piggyPocket = sum('piggyPocket');
+    fam.piggyReward = sum('piggyReward');
+  }
+  function ledgerAddTo(fam, account, delta, reason, id, entryDateKey){
+    if (!fam.ledger) fam.ledger = [];
+    delta = account === 'points' ? Math.round(delta) : roundMoney(delta);
+    if (delta === 0 && id == null) return; // nothing to record and nothing to upsert
+    const entry = {
+      id: id || `${account}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+      account, delta, reason, at: new Date().toISOString(), dateKey: entryDateKey || todayKey(),
+    };
+    const idx = fam.ledger.findIndex(e => e.id === entry.id);
+    if (idx !== -1) fam.ledger[idx] = entry; else fam.ledger.push(entry);
+    recomputeBalancesFor(fam);
+  }
+  function ledgerAdd(famId, account, delta, reason, id, entryDateKey){
+    ledgerAddTo(state.fam[famId], account, delta, reason, id, entryDateKey);
+  }
+  // Collapses ledger entries older than 180 days into one archived-balance entry per account,
+  // so the ledger stays small over years of use — the archived delta equals the exact sum of
+  // everything it replaces, so no total is ever affected by pruning.
+  function pruneLedger(s){
+    if (!s.ledger || s.ledger.length < 60) return;
+    const cutoff = addDaysKey(todayKey(), -180);
+    const old = s.ledger.filter(e => e.dateKey && e.dateKey < cutoff && !String(e.id).startsWith('archive:'));
+    if (old.length < 40) return;
+    const oldSet = new Set(old);
+    const keep = s.ledger.filter(e => !oldSet.has(e));
+    ['points','piggyPocket','piggyReward'].forEach(account => {
+      const sum = roundMoney(old.filter(e=>e.account===account).reduce((a,e)=>a+e.delta,0));
+      if (sum !== 0) keep.push({ id:`archive:${account}:${cutoff}`, account, delta:sum, reason:`Archived balance from before ${formatShort(cutoff)}`, at:new Date().toISOString(), dateKey:cutoff });
+    });
+    s.ledger = keep;
+    recomputeBalancesFor(s);
+  }
+
+  const defaultChores = [
+    { id:'water', name:'Water the plants', freq:'Weekly', pts:WEEKLY_CHORE_PTS, assignee:'matt', done:false },
+    { id:'dishwasher', name:'Empty the dishwasher', freq:'Daily', pts:DAILY_CHORE_PTS, assignee:'jemma', done:false },
+    { id:'bins', name:'Take out the bins', freq:'Weekly', pts:WEEKLY_CHORE_PTS, assignee:'henry', done:false },
+    { id:'table', name:'Set the table', freq:'Daily', pts:DAILY_CHORE_PTS, assignee:'ted', done:false },
+    { id:'sink', name:'Clean the bathroom sink', freq:'Weekly', pts:WEEKLY_CHORE_PTS, assignee:'lorraine', done:false },
+    { id:'vacuum', name:'Vacuum the living room', freq:'Weekly', pts:WEEKLY_CHORE_PTS, assignee:'matt', done:false },
+  ];
+
+  // Rewards with a `cash` value pay real money into the redeemer's piggy bank on top of
+  // costing points; rewards without `cash` are just privileges (no money changes hands).
+  // Lives in state (not a plain const) so parents can add/remove rewards from the UI.
+  const defaultRewards = [
+    { id:'r_dinner', name:'Choose Friday dinner', cost:50 },
+    { id:'r_screen30', name:'Extra 30 min screen time', cost:30 },
+    { id:'r_late15', name:'Stay up 15 min late', cost:25 },
+    { id:'r_movie', name:'Pick the family movie', cost:40 },
+    { id:'r_chorepass', name:'Skip one chore (free pass)', cost:60 },
+    { id:'r_cash5', name:'£5 pocket money', cost:120, cash:5 },
+  ];
+
+  function defaultState(){
+    const today = todayKey();
+    const s = {
+      fam:{}, chores: JSON.parse(JSON.stringify(defaultChores)), rewards: JSON.parse(JSON.stringify(defaultRewards)),
+      events:[], todos:[], log:[], lastResetDate: today, weekAnchor: mondayOf(today), kioskMode:false, selectedProfile:null,
+      icsUrl:'', icsProxyPrefix:'', icsEvents:[], icsLastSync:null, icsLastError:null, // Apple/iCloud calendar sync (see syncIcsCalendar)
+    };
+    family.forEach(f => {
+      const fam = {
+        points: 0,
+        habitState: defaultHabits[f.id].map(h => ({ name:h, done:false })), // streak is derived from history, see habitStreak — not stored here
+        birthday: '',
+        bdayClaimedYear: null,
+        pocketWeekly: defaultPocketWeekly[f.id] || 0,
+        piggyPocket: 0,
+        piggyReward: 0,
+        history: {}, // date ('YYYY-MM-DD') -> { ratio, habits:{name:done} } for that day, archived at each daily reset
+        ledger: [], // append-only points/money history — see ledgerAdd/recomputeBalancesFor. points/piggyPocket/piggyReward above are derived from this.
+      };
+      s.fam[f.id] = fam;
+    });
+    return s;
+  }
+
+  // ---- persistence (only meaningful once this file is hosted on its own domain;
+  // wrapped defensively so it never throws inside a sandboxed preview) ----
+  let storageOK = true;
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultState();
+      const parsed = JSON.parse(raw);
+      // make sure every current family member exists even if saved data predates them
+      family.forEach(f => {
+        if (!parsed.fam[f.id]) parsed.fam[f.id] = defaultState().fam[f.id];
+        const pf = parsed.fam[f.id];
+        // backfill piggy-bank fields for saves made before this feature existed
+        if (typeof pf.pocketWeekly !== 'number') pf.pocketWeekly = defaultPocketWeekly[f.id] || 0;
+        if (typeof pf.piggyPocket !== 'number') pf.piggyPocket = 0;
+        if (typeof pf.piggyReward !== 'number') pf.piggyReward = 0;
+        if (!pf.history || typeof pf.history !== 'object') pf.history = {};
+        // Backfill the ledger for saves made before it existed: seed one opening entry per
+        // non-zero cached balance so nothing is lost, then let it drive points/piggy from here on.
+        if (!Array.isArray(pf.ledger)){
+          const openingPoints = pf.points || 0, openingPocket = pf.piggyPocket || 0, openingReward = pf.piggyReward || 0;
+          pf.ledger = [];
+          if (openingPoints) ledgerAddTo(pf, 'points', openingPoints, 'Migrated balance', `opening:${f.id}:points`);
+          if (openingPocket) ledgerAddTo(pf, 'piggyPocket', openingPocket, 'Migrated balance', `opening:${f.id}:piggyPocket`);
+          if (openingReward) ledgerAddTo(pf, 'piggyReward', openingReward, 'Migrated balance', `opening:${f.id}:piggyReward`);
+        }
+        delete pf.paidWeeks; // superseded by deterministic ledger entry ids (see payoutWeek)
+        delete pf.weekRatioSum; delete pf.weekDaysCount; // superseded by per-day history
+      });
+      if (!parsed.chores) parsed.chores = JSON.parse(JSON.stringify(defaultChores));
+      if (!parsed.rewards) parsed.rewards = JSON.parse(JSON.stringify(defaultRewards));
+      if (!Array.isArray(parsed.events)) parsed.events = [];
+      if (!Array.isArray(parsed.todos)) parsed.todos = [];
+      if (typeof parsed.icsUrl !== 'string') parsed.icsUrl = '';
+      if (typeof parsed.icsProxyPrefix !== 'string') parsed.icsProxyPrefix = '';
+      if (!Array.isArray(parsed.icsEvents)) parsed.icsEvents = [];
+      if (typeof parsed.icsLastSync === 'undefined') parsed.icsLastSync = null;
+      if (typeof parsed.icsLastError === 'undefined') parsed.icsLastError = null;
+      if (typeof parsed.kioskMode !== 'boolean') parsed.kioskMode = false;
+      if (typeof parsed.selectedProfile === 'undefined') parsed.selectedProfile = null;
+      if (typeof parsed.lastResetDate !== 'string') parsed.lastResetDate = todayKey();
+      if (typeof parsed.weekAnchor !== 'string') parsed.weekAnchor = mondayOf(parsed.lastResetDate);
+      delete parsed.simDay; delete parsed.simWeek; // superseded by real-date tracking
+      return parsed;
+    } catch(e){
+      storageOK = false;
+      return defaultState();
+    }
+  }
+  // pushRemote defaults to true; pass false when applying a snapshot that just arrived FROM
+  // sync, so we don't immediately echo it straight back up (see applyRemoteState).
+  function saveState(pushRemote){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){ storageOK = false; }
+    if (pushRemote !== false) pushStateToSync();
+  }
+
+  const state = loadState();
+  let adminUnlocked = !state.kioskMode; // if kiosk mode is off, admin tools are always visible
+  let pinBuffer = '';
+
+  // ---- Multi-device sync (Firebase Firestore) ----
+  // Everything above this point works the same whether or not sync is turned on — sync is an
+  // opt-in layer on top of the existing localStorage-per-device model, not a replacement for
+  // it. Connection settings (which Firebase project, which shared family code) live in their
+  // own localStorage key, separate from the app data itself, so a "Reset all progress" never
+  // disconnects a device from sync by accident, and disconnecting sync never wipes local data.
+  const SYNC_CONFIG_KEY = 'familyHQ_sync_v1';
+  // Kept out of the synced payload on purpose — these describe THIS device/session, not the
+  // family's shared data, and syncing them would cause weird cross-device side effects (e.g.
+  // unlocking admin on the kitchen iPad shouldn't unlock it on a parent's phone too).
+  const SYNC_EXCLUDE_KEYS = ['kioskMode', 'selectedProfile'];
+  function loadSyncConfig(){
+    try{
+      const raw = localStorage.getItem(SYNC_CONFIG_KEY);
+      return raw ? JSON.parse(raw) : { familyId:'', firebaseConfig:null };
+    } catch(e){ return { familyId:'', firebaseConfig:null }; }
+  }
+  function saveSyncConfig(cfg){
+    try{ localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(cfg)); } catch(e){ /* ignore */ }
+  }
+  const syncConfig = loadSyncConfig();
+  // Transient — deliberately not persisted; rebuilt fresh every load from a live connection attempt.
+  const syncStatus = { connected:false, connecting:false, error:null, lastSyncedAt:null };
+  let fbDb = null, fbUnsub = null, applyingRemote = false, fbScriptsLoaded = false;
+
+  function syncPayload(){
+    const out = {};
+    Object.keys(state).forEach(k => { if (!SYNC_EXCLUDE_KEYS.includes(k)) out[k] = state[k]; });
+    return out;
+  }
+  // Merges an incoming remote snapshot into the live `state` object in place (state is a
+  // `const`, so we mutate rather than reassign — same pattern resetDemo() already uses).
+  // saveState(false) still writes the merged result to localStorage as this device's own
+  // cache, just without pushing it straight back up to Firestore.
+  function applyRemoteState(data){
+    applyingRemote = true;
+    SYNC_EXCLUDE_KEYS.forEach(k => delete data[k]); // never let a remote payload touch device-local settings
+    Object.assign(state, data);
+    applyingRemote = false;
+    saveState(false);
+    renderAll();
+  }
+  function loadFirebaseSdk(){
+    if (window.firebase) return Promise.resolve();
+    const urls = [
+      'https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js',
+      'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js',
+      'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js',
+    ];
+    return urls.reduce((p, url) => p.then(() => new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = url; s.onload = resolve; s.onerror = () => reject(new Error('Failed to load ' + url));
+      document.head.appendChild(s);
+    })), Promise.resolve());
+  }
+  // Accepts either the Firebase console's raw pasted snippet (unquoted keys, `const
+  // firebaseConfig = {...};`) or strict JSON, since that's what people actually copy-paste.
+  function parseFirebaseConfigText(text){
+    let t = text.trim();
+    t = t.replace(/^(export\s+default|const\s+firebaseConfig\s*=|var\s+firebaseConfig\s*=|let\s+firebaseConfig\s*=)/, '').trim();
+    if (t.endsWith(';')) t = t.slice(0, -1);
+    return Function('"use strict"; return (' + t + ');')();
+  }
+  async function connectSync(familyId, firebaseConfig, announce){
+    if (!familyId || !firebaseConfig){ return; }
+    syncStatus.connecting = true; syncStatus.error = null;
+    if (announce) renderAll();
+    try{
+      await loadFirebaseSdk();
+      fbScriptsLoaded = true;
+      if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      await firebase.auth().signInAnonymously();
+      fbDb = firebase.firestore();
+      if (fbUnsub) fbUnsub();
+      const docRef = fbDb.collection('familyhq').doc(familyId);
+      await new Promise((resolve, reject) => {
+        let first = true;
+        fbUnsub = docRef.onSnapshot(snap => {
+          syncStatus.connected = true; syncStatus.connecting = false; syncStatus.error = null;
+          syncStatus.lastSyncedAt = new Date().toISOString();
+          if (snap.exists){
+            applyRemoteState(snap.data());
+          } else if (first){
+            // brand-new family code — seed it with whatever this device already has
+            docRef.set(syncPayload()).catch(()=>{});
+          }
+          if (first){ first = false; resolve(); }
+          renderAll();
+        }, err => {
+          syncStatus.connected = false; syncStatus.connecting = false; syncStatus.error = err.message || 'sync error';
+          renderAll();
+          if (first){ first = false; reject(err); }
+        });
+      });
+      syncConfig.familyId = familyId; syncConfig.firebaseConfig = firebaseConfig;
+      saveSyncConfig(syncConfig);
+      if (announce) toast('Connected — synced across devices', 'success');
+    } catch(err){
+      syncStatus.connected = false; syncStatus.connecting = false; syncStatus.error = err.message || 'could not connect';
+      if (announce) toast(`Couldn't connect (${syncStatus.error})`, 'danger');
+      renderAll();
+    }
+  }
+  function disconnectSync(){
+    if (fbUnsub) fbUnsub();
+    fbUnsub = null; fbDb = null;
+    syncStatus.connected = false; syncStatus.error = null;
+    syncConfig.familyId = ''; syncConfig.firebaseConfig = null;
+    saveSyncConfig(syncConfig);
+    renderAll();
+  }
+  function pushStateToSync(){
+    if (!fbDb || !syncConfig.familyId || applyingRemote) return;
+    fbDb.collection('familyhq').doc(syncConfig.familyId).set(syncPayload())
+      .then(() => { syncStatus.lastSyncedAt = new Date().toISOString(); })
+      .catch(err => { syncStatus.error = err.message || 'push failed'; });
+  }
+  function randomFamilyCode(){
+    return 'family-' + Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 6);
+  }
+
+  // Sections start condensed on mobile on every fresh load; expand/collapse choices
+  // made during a session are kept until you reload. Desktop/tablet always shows everything.
+  const mobileExpanded = { leaderboard:false, habits:false, jobs:false, upcoming:false, todos:false, rewards:false, log:false };
+  function applyCollapseState(){
+    const mobile = isMobile();
+    document.querySelectorAll('.collapsible').forEach(sec => {
+      const key = sec.dataset.section;
+      sec.classList.toggle('expanded', !mobile || !!mobileExpanded[key]);
+    });
+  }
+  function initSectionToggles(){
+    document.querySelectorAll('.section-toggle').forEach(h => {
+      h.addEventListener('click', () => {
+        if (!isMobile()) return;
+        const key = h.dataset.toggle;
+        mobileExpanded[key] = !mobileExpanded[key];
+        applyCollapseState();
+      });
+    });
+  }
+
+  // ---- Bottom tab bar: switches between the "home" (gamification) and "planner"
+  // (upcoming + to-do) pages. Not persisted — always opens back on Home, which matches
+  // a kiosk device more than remembering a per-visit tab.
+  function switchPage(name){
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.dataset.page === name));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.page === name));
+    window.scrollTo(0, 0);
+  }
+  function initTabBar(){
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.addEventListener('click', () => switchPage(b.dataset.page));
+    });
+  }
+
+  function byId(id){ return family.find(f=>f.id===id); }
+  function totalPoints(id){ return state.fam[id].points; }
+  function showAdmin(){ return !state.kioskMode || adminUnlocked; }
+  function isMobile(){ return window.matchMedia('(max-width:640px)').matches; }
+
+  // Levels get harder to reach as you climb: level 1 needs 150 pts, then each next
+  // level needs 25% more than the last (150, 188, 234, 293, 366, 458, ...). Tweak
+  // LEVEL_BASE_PTS / LEVEL_GROWTH here to make the climb steeper or gentler.
+  const LEVEL_BASE_PTS = 150;
+  const LEVEL_GROWTH = 1.25;
+  function levelInfo(points){
+    let lvl = 1, into = points, span = LEVEL_BASE_PTS;
+    while (into >= span){
+      into -= span;
+      lvl++;
+      span = Math.round(span * LEVEL_GROWTH);
+    }
+    return { level: lvl, into, span };
+  }
+  function level(points){ return levelInfo(points).level; }
+
+  // Streaks pay off: the longer a habit's current streak, the bigger the point multiplier
+  // when you tick it off. Tune the tiers here.
+  function streakMultiplier(streak){
+    if (streak >= 30) return 3;
+    if (streak >= 14) return 2;
+    if (streak >= 7) return 1.5;
+    if (streak >= 3) return 1.25;
+    return 1;
+  }
+
+  // Piggy bank: each day contributes at most 1/7th of the weekly allowance, so it builds up
+  // gradually across the week rather than an all-or-nothing single day. A perfect Monday
+  // alone banks ~14% of the week's money, not the full amount — the ratio here is always
+  // "days' worth earned so far" out of all 7 days, whether or not they've happened yet.
+  // Past days' ratios come from each person's persisted `history`; today's (not-yet-archived)
+  // ratio is read live from habitState so the estimate updates instantly as habits get ticked.
+  // A history entry is { ratio, habits:{name:done} } — habits is the per-habit detail that
+  // lets "Edit past days" show exactly what was tracked that day. Older saves (or gap-filled
+  // fully-skipped days) may only have a bare ratio; these helpers normalise both shapes.
+  function getHistoryEntry(s, dateStr){
+    const e = s.history[dateStr];
+    if (e == null) return null;
+    return typeof e === 'number' ? { ratio: e, habits: null } : e;
+  }
+  function historyRatio(s, dateStr){
+    const e = getHistoryEntry(s, dateStr);
+    return e ? e.ratio : 0;
+  }
+  // A habit's streak is derived from its own history rather than hand-incremented, so
+  // retroactively filling in a forgotten day immediately extends or repairs the streak —
+  // fixing yesterday reflects in today's multiplier right away, not just from tomorrow on.
+  // Counts consecutive done days walking backward from the day *before* refDate (refDate
+  // itself isn't counted — this is "the streak that day is walking into", the same number
+  // that determines its own completion bonus). A day with no record at all, or a habit that
+  // didn't exist that day, ends the streak the same as an explicit "not done".
+  function habitStreakAsOf(s, habitName, refDate){
+    let streak = 0;
+    let cursor = addDaysKey(refDate, -1);
+    while (true){
+      const entry = getHistoryEntry(s, cursor);
+      if (!entry || !entry.habits || !(habitName in entry.habits) || !entry.habits[habitName]) break;
+      streak++;
+      cursor = addDaysKey(cursor, -1);
+    }
+    return streak;
+  }
+  function habitStreak(s, habitName){ return habitStreakAsOf(s, habitName, state.lastResetDate); }
+  function weeklyEstimate(famId){
+    const s = state.fam[famId];
+    const days = datesInWeek(state.weekAnchor);
+    const today = state.lastResetDate;
+    const todayRatio = s.habitState.length ? s.habitState.filter(h => h.done).length / s.habitState.length : 0;
+    let sum = 0;
+    days.forEach(d => {
+      if (d === today) sum += todayRatio;
+      else if (d < today) sum += historyRatio(s, d);
+      // days that haven't happened yet simply don't add anything — that's how it "builds through the week"
+    });
+    const ratio = sum / 7;
+    return { ratio, estimate: roundMoney(s.pocketWeekly * ratio) };
+  }
+  // Per-day breakdown for the week-at-a-glance dots on each card: past days from history,
+  // today live, future days marked as upcoming/not-yet-happened.
+  function weekDayBreakdown(famId){
+    const s = state.fam[famId];
+    const days = datesInWeek(state.weekAnchor);
+    const today = state.lastResetDate;
+    return days.map(d => {
+      if (d === today) return { date: d, ratio: s.habitState.length ? s.habitState.filter(h=>h.done).length / s.habitState.length : 0, status: 'today' };
+      if (d < today) return { date: d, ratio: historyRatio(s, d), status: 'past' };
+      return { date: d, ratio: null, status: 'future' };
+    });
+  }
+  // Per-habit weekly completion strip — tied purely to that one habit's own done/not-done
+  // record each day, nothing to do with pocket money. `done` is true/false once known,
+  // or null when there's simply no record for that day (habit didn't exist yet, or the day
+  // was never opened) — shown distinctly from "recorded as not done".
+  function habitWeekBreakdown(famId, habitIdx, habitName){
+    const s = state.fam[famId];
+    const days = datesInWeek(state.weekAnchor);
+    const today = state.lastResetDate;
+    return days.map(d => {
+      if (d === today){
+        const h = s.habitState[habitIdx];
+        return { date: d, done: h ? h.done : false, status: 'today' };
+      }
+      if (d < today){
+        const entry = getHistoryEntry(s, d);
+        if (!entry || !entry.habits || !(habitName in entry.habits)) return { date: d, done: null, status: 'unknown' };
+        return { date: d, done: !!entry.habits[habitName], status: 'past' };
+      }
+      return { date: d, done: null, status: 'future' };
+    });
+  }
+  function piggyTotal(famId){
+    const s = state.fam[famId];
+    return roundMoney(s.piggyPocket + s.piggyReward);
+  }
+  function money(n){ const sign = n < 0 ? '-' : ''; return `${sign}£${Math.abs(n).toFixed(2)}`; }
+  // Pays a person's banked pocket money for one tracked week, based on their archived
+  // daily history for that week's Mon-Sun span (missing days count as 0, same rule as the
+  // live estimate above, so what you see building through the week is what gets paid).
+  // Records what was actually paid in `paidWeeks` so a later edit to one of that week's days
+  // (see editPastHabit/reconcileWeekIfPaid) can true the amount up instead of double-paying.
+  // Called automatically when the real date crosses into a new week (see checkDateRollover),
+  // or manually via the admin testing button.
+  function payoutWeek(mondayKey){
+    const days = datesInWeek(mondayKey);
+    family.forEach(f => {
+      const s = state.fam[f.id];
+      if (s.pocketWeekly > 0){
+        const sum = days.reduce((acc,d) => acc + historyRatio(s, d), 0);
+        const ratio = sum / 7;
+        const payout = roundMoney(s.pocketWeekly * ratio);
+        const ledgerId = `payout:${f.id}:${mondayKey}`;
+        const alreadyPaid = (s.ledger||[]).some(e => e.id === ledgerId);
+        // Deterministic id: re-running this for a week that's already been paid (testing
+        // button, or a multi-week catch-up) upserts the same entry rather than paying twice.
+        ledgerAddTo(s, 'piggyPocket', payout, `Pocket money for the week of ${formatShort(mondayKey)} (${Math.round(ratio*100)}% of habits done)`, ledgerId, mondayKey);
+        if (payout > 0 && !alreadyPaid){
+          addLog(`<b>${f.name}</b> earned ${money(payout)} pocket money for the week of ${formatShort(mondayKey)} <span>(${Math.round(ratio*100)}% of the week's habits done)</span>`);
+        }
+      }
+    });
+  }
+  // Runs the automatic daily reset whenever the real date has moved on since the app was
+  // last open. Archives the day that just ended into each person's history (separate from
+  // the live habitState.done flags, which reset), updates streaks, clears daily jobs, fills
+  // in any fully-skipped days as 0%, and pays out any tracked weeks that have fully elapsed.
+  // Runs on load and on a periodic timer, so it also catches a kiosk iPad left open overnight.
+  // Archives the given date's completion ratio and per-habit detail (read live from each
+  // person's current habitState.done ticks) into their persisted history, updates streaks
+  // accordingly, and clears today's ticks + daily jobs ready for the next day. Shared by the
+  // automatic rollover and the manual testing button so both behave identically.
+  function closeOutDayUsingLiveTicks(dateStr){
+    family.forEach(f => {
+      const s = state.fam[f.id];
+      const habits = {};
+      s.habitState.forEach(h => { habits[h.name] = h.done; });
+      const ratio = s.habitState.length ? s.habitState.filter(h => h.done).length / s.habitState.length : 0;
+      s.history[dateStr] = { ratio, habits };
+      s.habitState.forEach(h => { h.done = false; }); // streak is derived from history (just written above), not stored
+    });
+    state.chores.filter(c => c.freq === 'Daily').forEach(c => c.done = false);
+    addLog(`New day started — streaks updated, daily checklists cleared`);
+  }
+  // Pays out and advances state.weekAnchor for every tracked week that has fully elapsed
+  // as of newDateStr (normally just one, but a multi-week absence pays each week in turn).
+  function crossWeekBoundaryIfNeeded(newDateStr){
+    const newAnchor = mondayOf(newDateStr);
+    while (state.weekAnchor !== newAnchor){
+      payoutWeek(state.weekAnchor);
+      state.weekAnchor = addDaysKey(state.weekAnchor, 7);
+      state.chores.filter(c => c.freq === 'Weekly').forEach(c => c.done = false);
+      addLog(`New pocket-money week started — weekly jobs reset`);
+    }
+  }
+  function checkDateRollover(){
+    const today = todayKey();
+    if (state.lastResetDate >= today) return false; // already caught up (or a test has fast-forwarded us)
+    const closingDate = state.lastResetDate;
+    closeOutDayUsingLiveTicks(closingDate);
+    // any days the app wasn't opened at all count as 0% (habits weren't done); use whatever
+    // habits exist right now as a best-effort record for those gap days
+    let d = addDaysKey(closingDate, 1);
+    while (d < today){
+      family.forEach(f => {
+        const s = state.fam[f.id];
+        const habits = {};
+        s.habitState.forEach(h => { habits[h.name] = false; });
+        s.history[d] = { ratio: 0, habits };
+      });
+      d = addDaysKey(d, 1);
+    }
+    state.lastResetDate = today;
+    family.forEach(f => { pruneHistory(state.fam[f.id]); pruneLedger(state.fam[f.id]); });
+    crossWeekBoundaryIfNeeded(today);
+    saveState();
+    return true;
+  }
+  // Lets a parent go back and fix a forgotten/wrong tick for a past day (yesterday or
+  // earlier — today is still edited live on the habit card itself). Updates that day's
+  // archived record and, if the week it falls in has already been paid out, retroactively
+  // trues up the pocket money for that week. Since a habit's streak (see habitStreak) is
+  // read live from this same history rather than stored, fixing a forgotten day here
+  // immediately repairs or extends the streak too — no separate streak bookkeeping needed.
+  // Awards/deducts a flat base per-habit amount rather than working out what multiplier the
+  // fixed day itself would have earned, since correctly doing that would also mean re-truing
+  // every day *after* it that was already paid out under the old (broken) streak — out of
+  // scope for a quick correction.
+  function editPastHabit(famId, dateStr, habitName, newDone){
+    const s = state.fam[famId];
+    const f = byId(famId);
+    let entry = getHistoryEntry(s, dateStr);
+    if (!entry || !entry.habits) {
+      // Seed every current habit as not-done first (matching what the checklist UI shows for
+      // an unrecorded day) — otherwise the ratio below is computed against only the one habit
+      // just toggled instead of all of them.
+      const habits = {};
+      s.habitState.forEach(h => { habits[h.name] = false; });
+      entry = { ratio: entry ? entry.ratio : 0, habits };
+    }
+    const wasDone = !!entry.habits[habitName];
+    if (wasDone === newDone) return;
+    entry.habits[habitName] = newDone;
+    const names = Object.keys(entry.habits);
+    entry.ratio = names.length ? names.filter(n => entry.habits[n]).length / names.length : 0;
+    s.history[dateStr] = entry;
+
+    const ledgerId = `pasthabit:${famId}:${dateStr}:${habitName}`;
+    if (newDone){
+      ledgerAdd(famId, 'points', HABIT_PTS, `Marked "${habitName}" done on ${formatShort(dateStr)} (retroactive)`, ledgerId, dateStr);
+      addLog(`<b>${f.name}</b>: marked "${habitName}" done on ${formatShort(dateStr)} <span>(+${HABIT_PTS} pts, retroactive)</span>`);
+    } else {
+      ledgerAdd(famId, 'points', 0, `Unmarked "${habitName}" on ${formatShort(dateStr)} (retroactive)`, ledgerId, dateStr);
+      addLog(`<b>${f.name}</b>: unmarked "${habitName}" on ${formatShort(dateStr)} <span>(-${HABIT_PTS} pts, retroactive)</span>`);
+    }
+    reconcileWeekIfPaid(famId, mondayOf(dateStr));
+    saveState(); renderAll();
+  }
+  // If the week containing a just-edited day was already paid out, recompute what it should
+  // have paid with the corrected history and re-upsert the same payout ledger entry with the
+  // new amount — recomputeBalancesFor trues up piggyPocket automatically, so a retroactive fix
+  // still lands in the piggy bank rather than silently changing history only.
+  function reconcileWeekIfPaid(famId, mondayKey){
+    const s = state.fam[famId];
+    const ledgerId = `payout:${famId}:${mondayKey}`;
+    const prior = (s.ledger||[]).find(e => e.id === ledgerId);
+    if (!prior) return; // that week hasn't been paid yet — the live estimate already reflects the edit
+    const days = datesInWeek(mondayKey);
+    const sum = days.reduce((acc,d) => acc + historyRatio(s, d), 0);
+    const ratio = sum / 7;
+    const newPayout = roundMoney(s.pocketWeekly * ratio);
+    if (newPayout === prior.delta) return;
+    const diff = roundMoney(newPayout - prior.delta);
+    ledgerAdd(famId, 'piggyPocket', newPayout, `Pocket money for the week of ${formatShort(mondayKey)} (${Math.round(ratio*100)}% of habits done)`, ledgerId, mondayKey);
+    const f = byId(famId);
+    addLog(`<b>${f.name}</b>'s pocket money for the week of ${formatShort(mondayKey)} adjusted ${diff>0?'+':''}${money(diff)} after a habit edit`);
+  }
+
+  // Titles get grander (and sillier) the higher you climb. Add/reorder entries here to
+  // change the ranks; anything past the list just keeps the top title and tacks on a
+  // Roman numeral (Cosmic Ruler of Family HQ II, III, ...).
+  const LEVEL_TITLES = [
+    'Sock drawer sergeant',
+    'Duty deputy',
+    'Chore cadet',
+    'Tidy titan',
+    'Household hero',
+    'Domestic dynamo',
+    'Grand vizier of vacuuming',
+    'Baron of the bins',
+    'Duke of dishes',
+    'Sultan of suds',
+    'Emperor of errands',
+    'Supreme overlord of chores',
+    'Grand master of the house',
+    'Legendary keeper of the realm',
+    'Cosmic ruler of Family HQ',
+  ];
+  function toRoman(num){
+    const map = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+    let res = '';
+    for (const [v,s] of map){ while(num >= v){ res += s; num -= v; } }
+    return res;
+  }
+  function levelTitle(lvl){
+    if (lvl <= LEVEL_TITLES.length) return LEVEL_TITLES[lvl-1];
+    return `${LEVEL_TITLES[LEVEL_TITLES.length-1]} ${toRoman(lvl - LEVEL_TITLES.length + 1)}`;
+  }
+  // Lucide stand-ins for the old medal emoji — same escalating ladder.
+  function levelIcon(lvl){
+    if (lvl >= 15) return 'sparkles';
+    if (lvl >= 12) return 'crown';
+    if (lvl >= 9) return 'trophy';
+    if (lvl >= 6) return 'award';
+    if (lvl >= 3) return 'medal';
+    return 'star';
+  }
+
+  function addLog(msg){
+    state.log.unshift({ msg, time: new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) });
+    if (state.log.length > 40) state.log.pop();
+  }
+
+  // tone: 'success' | 'danger' | undefined (neutral ink)
+  function toast(msg, tone){
+    const t = document.getElementById('toast');
+    t.className = 'toast show' + (tone ? ' ' + tone : '');
+    t.textContent = msg;
+    clearTimeout(t._timer);
+    t._timer = setTimeout(()=> t.classList.remove('show'), 2000);
+  }
+
+  function renderTodayLabel(){
+    const real = new Date();
+    const opts = { weekday:'long', day:'numeric', month:'long' };
+    const dayIdx = Math.round((parseDateKey(state.lastResetDate) - parseDateKey(state.weekAnchor)) / 86400000) + 1;
+    document.getElementById('todayLabel').textContent =
+      `${real.toLocaleDateString('en-GB', opts)} · Day ${dayIdx} of 7 this pocket-money week, started ${formatShort(state.weekAnchor)}`;
+  }
+
+  function renderLeaderboard(){
+    const el = document.getElementById('leaderboard');
+    const sorted = [...family].sort((a,b)=> totalPoints(b.id) - totalPoints(a.id));
+    const max = Math.max(...family.map(f=>totalPoints(f.id)), 1);
+    el.innerHTML = sorted.map((f,i) => {
+      const s = state.fam[f.id];
+      const bestStreak = Math.max(0, ...s.habitState.map(h=>habitStreak(s,h.name)));
+      return `
+        <div class="lb-row">
+          <div class="lb-rank ${i===0?'first':''}">${i+1}</div>
+          <div class="avatar lb-avatar" style="background:${f.color}; color:${f.on}">${f.initials}</div>
+          <div class="lb-name">${f.name}</div>
+          <div class="lb-bar-track"><div class="lb-bar-fill" style="width:${(totalPoints(f.id)/max*100).toFixed(0)}%; background:${f.color}"></div></div>
+          <div class="lb-points">${totalPoints(f.id)} pts</div>
+          <div class="lb-streak">${icon('flame',14)} ${bestStreak}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderProfilePicker(){
+    const el = document.getElementById('profilePicker');
+    const active = state.selectedProfile;
+    el.innerHTML = `
+      <div class="profile-pill everyone ${active===null?'active':''}" data-pick="">${icon('users',14)} Everyone</div>
+      ${family.map(f => `
+        <div class="profile-pill ${active===f.id?'active':''}" data-pick="${f.id}">
+          <div class="avatar pill-avatar" style="background:${f.color}; color:${f.on}">${f.initials}</div>${f.name}
+        </div>`).join('')}`;
+    el.querySelectorAll('[data-pick]').forEach(pill => {
+      pill.addEventListener('click', () => {
+        state.selectedProfile = pill.dataset.pick || null;
+        saveState(); renderAll();
+      });
+    });
+  }
+
+  function renderFamGrid(){
+    const el = document.getElementById('famGrid');
+    const admin = showAdmin();
+    const members = (isMobile() && state.selectedProfile) ? family.filter(f => f.id === state.selectedProfile) : family;
+    const ranked = [...family].sort((a,b) => totalPoints(b.id) - totalPoints(a.id));
+    const rankOf = {}; ranked.forEach((f,i) => { rankOf[f.id] = i + 1; });
+    const letters = ['M','T','W','T','F','S','S'];
+    el.innerHTML = members.map(f => {
+      const s = state.fam[f.id];
+      const li = levelInfo(s.points);
+      const lvl = li.level;
+      const bestStreak = Math.max(0, ...s.habitState.map(h=>habitStreak(s,h.name)));
+      const est = weeklyEstimate(f.id);
+      const showPiggy = s.pocketWeekly > 0 || piggyTotal(f.id) !== 0;
+      const rank = rankOf[f.id];
+      return `
+        <div class="fam-card">
+          <div class="fam-head">
+            <div class="avatar fam-avatar" style="background:${f.color}; color:${f.on}">${f.initials}</div>
+            <div>
+              <div class="fam-name">${f.name} <span class="rank-badge ${rank===1?'first':''}">#${rank}</span></div>
+              <div class="fam-role">${f.role}</div>
+            </div>
+          </div>
+          <div class="badge fam-title" style="background:${f.color}; color:${f.on}">${icon(levelIcon(lvl),13)} ${levelTitle(lvl)}</div>
+          <div class="fam-stats">
+            <div class="stat">${icon('star',13)} Level ${lvl}</div>
+            <div class="stat">${s.points} pts</div>
+            <div class="stat">${icon('flame',13)} ${bestStreak}</div>
+          </div>
+          <div class="level-track"><div class="level-fill" style="width:${(li.into/li.span*100).toFixed(0)}%; background:${f.color}"></div></div>
+          <div class="level-caption">${li.into} of ${li.span} to level ${lvl+1}</div>
+          <div class="habit-list">
+            ${s.habitState.map((h,idx) => {
+              const streak = habitStreak(s, h.name);
+              const mult = streakMultiplier(streak);
+              return `
+              <div class="habit ${h.done?'done':''}">
+                <div class="habit-main">
+                  <div class="box" data-fam="${f.id}" data-idx="${idx}" data-act="toggle" style="${h.done?`background:${f.color}; color:${f.on};`:''}">${h.done ? icon('check',13) : ''}</div>
+                  <div class="htext" data-fam="${f.id}" data-idx="${idx}" data-act="toggle">${h.name}${streak>0 ? ` <span class="meta">· ${icon('flame',12)} ${streak}${mult>1?` · ${mult}×`:''}</span>`:''}</div>
+                  ${admin ? `<button class="del-x" data-fam="${f.id}" data-idx="${idx}" data-act="del" title="Remove habit">${icon('x',14)}</button>` : ''}
+                </div>
+                <div class="habit-week">
+                  ${habitWeekBreakdown(f.id, idx, h.name).map((d,i) => {
+                    const clickable = d.status === 'past' || d.status === 'unknown';
+                    const cls = d.status === 'today' ? 'today' : d.status === 'future' ? 'future' : d.done === true ? 'done' : d.done === false ? 'missed' : 'unknown';
+                    const fillStyle = cls === 'done' ? `background:${f.color};` : '';
+                    const title = d.status === 'future' ? `${formatShort(d.date)} — upcoming`
+                      : d.status === 'today' ? `${formatShort(d.date)} — today`
+                      : d.status === 'unknown' ? `${formatShort(d.date)} — no record, tap to add`
+                      : `${formatShort(d.date)} — ${d.done ? 'done' : 'not done'}, tap to edit`;
+                    return `<div class="hw-dot ${clickable?'clickable':''}" ${clickable ? `data-hwedit="${f.id}|${d.date}"` : ''} title="${title}">
+                      <div class="hw-circle ${cls}" style="${fillStyle}"></div><span>${letters[i]}</span>
+                    </div>`;
+                  }).join('')}
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+          ${showPiggy ? `
+            <div class="piggy-inline">
+              <div class="piggy-inline-top">
+                <span class="piggy-label ${piggyTotal(f.id)<0 ? 'balance-negative' : ''}">${icon(piggyTotal(f.id)<0 ? 'circle-alert' : 'piggy-bank',13)} ${money(piggyTotal(f.id))} banked</span>
+                ${s.pocketWeekly>0 ? `<span style="color:var(--text-secondary)">${money(est.estimate)} of ${money(s.pocketWeekly)} so far</span>` : ''}
+              </div>
+              ${s.pocketWeekly>0 ? `
+                <div class="level-track piggy-inline-track"><div class="level-fill" style="width:${(est.ratio*100).toFixed(0)}%; background:${f.color}"></div></div>
+                <div class="day-dots">
+                  ${weekDayBreakdown(f.id).map((d,i) => {
+                    const letters = ['M','T','W','T','F','S','S'];
+                    const fill = d.ratio === null ? 'transparent' : tint(f.color, 0.15 + d.ratio*0.85);
+                    const cls = d.status === 'today' ? 'day-dot-today' : d.status === 'future' ? 'day-dot-future' : '';
+                    const title = d.status === 'future' ? `${formatShort(d.date)} — upcoming` : `${formatShort(d.date)} — ${Math.round(d.ratio*100)}% of habits done`;
+                    return `<div class="day-dot ${cls}" title="${title}"><div class="dot-circle" style="background:${fill}"></div><span>${letters[i]}</span></div>`;
+                  }).join('')}
+                </div>` : ''}
+            </div>` : ''}
+          ${admin ? `
+            <div class="add-habit-row">
+              <input type="text" placeholder="New habit…" data-newhabit="${f.id}" maxlength="40">
+              <button class="btn btn-secondary btn-sm" data-addhabit="${f.id}">Add</button>
+            </div>` : ''}
+        </div>`;
+    }).join('');
+
+    el.querySelectorAll('[data-act="toggle"]').forEach(node => {
+      node.addEventListener('click', () => {
+        const famId = node.dataset.fam;
+        const idx = +node.dataset.idx;
+        const h = state.fam[famId].habitState[idx];
+        const f = byId(famId);
+        h.done = !h.done;
+        const streak = habitStreak(state.fam[famId], h.name);
+        const mult = streakMultiplier(streak);
+        const pts = Math.round(HABIT_PTS * mult);
+        const multNote = mult > 1 ? ` <span>(${streak}-day streak, ${mult}×)</span>` : '';
+        const ledgerId = `habit:${famId}:${todayKey()}:${h.name}`;
+        if (h.done){
+          ledgerAdd(famId, 'points', pts, `Completed "${h.name}"`, ledgerId);
+          addLog(`<b>${f.name}</b> completed "${h.name}" <span>(+${pts} pts)</span>${multNote}`);
+          toast(mult > 1 ? `Habit done! ${f.name} earned ${pts} points — ${mult}× streak bonus` : `Habit done! ${f.name} earned ${pts} points`, 'success');
+        } else {
+          ledgerAdd(famId, 'points', 0, `Unchecked "${h.name}"`, ledgerId);
+          addLog(`<b>${f.name}</b> unchecked "${h.name}"`);
+        }
+        saveState(); renderAll();
+      });
+    });
+    el.querySelectorAll('[data-act="del"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const famId = btn.dataset.fam;
+        const idx = +btn.dataset.idx;
+        const f = byId(famId);
+        const h = state.fam[famId].habitState[idx];
+        state.fam[famId].habitState.splice(idx,1);
+        addLog(`Removed habit "${h.name}" for <b>${f.name}</b>`);
+        saveState(); renderAll();
+      });
+    });
+    el.querySelectorAll('[data-addhabit]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const famId = btn.dataset.addhabit;
+        const input = el.querySelector(`[data-newhabit="${famId}"]`);
+        const val = input.value.trim();
+        if (!val) return;
+        state.fam[famId].habitState.push({ name: val, done:false });
+        const f = byId(famId);
+        addLog(`New habit added for <b>${f.name}</b>: "${val}"`);
+        saveState(); renderAll();
+      });
+    });
+    el.querySelectorAll('[data-hwedit]').forEach(dot => {
+      dot.addEventListener('click', () => {
+        const [famId, dateStr] = dot.dataset.hwedit.split('|');
+        openPastEditFor(famId, dateStr);
+      });
+    });
+  }
+
+  function renderAddJobForm(){
+    const wrap = document.getElementById('addJobWrap');
+    if (!showAdmin()){ wrap.innerHTML = ''; return; }
+    wrap.innerHTML = `
+      <div class="add-job-form">
+        <input type="text" id="newJobName" placeholder="New job name…">
+        <select id="newJobFreq">
+          <option value="Daily">Daily</option>
+          <option value="Weekly" selected>Weekly</option>
+        </select>
+        <select id="newJobAssignee">
+          ${family.map(f => `<option value="${f.id}">${f.name}</option>`).join('')}
+        </select>
+        <input type="number" id="newJobPts" value="20" min="1" max="200">
+        <button class="btn btn-primary btn-sm" id="addJobBtn">Add job</button>
+      </div>`;
+    document.getElementById('addJobBtn').addEventListener('click', () => {
+      const name = document.getElementById('newJobName').value.trim();
+      if (!name) return;
+      const freq = document.getElementById('newJobFreq').value;
+      const assignee = document.getElementById('newJobAssignee').value;
+      const pts = Math.max(1, +document.getElementById('newJobPts').value || 20);
+      state.chores.push({ id:'job_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), name, freq, pts, assignee, done:false });
+      addLog(`New job added: "${name}" (${freq}, assigned to ${byId(assignee).name})`);
+      saveState(); renderAll();
+    });
+  }
+
+  function renderChores(){
+    const el = document.getElementById('choreBody');
+    const admin = showAdmin();
+    document.querySelector('.chore-table thead tr').innerHTML =
+      `<th>Job</th><th>Frequency</th><th>Assigned to</th><th>Points</th><th>Done</th>${admin ? '<th></th>' : ''}`;
+    el.innerHTML = state.chores.map(c => `
+      <tr>
+        <td class="job-name-cell">${c.name}</td>
+        <td data-label="Frequency"><span class="badge" style="background:${c.freq==='Daily'?'var(--cat-family)':'var(--cat-finance)'}; color:#fff">${c.freq}</span></td>
+        <td data-label="Assigned to">
+          <select class="assignee" data-chore="${c.id}">
+            ${family.map(f => `<option value="${f.id}" ${f.id===c.assignee?'selected':''}>${f.name}</option>`).join('')}
+          </select>
+        </td>
+        <td data-label="Points"><span class="pts-tag">+${c.pts}</span></td>
+        <td data-label="Done"><button class="chore-check ${c.done?'on':''}" data-chore="${c.id}" aria-label="Mark done">${c.done ? icon('check',15) : ''}</button></td>
+        ${admin ? `<td data-label="Remove"><button class="job-del-btn" data-chore="${c.id}">${icon('trash-2',15)}</button></td>` : ''}
+      </tr>`).join('');
+
+    el.querySelectorAll('.assignee').forEach(sel => {
+      sel.addEventListener('change', () => {
+        const c = state.chores.find(x=>x.id===sel.dataset.chore);
+        c.assignee = sel.value;
+        addLog(`Job "${c.name}" reassigned to <b>${byId(c.assignee).name}</b>`);
+        saveState(); renderAll();
+      });
+    });
+    el.querySelectorAll('.chore-check').forEach(chk => {
+      chk.addEventListener('click', () => {
+        const c = state.chores.find(x=>x.id===chk.dataset.chore);
+        c.done = !c.done;
+        const f = byId(c.assignee);
+        const ledgerId = `chore:${c.assignee}:${todayKey()}:${c.id}`;
+        if (c.done){
+          ledgerAdd(c.assignee, 'points', c.pts, `Finished "${c.name}"`, ledgerId);
+          addLog(`<b>${f.name}</b> finished "${c.name}" <span>(+${c.pts} pts)</span>`);
+          toast(`Job marked done! ${f.name} earned ${c.pts} points`, 'success');
+        } else {
+          ledgerAdd(c.assignee, 'points', 0, `Un-marked "${c.name}"`, ledgerId);
+        }
+        saveState(); renderAll();
+      });
+    });
+    el.querySelectorAll('.job-del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const c = state.chores.find(x=>x.id===btn.dataset.chore);
+        state.chores = state.chores.filter(x=>x.id!==btn.dataset.chore);
+        addLog(`Removed job "${c.name}"`);
+        saveState(); renderAll();
+      });
+    });
+  }
+
+  // ---- Apple/iCloud calendar sync ----
+  // Apple Calendar's "Public Calendar" sharing gives a secret webcal:// address (really just
+  // https:// under the hood) that returns plain ICS text — but it doesn't send the CORS
+  // headers a browser needs to fetch it directly from a page hosted elsewhere. We route it
+  // through a small third-party relay that fetches it server-side and hands back the same
+  // ICS text with permissive CORS headers. That means the calendar address (and its contents,
+  // on every refresh) passes through that relay — worth knowing since it's no longer a
+  // purely Apple-to-you channel once this is turned on. The relay is swappable in Settings if
+  // the default one is ever unreachable.
+  const DEFAULT_ICS_PROXY = 'https://api.allorigins.win/raw?url=';
+  const ICS_LOOKAHEAD_DAYS = 60; // how far ahead we bother expanding recurring events
+  function normalizeIcsUrl(url){ return url.trim().replace(/^webcal:\/\//i, 'https://'); }
+  function addMonthsKey(k, n){ const d = parseDateKey(k); d.setMonth(d.getMonth()+n); return dateKey(d); }
+
+  function unfoldIcsLines(text){
+    // RFC5545: a folded line continues on the next physical line, indented by one space/tab
+    const raw = text.split(/\r\n|\n|\r/);
+    const lines = [];
+    for (const line of raw){
+      if ((line.startsWith(' ') || line.startsWith('\t')) && lines.length){
+        lines[lines.length-1] += line.slice(1);
+      } else {
+        lines.push(line);
+      }
+    }
+    return lines;
+  }
+  function parseIcsDateValue(value){
+    const m = value.match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2}))?/);
+    if (!m) return null;
+    const [, y, mo, d] = m;
+    return `${y}-${mo}-${d}`;
+  }
+  function parseIcsRule(str){
+    const parts = {};
+    str.split(';').forEach(p => { const [k,v] = p.split('='); if (k && v) parts[k] = v; });
+    return parts;
+  }
+  // Fast-forwards a recurring event's start date to its first occurrence on/after `today`,
+  // without iterating every past occurrence one at a time (important for e.g. a daily
+  // reminder that's been recurring for years). Returns null if the series has already ended
+  // (an UNTIL/COUNT limit was reached before reaching today).
+  function firstIcsOccurrenceOnOrAfter(startKey, freq, interval, today, until, count){
+    let cursor = startKey;
+    let index = 0; // 0-based occurrence index from DTSTART
+    if (cursor < today){
+      if (freq === 'DAILY' || freq === 'WEEKLY'){
+        const stepDays = freq === 'DAILY' ? interval : 7*interval;
+        const diffDays = Math.round((parseDateKey(today) - parseDateKey(startKey)) / 86400000);
+        index = Math.ceil(diffDays / stepDays);
+        cursor = addDaysKey(startKey, index * stepDays);
+      } else if (freq === 'MONTHLY' || freq === 'YEARLY'){
+        const stepMonths = freq === 'MONTHLY' ? interval : 12*interval;
+        let guard = 0;
+        while (cursor < today && guard < 2000){ cursor = addMonthsKey(cursor, stepMonths); index++; guard++; }
+      } else {
+        return null; // unrecognised frequency
+      }
+    }
+    if (count && index >= count) return null; // series ended before reaching today
+    if (until && cursor > until) return null;
+    return cursor;
+  }
+  // Parses VEVENTs out of raw ICS text into simple {id, title, date} upcoming-list items,
+  // expanding a common subset of RRULE recurrence (FREQ/INTERVAL/COUNT/UNTIL) up to
+  // ICS_LOOKAHEAD_DAYS out. Recurrence rules using BYDAY/BYMONTHDAY/etc are intentionally not
+  // expanded — showing nothing further is safer than guessing wrong dates — so only the
+  // event's own start date is included if it happens to still be upcoming.
+  function parseIcs(text){
+    const lines = unfoldIcsLines(text);
+    const rawEvents = [];
+    let cur = null;
+    for (const line of lines){
+      if (line === 'BEGIN:VEVENT'){ cur = {}; continue; }
+      if (line === 'END:VEVENT'){ if (cur) rawEvents.push(cur); cur = null; continue; }
+      if (!cur) continue;
+      const idx = line.indexOf(':');
+      if (idx === -1) continue;
+      const prop = line.slice(0, idx).split(';')[0];
+      const value = line.slice(idx+1);
+      if (prop === 'SUMMARY') cur.summary = value.replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\n/gi,' ').trim();
+      else if (prop === 'UID') cur.uid = value;
+      else if (prop === 'DTSTART') cur.dtstart = value;
+      else if (prop === 'RRULE') cur.rrule = value;
+    }
+
+    const today = todayKey();
+    const horizon = addDaysKey(today, ICS_LOOKAHEAD_DAYS);
+    const out = [];
+    rawEvents.forEach(ev => {
+      if (!ev.summary || !ev.dtstart) return;
+      const startKey = parseIcsDateValue(ev.dtstart);
+      if (!startKey) return;
+      const baseId = ev.uid || (ev.summary + startKey);
+      if (!ev.rrule){
+        if (startKey >= today && startKey <= horizon) out.push({ id: baseId, title: ev.summary, date: startKey });
+        return;
+      }
+      const rule = parseIcsRule(ev.rrule);
+      const freq = rule.FREQ;
+      const interval = Math.max(1, parseInt(rule.INTERVAL || '1', 10));
+      const complex = ['BYDAY','BYMONTHDAY','BYSETPOS','BYWEEKNO','BYYEARDAY'].some(k => rule[k]);
+      if (!freq || complex){
+        if (startKey >= today && startKey <= horizon) out.push({ id: baseId, title: ev.summary, date: startKey });
+        return;
+      }
+      const until = rule.UNTIL ? parseIcsDateValue(rule.UNTIL) : null;
+      const count = rule.COUNT ? parseInt(rule.COUNT, 10) : null;
+      let cursor = firstIcsOccurrenceOnOrAfter(startKey, freq, interval, today, until, count);
+      let guard = 0;
+      while (cursor && cursor <= horizon && guard < 200){
+        out.push({ id: baseId + '_' + cursor, title: ev.summary, date: cursor });
+        guard++;
+        if (freq === 'DAILY') cursor = addDaysKey(cursor, interval);
+        else if (freq === 'WEEKLY') cursor = addDaysKey(cursor, 7*interval);
+        else if (freq === 'MONTHLY') cursor = addMonthsKey(cursor, interval);
+        else if (freq === 'YEARLY') cursor = addMonthsKey(cursor, 12*interval);
+        else break;
+        if (until && cursor > until) break;
+      }
+    });
+    return out;
+  }
+  // Fetches + re-parses the connected calendar. Safe to call with no URL configured (no-op).
+  // Keeps the last successfully-synced events on a failed refresh, so a flaky relay or a
+  // spotty connection doesn't blank out the calendar — it just shows what it last knew plus
+  // a status note in Settings.
+  async function syncIcsCalendar(announce){
+    if (!state.icsUrl) return;
+    const proxy = state.icsProxyPrefix || DEFAULT_ICS_PROXY;
+    const target = normalizeIcsUrl(state.icsUrl);
+    try{
+      const res = await fetch(proxy + encodeURIComponent(target), { cache:'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      state.icsEvents = parseIcs(text);
+      state.icsLastSync = new Date().toISOString();
+      state.icsLastError = null;
+      if (announce) toast(`Calendar synced — ${state.icsEvents.length} upcoming event${state.icsEvents.length===1?'':'s'}`, 'success');
+    } catch(err){
+      state.icsLastError = err.message || 'sync failed';
+      if (announce) toast(`Couldn't sync your calendar (${state.icsLastError})`, 'danger');
+    }
+    saveState(); renderAll();
+  }
+
+  function daysUntilBirthday(dateStr){
+    if (!dateStr) return null;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const bday = new Date(dateStr);
+    const next = new Date(today.getFullYear(), bday.getMonth(), bday.getDate());
+    if (next < today) next.setFullYear(today.getFullYear()+1);
+    return Math.round((next - today) / 86400000);
+  }
+  // One-off events don't recur like birthdays — once the date's passed it just drops out of
+  // the upcoming list on its own next render, no manual archiving needed.
+  function daysUntilDate(dateStr){
+    if (!dateStr) return null;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const d = new Date(dateStr);
+    return Math.round((d - today) / 86400000);
+  }
+
+  function renderAddEventForm(){
+    const wrap = document.getElementById('addEventWrap');
+    if (!showAdmin()){ wrap.innerHTML = ''; return; }
+    wrap.innerHTML = `
+      <div class="add-job-form" style="grid-template-columns:2fr 1fr auto;">
+        <input type="text" id="newEventName" placeholder="Event name, e.g. School photo day…">
+        <input type="date" id="newEventDate">
+        <button class="btn btn-primary btn-sm" id="addEventBtn">Add event</button>
+      </div>`;
+    document.getElementById('addEventBtn').addEventListener('click', () => {
+      const name = document.getElementById('newEventName').value.trim();
+      const date = document.getElementById('newEventDate').value;
+      if (!name || !date) return;
+      state.events.push({ id:'event_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), name, date });
+      addLog(`New event added: "${name}" on ${formatShort(date)}`);
+      saveState(); renderAll();
+    });
+  }
+
+  // Merges birthdays (recurring, yearly) and custom one-off events into a single list
+  // sorted by how soon they're coming up, per the "simple upcoming list" design.
+  const ICS_DISPLAY_CAP = 12; // how many synced calendar events to show at once (soonest first) — not silently truncated, see the "+N more" note below
+  function renderUpcoming(){
+    const el = document.getElementById('upcomingGrid');
+    const statusEl = document.getElementById('icsStatus');
+    const admin = showAdmin();
+    const thisYear = new Date().getFullYear();
+    const bdayItems = family
+      .filter(f => state.fam[f.id].birthday)
+      .map(f => ({ type:'birthday', f, days: daysUntilBirthday(state.fam[f.id].birthday) }));
+    const eventItems = state.events
+      .map(e => ({ type:'event', e, days: daysUntilDate(e.date) }))
+      .filter(it => it.days !== null && it.days >= 0);
+    const icsAll = state.icsEvents
+      .map(e => ({ type:'ics', e, days: daysUntilDate(e.date) }))
+      .filter(it => it.days !== null && it.days >= 0)
+      .sort((a,b) => a.days - b.days);
+    const icsItems = icsAll.slice(0, ICS_DISPLAY_CAP);
+    const icsOverflow = icsAll.length - icsItems.length;
+    const noDateFam = family.filter(f => !state.fam[f.id].birthday).map(f => ({ type:'birthday', f, days: null }));
+    const all = [...bdayItems, ...eventItems, ...icsItems].sort((a,b) => a.days - b.days).concat(noDateFam);
+
+    if (statusEl){
+      if (!state.icsUrl) statusEl.textContent = '';
+      else if (state.icsLastError) statusEl.textContent = `Calendar sync issue: ${state.icsLastError} — showing the last events it managed to fetch.`;
+      else if (state.icsLastSync) statusEl.textContent = `Synced with your calendar — ${icsAll.length} upcoming, last checked ${new Date(state.icsLastSync).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${icsOverflow > 0 ? `. Showing the soonest ${ICS_DISPLAY_CAP}, ${icsOverflow} more on your calendar` : ''}.`;
+      else statusEl.textContent = 'Calendar connected — syncing…';
+    }
+
+    el.innerHTML = all.map(item => {
+      if (item.type === 'birthday'){
+        const f = item.f, days = item.days;
+        const s = state.fam[f.id];
+        const claimedThisYear = s.bdayClaimedYear === thisYear;
+        let extra = '';
+        if (days === 0){
+          extra = claimedThisYear
+            ? `<div class="bday-claimed">${icon('circle-check',14)} Bonus claimed this year</div>`
+            : `<button class="btn btn-primary btn-sm" data-claim="${f.id}">${icon('gift',14)} Claim birthday bonus, +${BIRTHDAY_BONUS} pts</button>`;
+        }
+        return `
+        <div class="card bday-card">
+          <div class="bday-top">
+            <div class="avatar bday-avatar" style="background:${f.color}; color:${f.on}">${f.initials}</div>
+            <div>
+              <div class="bday-name">${f.name}</div>
+              <div class="upcoming-type">${icon('cake',12)} Birthday</div>
+            </div>
+          </div>
+          <input type="date" class="bday-date" data-fam="${f.id}" value="${s.birthday}">
+          ${days===null ? '' : `<div class="badge bday-count ${days===0?'today':''}">${days===0 ? 'Today' : days+' days to go'}</div>`}
+          ${extra}
+        </div>`;
+      }
+      if (item.type === 'event'){
+        const e = item.e, days = item.days;
+        return `
+        <div class="card bday-card">
+          <div class="bday-top">
+            <div class="bday-tile" style="background:var(--cat-family)">${icon('calendar-days',18)}</div>
+            <div>
+              <div class="bday-name">${e.name}</div>
+              <div class="upcoming-type">Event · ${formatShort(e.date)}</div>
+            </div>
+          </div>
+          <div class="badge bday-count ${days===0?'today':''}">${days===0 ? 'Today' : days+' days to go'}</div>
+          ${admin ? `<button class="job-del-btn reward-del-btn" data-delevent="${e.id}">${icon('trash-2',14)} Remove event</button>` : ''}
+        </div>`;
+      }
+      const e = item.e, days = item.days;
+      return `
+      <div class="card bday-card">
+        <div class="bday-top">
+          <div class="bday-tile" style="background:var(--ink-500)">${icon('calendar',18)}</div>
+          <div>
+            <div class="bday-name">${e.title}</div>
+            <div class="upcoming-type">Your calendar · ${formatShort(e.date)}</div>
+          </div>
+        </div>
+        <div class="badge bday-count ${days===0?'today':''}">${days===0 ? 'Today' : days+' days to go'}</div>
+      </div>`;
+    }).join('');
+
+    el.querySelectorAll('.bday-date').forEach(inp => {
+      inp.addEventListener('change', () => {
+        state.fam[inp.dataset.fam].birthday = inp.value;
+        saveState(); renderAll();
+      });
+    });
+    el.querySelectorAll('[data-claim]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const famId = btn.dataset.claim;
+        const f = byId(famId);
+        ledgerAdd(famId, 'points', BIRTHDAY_BONUS, 'Birthday bonus', `birthday:${famId}:${thisYear}`);
+        state.fam[famId].bdayClaimedYear = thisYear;
+        addLog(`<b>${f.name}</b> claimed their birthday bonus <span>(+${BIRTHDAY_BONUS} pts)</span>`);
+        toast(`Happy birthday ${f.name}! ${BIRTHDAY_BONUS} points added`, 'success');
+        saveState(); renderAll();
+      });
+    });
+    el.querySelectorAll('[data-delevent]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ev = state.events.find(x => x.id === btn.dataset.delevent);
+        state.events = state.events.filter(x => x.id !== btn.dataset.delevent);
+        addLog(`Removed event "${ev.name}"`);
+        saveState(); renderAll();
+      });
+    });
+  }
+
+  // Shared family to-do list — open to everyone (not admin-gated), unlike jobs/rewards/events.
+  function renderTodos(){
+    const el = document.getElementById('todoList');
+    if (!state.todos.length){ el.innerHTML = '<div class="log-item">Nothing on the list yet — add something above.</div>'; return; }
+    const sorted = [...state.todos].sort((a,b) => (a.done === b.done) ? 0 : (a.done ? 1 : -1));
+    el.innerHTML = sorted.map(t => `
+      <div class="todo-item ${t.done?'done':''}">
+        <div class="todo-check" data-todo="${t.id}" data-act="toggle">${t.done ? icon('check',13) : ''}</div>
+        <div class="todo-text" data-todo="${t.id}" data-act="toggle">${t.text}</div>
+        <button class="todo-del" data-todo="${t.id}" data-act="del" title="Remove">${icon('x',14)}</button>
+      </div>`).join('');
+    el.querySelectorAll('[data-act="toggle"]').forEach(node => {
+      node.addEventListener('click', () => {
+        const t = state.todos.find(x => x.id === node.dataset.todo);
+        t.done = !t.done;
+        saveState(); renderAll();
+      });
+    });
+    el.querySelectorAll('[data-act="del"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        state.todos = state.todos.filter(x => x.id !== btn.dataset.todo);
+        saveState(); renderAll();
+      });
+    });
+  }
+
+  function renderAddRewardForm(){
+    const wrap = document.getElementById('addRewardWrap');
+    if (!showAdmin()){ wrap.innerHTML = ''; return; }
+    wrap.innerHTML = `
+      <div class="add-job-form" style="grid-template-columns:2fr 1fr 1fr auto;">
+        <input type="text" id="newRewardName" placeholder="New reward name…">
+        <input type="number" id="newRewardCost" placeholder="Points cost" value="50" min="1" max="2000">
+        <input type="number" id="newRewardCash" placeholder="£ cash (optional)" min="0" step="0.5" value="0">
+        <button class="btn btn-primary btn-sm" id="addRewardBtn">Add reward</button>
+      </div>`;
+    document.getElementById('addRewardBtn').addEventListener('click', () => {
+      const name = document.getElementById('newRewardName').value.trim();
+      if (!name) return;
+      const cost = Math.max(1, Math.round(+document.getElementById('newRewardCost').value) || 50);
+      const cash = Math.max(0, parseFloat(document.getElementById('newRewardCash').value) || 0);
+      const reward = { id:'reward_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), name, cost };
+      if (cash > 0) reward.cash = roundMoney(cash);
+      state.rewards.push(reward);
+      addLog(`New reward added: "${name}" (${cost} pts${cash>0?`, ${money(cash)} cash`:''})`);
+      saveState(); renderAll();
+    });
+  }
+
+  function renderRewards(){
+    const el = document.getElementById('rewardGrid');
+    const admin = showAdmin();
+    el.innerHTML = state.rewards.map(r => `
+      <div class="card reward-card">
+        <div class="reward-title">${r.name}</div>
+        <div class="reward-cost">${r.cost} pts${r.cash ? ` · <span class="cash-tag">${icon('piggy-bank',13)} ${money(r.cash)}</span>` : ''}</div>
+        <div class="redeem-row">
+          <select class="redeemer" data-reward="${r.id}">
+            ${family.map(f => `<option value="${f.id}">${f.name} · ${totalPoints(f.id)} pts</option>`).join('')}
+          </select>
+          <button class="btn btn-primary btn-sm" data-reward="${r.id}">Redeem</button>
+        </div>
+        ${admin ? `<button class="job-del-btn reward-del-btn" data-delreward="${r.id}">${icon('trash-2',14)} Remove reward</button>` : ''}
+      </div>`).join('');
+
+    el.querySelectorAll('button[data-reward]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const r = state.rewards.find(x => x.id === btn.dataset.reward);
+        const sel = el.querySelector(`.redeemer[data-reward="${btn.dataset.reward}"]`);
+        const famId = sel.value;
+        const f = byId(famId);
+        if (state.fam[famId].points < r.cost){
+          toast(`${f.name} needs ${r.cost - state.fam[famId].points} more points`);
+          return;
+        }
+        const redeemId = `reward_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+        ledgerAdd(famId, 'points', -r.cost, `Redeemed "${r.name}"`, redeemId + ':cost');
+        let cashNote = '';
+        if (r.cash){
+          ledgerAdd(famId, 'piggyReward', r.cash, `Reward cash: "${r.name}"`, redeemId + ':cash');
+          cashNote = ` <span>(+${money(r.cash)} to piggy bank)</span>`;
+        }
+        addLog(`<b>${f.name}</b> redeemed "${r.name}" <span>(-${r.cost} pts)</span>${cashNote}`);
+        toast(r.cash ? `${f.name} redeemed ${r.name} — ${money(r.cash)} banked` : `${f.name} redeemed ${r.name}`, 'success');
+        saveState(); renderAll();
+      });
+    });
+    el.querySelectorAll('[data-delreward]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const r = state.rewards.find(x => x.id === btn.dataset.delreward);
+        state.rewards = state.rewards.filter(x => x.id !== btn.dataset.delreward);
+        addLog(`Removed reward "${r.name}"`);
+        saveState(); renderAll();
+      });
+    });
+  }
+
+  function renderLog(){
+    const el = document.getElementById('logList');
+    if (!state.log.length){ el.innerHTML = '<div class="log-item">No activity yet — tap a habit or job to get started.</div>'; return; }
+    el.innerHTML = state.log.map(l => `<div class="log-item">${l.msg} <span>· ${l.time}</span></div>`).join('');
+  }
+
+  function renderFooter(){
+    const base = storageOK
+      ? `Progress is saved on this device automatically.`
+      : `This browser blocked saved storage, so progress will reset on reload.`;
+    const syncNote = syncStatus.connected ? ` Synced live across devices.` : '';
+    document.getElementById('footerNote').innerHTML = `${base}${syncNote} Open settings for kiosk mode and admin tools.`;
+  }
+
+  function renderAdminFab(){
+    const fab = document.getElementById('adminFab');
+    fab.style.display = state.kioskMode ? 'flex' : 'none';
+    fab.innerHTML = icon(adminUnlocked ? 'lock-open' : 'lock', 20);
+  }
+
+  function renderAll(){
+    renderTodayLabel();
+    renderLeaderboard();
+    renderProfilePicker();
+    renderFamGrid();
+    renderAddJobForm();
+    renderChores();
+    renderAddEventForm();
+    renderUpcoming();
+    renderTodos();
+    renderAddRewardForm();
+    renderRewards();
+    renderLog();
+    renderFooter();
+    renderAdminFab();
+    applyCollapseState();
+  }
+
+  // Re-render on rotation/resize so the mobile profile filter and section collapsing kick in/out at the right width
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderAll, 150);
+  });
+  initSectionToggles();
+  initTabBar();
+
+  // ---------- Admin dialog / kiosk / PIN ----------
+  const overlay = document.getElementById('modalOverlay');
+  const box = document.getElementById('modalBox');
+
+  function openModal(){
+    overlay.classList.add('show');
+    if (state.kioskMode && !adminUnlocked){
+      pinBuffer = '';
+      renderPinPad();
+    } else {
+      renderAdminPanel();
+    }
+  }
+  function closeModal(){ overlay.classList.remove('show'); pendingPastEdit = null; }
+
+  // Set from a habit card's own week dots (see [data-hwedit] wiring in renderFamGrid) so
+  // tapping a past day jumps straight to "Edit past days" pre-filled, instead of making
+  // someone reopen settings and pick the person/date by hand. openModal() already handles
+  // the kiosk PIN gate; renderAdminPanel() picks this up once it actually renders.
+  let pendingPastEdit = null;
+  function openPastEditFor(famId, dateStr){
+    pendingPastEdit = { famId, dateStr };
+    openModal();
+  }
+
+  // opts.onSuccess: if set, a correct PIN calls this instead of the default "unlock admin"
+  // behaviour — used to gate a single action (Danger Zone) without unlocking all of settings.
+  // opts.onCancel: what Cancel does; defaults to closing the whole modal (the kiosk-lock case).
+  function renderPinPad(opts){
+    opts = opts || {};
+    const title = opts.title || 'Enter PIN';
+    const hint = opts.hint || 'This unlocks settings, adding habits and editing jobs.';
+    const onSuccess = opts.onSuccess;
+    const onCancel = opts.onCancel || closeModal;
+    box.innerHTML = `
+      <h3>${title}</h3>
+      <p class="hint">${hint}</p>
+      <div class="pin-display" id="pinDisplay">${'•'.repeat(pinBuffer.length)}</div>
+      <div class="pin-pad">
+        ${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="pin-key" data-key="${n}">${n}</button>`).join('')}
+        <button class="pin-key" data-key="clear">C</button>
+        <button class="pin-key" data-key="0">0</button>
+        <button class="pin-key" data-key="ok">OK</button>
+      </div>
+      <button class="modal-close" id="modalCloseBtn">Cancel</button>`;
+    box.querySelectorAll('.pin-key').forEach(k => {
+      k.addEventListener('click', () => {
+        const key = k.dataset.key;
+        if (key === 'clear'){ pinBuffer = ''; }
+        else if (key === 'ok'){
+          if (pinBuffer === ADMIN_PIN){
+            pinBuffer = '';
+            if (onSuccess) onSuccess();
+            else { adminUnlocked = true; renderAdminPanel(); renderAll(); }
+            return;
+          }
+          else { toast('Wrong PIN', 'danger'); pinBuffer = ''; }
+        } else if (pinBuffer.length < 6){ pinBuffer += key; }
+        const disp = document.getElementById('pinDisplay');
+        if (disp) disp.textContent = '•'.repeat(pinBuffer.length);
+      });
+    });
+    document.getElementById('modalCloseBtn').addEventListener('click', onCancel);
+  }
+
+  function renderAdminPanel(){
+    box.innerHTML = `
+      <h3>Settings</h3>
+      <p class="hint">${state.kioskMode ? 'Unlocked for this session.' : 'Kiosk mode is off, so settings are always open.'}</p>
+      <div class="admin-panel-list">
+        <div class="kiosk-row">
+          <div><b>Kiosk mode</b><br><span class="hint" style="margin:0;">Hide admin tools behind PIN ${ADMIN_PIN}</span></div>
+          <button class="switch ${state.kioskMode?'on':''}" id="kioskSwitch"><span class="knob"></span></button>
+        </div>
+        <div class="panel">
+          <div class="panel-title">${icon('piggy-bank',15)} Weekly pocket money</div>
+          <p class="hint" style="margin:0 0 8px;">Habits reset automatically every day. Each day banks roughly a seventh of the weekly amount based on how many habits got done that day, so it builds up gradually across the week — a great Monday alone won't pay the full amount. Paid out automatically once the week (Mon–Sun) ends. Set £0 to turn it off for someone.</p>
+          <p class="hint" style="margin:0 0 8px;">Testing tools, to skip the wait instead of using real time:</p>
+          <button class="btn btn-ghost btn-sm" id="forceDayBtn" style="margin-bottom:8px; width:100%;">${icon('moon',14)} Force a day to pass</button>
+          <button class="btn btn-ghost btn-sm" id="forceWeekBtn" style="width:100%;">${icon('calendar-days',14)} Force this week's payout</button>
+          ${family.map(f => `
+            <div class="pocket-row">
+              <span>${f.name}</span>
+              <div class="pocket-input-wrap">£<input type="number" min="0" step="0.5" class="pocket-input" data-pocket="${f.id}" value="${state.fam[f.id].pocketWeekly}"></div>
+            </div>`).join('')}
+        </div>
+        <div class="panel">
+          <div class="panel-title">${icon('clock',15)} Edit past days</div>
+          <p class="hint" style="margin:0 0 8px;">Forgot to tick something? Fix an earlier day here — you can also tap a habit's own week dots on its card. This corrects that day's record (and any pocket money already paid for that week), awards or removes the base points, and repairs their current streak to match.</p>
+          <div class="past-edit-controls">
+            <select id="pastEditFam">${family.map(f => `<option value="${f.id}">${f.name}</option>`).join('')}</select>
+            <input type="date" id="pastEditDate" min="${addDaysKey(state.lastResetDate,-30)}" max="${addDaysKey(state.lastResetDate,-1)}" value="${addDaysKey(state.lastResetDate,-1)}">
+          </div>
+          <div id="pastEditChecklist"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">${icon('banknote',15)} Adjust piggy bank</div>
+          <p class="hint" style="margin:0 0 8px;">For money spent outside the app, or to correct a mistake — treat it like a bank balance. Enter a negative amount to take money out, positive to add it. A note is optional but shows in the activity log.</p>
+          ${family.map(f => `
+            <div class="adjust-row">
+              <div class="adjust-row-top">
+                <span>${f.name}</span>
+                <b class="${piggyTotal(f.id) < 0 ? 'balance-negative' : ''}">${money(piggyTotal(f.id))}</b>
+              </div>
+              <div class="adjust-row-controls">
+                <input type="number" step="0.5" placeholder="±£" class="adjust-amount" data-adjust="${f.id}">
+                <input type="text" placeholder="Note (optional)" class="adjust-note" data-adjustnote="${f.id}" maxlength="40">
+                <button class="btn btn-primary btn-sm" data-adjustbtn="${f.id}">Apply</button>
+              </div>
+            </div>`).join('')}
+        </div>
+        <div class="panel">
+          <div class="panel-title">${icon('receipt-text',15)} Transaction ledger</div>
+          <p class="hint" style="margin:0 0 8px;">Every points and money movement, in order — the record everything else is calculated from. Good for checking a balance looks right.</p>
+          <select id="ledgerFam">${family.map(f => `<option value="${f.id}">${f.name}</option>`).join('')}</select>
+          <div id="ledgerList" style="margin-top:8px;"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">${icon('calendar',15)} Apple Calendar sync</div>
+          <p class="hint" style="margin:0 0 8px;">In the Calendar app (or icloud.com), share a <b>Public Calendar</b> and copy its link — it starts with <code>webcal://</code>. Paste it below. Since a plain web page can't be trusted with your Apple ID and Apple doesn't allow pages on other sites to read that link directly, this routes it through a free third-party relay each refresh — your calendar's address (and its events) passes through that relay, which is worth knowing before you turn it on.</p>
+          <input type="text" id="icsUrlInput" placeholder="webcal://p0X-caldav.icloud.com/published/…" value="${state.icsUrl}">
+          <button class="btn btn-ghost btn-sm" id="icsSyncBtn" style="margin-top:8px; width:100%;">${icon('refresh-cw',14)} Save and sync now</button>
+          <details style="margin-top:10px;">
+            <summary class="hint" style="cursor:pointer;">Advanced: relay address</summary>
+            <p class="hint" style="margin:6px 0;">Only change this if the default relay stops working. It must return the raw ICS text with permissive CORS, given a URL appended to the end.</p>
+            <input type="text" id="icsProxyInput" placeholder="${DEFAULT_ICS_PROXY} (default)" value="${state.icsProxyPrefix}">
+          </details>
+        </div>
+        <div class="panel">
+          <div class="panel-title">${icon('cloud',15)} Sync across devices</div>
+          <p class="hint" style="margin:0 0 8px;">
+            ${syncStatus.connecting ? 'Connecting…'
+              : syncStatus.connected ? `Synced live${syncStatus.lastSyncedAt ? ' — last update ' + new Date(syncStatus.lastSyncedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : ''}. Every device using the same family code below shares this data in real time.`
+              : syncStatus.error ? `Not connected: ${syncStatus.error}`
+              : 'Not connected yet — each device is only saving to itself. Set this up once and every device using the same family code below will share the same live data.'}
+          </p>
+          <details ${syncConfig.familyId ? '' : 'open'}>
+            <summary class="hint" style="cursor:pointer;">${syncConfig.familyId ? 'Connection settings' : 'Set this up (one-time, about 10 min)'}</summary>
+            <p class="hint" style="margin:8px 0;">1. Go to <b>console.firebase.google.com</b>, sign in with any Google account, and create a free project.<br>
+            2. In the project, open <b>Build → Firestore Database</b> and click Create (any region, "start in test mode" is fine).<br>
+            3. In Firestore → Rules, paste this and click Publish:</p>
+            <p class="hint" style="margin:0 0 8px;"><code style="display:block; padding:8px; white-space:pre-wrap;">rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    match /familyhq/{id} { allow read, write: if request.auth != null; }
+  }
+}</code></p>
+            <p class="hint" style="margin:0 0 8px;">4. Back in the project, open <b>Build → Authentication → Sign-in method</b> and enable <b>Anonymous</b>.<br>
+            5. Click the gear icon → Project settings → scroll to "Your apps" → add a Web app → copy the whole <code>firebaseConfig</code> snippet it gives you and paste it below.<br>
+            6. Pick a family code (anyone with this exact code can read and change your data — keep it as private as a password) and use the <i>same</i> code and config on every device.</p>
+            <label class="hint" style="display:block; margin-bottom:4px;">Family code</label>
+            <div class="past-edit-controls" style="margin-bottom:8px;">
+              <input type="text" id="syncFamilyId" placeholder="e.g. phipps-fq7k2m9x" value="${syncConfig.familyId || ''}">
+              <button class="btn btn-ghost btn-sm" id="syncGenBtn" style="flex:0 0 auto;">${icon('dices',14)} Generate</button>
+            </div>
+            <label class="hint" style="display:block; margin-bottom:4px;">Firebase config (paste the whole snippet)</label>
+            <textarea id="syncConfigInput" class="sync-textarea" placeholder="const firebaseConfig = { apiKey: …">${syncConfig.firebaseConfig ? JSON.stringify(syncConfig.firebaseConfig, null, 2) : ''}</textarea>
+            <button class="btn btn-ghost btn-sm" id="syncConnectBtn" style="margin-top:8px; width:100%;">${icon('cloud',14)} Save and connect</button>
+            ${syncConfig.familyId ? `<button class="btn btn-ghost btn-sm" id="syncDisconnectBtn" style="margin-top:8px; width:100%;">Disconnect this device</button>` : ''}
+          </details>
+        </div>
+        <div class="panel">
+          <div class="panel-title">${icon('triangle-alert',15)} Danger zone</div>
+          <p class="hint" style="margin:0 0 8px;"><b>Reset all progress</b> puts everyone back to 0 points with no streaks, jobs unassigned-done and birthdays cleared — if sync is connected, that reset is shared to every other device too. <b>Erase everything</b> does the same, then also disconnects sync and wipes this device's local copy completely, for a genuinely fresh start (e.g. handing the device to someone else). Neither can be undone — both always ask for PIN ${ADMIN_PIN}, even with kiosk mode off.</p>
+          <button class="btn btn-danger" id="resetBtn" style="width:100%; margin-bottom:8px;">${icon('rotate-ccw',15)} Reset all progress</button>
+          <button class="btn btn-danger" id="eraseAllBtn" style="width:100%;">${icon('trash-2',15)} Erase everything on this device</button>
+        </div>
+        ${state.kioskMode ? `<button class="btn btn-ghost" id="lockNowBtn">${icon('lock',15)} Lock now</button>` : ''}
+      </div>
+      <button class="modal-close" id="modalCloseBtn">Close</button>`;
+
+    document.getElementById('kioskSwitch').addEventListener('click', () => {
+      state.kioskMode = !state.kioskMode;
+      if (state.kioskMode) adminUnlocked = false;
+      saveState();
+      if (state.kioskMode){ closeModal(); }
+      else { adminUnlocked = true; renderAdminPanel(); }
+      renderAll();
+    });
+    document.getElementById('forceDayBtn').addEventListener('click', forceDayRollover);
+    document.getElementById('forceWeekBtn').addEventListener('click', forceWeekPayout);
+    document.getElementById('icsSyncBtn').addEventListener('click', () => {
+      state.icsUrl = document.getElementById('icsUrlInput').value.trim();
+      state.icsProxyPrefix = document.getElementById('icsProxyInput').value.trim();
+      if (!state.icsUrl){ state.icsEvents = []; state.icsLastSync = null; state.icsLastError = null; saveState(); renderAll(); return; }
+      saveState();
+      syncIcsCalendar(true);
+    });
+    document.getElementById('syncGenBtn').addEventListener('click', () => {
+      document.getElementById('syncFamilyId').value = randomFamilyCode();
+    });
+    document.getElementById('syncConnectBtn').addEventListener('click', () => {
+      const familyId = document.getElementById('syncFamilyId').value.trim();
+      const cfgText = document.getElementById('syncConfigInput').value.trim();
+      if (!familyId || !cfgText){ toast('Enter a family code and paste your Firebase config first'); return; }
+      let cfg;
+      try{ cfg = parseFirebaseConfigText(cfgText); }
+      catch(e){ toast('Could not read that Firebase config — check it was pasted in full', 'danger'); return; }
+      connectSync(familyId, cfg, true);
+    });
+    const syncDiscBtn = document.getElementById('syncDisconnectBtn');
+    if (syncDiscBtn) syncDiscBtn.addEventListener('click', () => { disconnectSync(); renderAdminPanel(); });
+    // Danger Zone always requires the PIN, even with kiosk mode off and admin already
+    // unlocked — these two actions are irreversible and family-wide, so they get their own
+    // gate regardless of the general settings-access model.
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      pinBuffer = '';
+      renderPinPad({
+        title: 'Confirm PIN',
+        hint: 'Enter the PIN to reset all progress — everyone back to 0 points, no streaks.',
+        onSuccess: resetDemo,
+        onCancel: renderAdminPanel,
+      });
+    });
+    document.getElementById('eraseAllBtn').addEventListener('click', () => {
+      pinBuffer = '';
+      renderPinPad({
+        title: 'Confirm PIN',
+        hint: 'Enter the PIN to erase everything on this device, including your sync connection.',
+        onSuccess: eraseEverything,
+        onCancel: renderAdminPanel,
+      });
+    });
+    box.querySelectorAll('.pocket-input').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const famId = inp.dataset.pocket;
+        const val = Math.max(0, parseFloat(inp.value) || 0);
+        state.fam[famId].pocketWeekly = val;
+        inp.value = val;
+        addLog(`Weekly pocket money for <b>${byId(famId).name}</b> set to ${money(val)}`);
+        saveState(); renderAll();
+      });
+    });
+    function refreshPastChecklist(){
+      const famId = document.getElementById('pastEditFam').value;
+      const dateStr = document.getElementById('pastEditDate').value;
+      const listEl = document.getElementById('pastEditChecklist');
+      if (!dateStr){ listEl.innerHTML = '<p class="hint" style="margin:8px 0 0;">Pick a date above.</p>'; return; }
+      const s = state.fam[famId];
+      const entry = getHistoryEntry(s, dateStr);
+      const names = (entry && entry.habits) ? Object.keys(entry.habits) : s.habitState.map(h => h.name);
+      if (!names.length){ listEl.innerHTML = '<p class="hint" style="margin:8px 0 0;">No habits recorded for this day.</p>'; return; }
+      listEl.innerHTML = names.map(name => `
+        <label class="past-habit-row">
+          <input type="checkbox" data-pastfam="${famId}" data-pastdate="${dateStr}" data-pasthabit="${name}" ${entry && entry.habits && entry.habits[name] ? 'checked' : ''}>
+          <span>${name}</span>
+        </label>`).join('');
+      listEl.querySelectorAll('input[type=checkbox]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          editPastHabit(cb.dataset.pastfam, cb.dataset.pastdate, cb.dataset.pasthabit, cb.checked);
+        });
+      });
+    }
+    document.getElementById('pastEditFam').addEventListener('change', refreshPastChecklist);
+    document.getElementById('pastEditDate').addEventListener('change', refreshPastChecklist);
+    if (pendingPastEdit){
+      document.getElementById('pastEditFam').value = pendingPastEdit.famId;
+      document.getElementById('pastEditDate').value = pendingPastEdit.dateStr;
+      pendingPastEdit = null;
+      refreshPastChecklist();
+      document.getElementById('pastEditFam').closest('.panel').scrollIntoView({ block:'center' });
+    } else {
+      refreshPastChecklist();
+    }
+    box.querySelectorAll('[data-adjustbtn]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const famId = btn.dataset.adjustbtn;
+        const amtInput = box.querySelector(`.adjust-amount[data-adjust="${famId}"]`);
+        const noteInput = box.querySelector(`.adjust-note[data-adjustnote="${famId}"]`);
+        const amt = parseFloat(amtInput.value);
+        if (!amt || isNaN(amt)){ toast('Enter an amount first'); return; }
+        const delta = roundMoney(amt);
+        const f = byId(famId);
+        const note = noteInput.value.trim();
+        ledgerAdd(famId, 'piggyPocket', delta, note ? `Manual adjustment: ${note}` : 'Manual adjustment');
+        const verb = delta < 0 ? 'removed' : 'added';
+        addLog(`<b>${f.name}</b>'s piggy bank ${verb} ${money(Math.abs(delta))}${note ? ` <span>(${note})</span>` : ''} <span>(by a parent)</span>`);
+        toast(`${f.name}'s piggy bank ${delta < 0 ? 'reduced by' : 'topped up'} ${money(Math.abs(delta))}`, 'success');
+        saveState(); renderAdminPanel(); renderAll();
+      });
+    });
+    function refreshLedgerList(){
+      const famId = document.getElementById('ledgerFam').value;
+      const s = state.fam[famId];
+      const listEl = document.getElementById('ledgerList');
+      const entries = [...(s.ledger||[])].filter(e => e.delta !== 0).sort((a,b) => b.at.localeCompare(a.at)).slice(0, 20);
+      if (!entries.length){ listEl.innerHTML = '<p class="hint" style="margin:4px 0 0;">No transactions yet.</p>'; return; }
+      const accountLabel = { points:'Points', piggyPocket:'Pocket money', piggyReward:'Reward cash' };
+      listEl.innerHTML = entries.map(e => {
+        const isMoney = e.account !== 'points';
+        const amt = isMoney ? money(e.delta) : `${e.delta>0?'+':''}${e.delta} pts`;
+        return `<div class="ledger-row">
+          <span class="ledger-reason">${e.reason}<br><span class="hint" style="margin:0;">${new Date(e.at).toLocaleDateString('en-GB',{day:'numeric',month:'short'})} · ${accountLabel[e.account]||e.account}</span></span>
+          <b class="ledger-amount ${e.delta<0?'balance-negative':''}">${amt}</b>
+        </div>`;
+      }).join('');
+    }
+    document.getElementById('ledgerFam').addEventListener('change', refreshLedgerList);
+    refreshLedgerList();
+    const lockBtn = document.getElementById('lockNowBtn');
+    if (lockBtn) lockBtn.addEventListener('click', () => { adminUnlocked = false; closeModal(); renderAll(); });
+    document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+  }
+
+  // Testing tools only — real day/week rollovers now happen automatically (see
+  // checkDateRollover, called on load and on a periodic timer). These just let you test
+  // the mechanic without waiting for real time to pass.
+  function forceDayRollover(){
+    // Steps the tracker forward exactly one day using today's current ticks, reusing the
+    // same close-out logic real usage relies on. Click it repeatedly to walk through a
+    // whole week for testing — it advances independently of the real calendar, so the
+    // automatic rollover simply won't re-fire until real time catches back up. Use
+    // "Reset all progress" to undo a testing session.
+    const closingDate = state.lastResetDate;
+    closeOutDayUsingLiveTicks(closingDate);
+    state.lastResetDate = addDaysKey(closingDate, 1);
+    family.forEach(f => pruneHistory(state.fam[f.id]));
+    crossWeekBoundaryIfNeeded(state.lastResetDate);
+    saveState(); renderAll();
+  }
+  function forceWeekPayout(){
+    // Pays out the current tracking week right now, as if it had just ended, without
+    // forcing a day rollover too.
+    crossWeekBoundaryIfNeeded(addDaysKey(state.weekAnchor, 7));
+    saveState(); renderAll();
+  }
+  // All habits/chores/points/etc back to a genuine blank slate — everyone at 0 points, no
+  // streaks, nothing recorded. Gated by the PIN (see the Danger Zone wiring in
+  // renderAdminPanel) rather than a native confirm() dialog, which can be unreliable inside
+  // some standalone/home-screen web app contexts.
+  function resetDemo(){
+    Object.assign(state, defaultState());
+    addLog('Reset to defaults — everyone back to 0');
+    saveState(); renderAll(); renderAdminPanel();
+    toast('All progress reset — everyone back to 0', 'success');
+  }
+  // Full wipe for this device: unlike resetDemo (which puts app data back to defaults but
+  // deliberately leaves sync connected, so a reset is a normal thing to do on a live shared
+  // device), this also disconnects sync and clears both localStorage keys outright, then
+  // reloads to a truly first-run state — for repurposing/handing off the device, or backing
+  // out of a sync setup that's gone wrong.
+  function eraseEverything(){
+    if (fbUnsub) fbUnsub();
+    try{ localStorage.removeItem(STORAGE_KEY); } catch(e){ /* ignore */ }
+    try{ localStorage.removeItem(SYNC_CONFIG_KEY); } catch(e){ /* ignore */ }
+    location.reload();
+  }
+  document.getElementById('gearBtn').addEventListener('click', openModal);
+  document.getElementById('adminFab').addEventListener('click', openModal);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+
+  // To-do list add controls live in static HTML (not rebuilt on every render like most other
+  // lists), so they're wired up once here rather than inside renderTodos().
+  function addTodoFromInput(){
+    const input = document.getElementById('newTodoText');
+    const text = input.value.trim();
+    if (!text) return;
+    state.todos.push({ id:'todo_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), text, done:false });
+    input.value = '';
+    addLog(`Added to the to-do list: "${text}"`);
+    saveState(); renderAll();
+  }
+  document.getElementById('addTodoBtn').addEventListener('click', addTodoFromInput);
+  document.getElementById('newTodoText').addEventListener('keydown', (e) => { if (e.key === 'Enter') addTodoFromInput(); });
+
+  // Catch up on any day(s)/week(s) that passed while the app was closed, then keep
+  // checking periodically so a device left open (e.g. a kiosk iPad) rolls over on its own
+  // right around midnight rather than needing a manual refresh.
+  checkDateRollover();
+  renderAll();
+  setInterval(() => { if (checkDateRollover()) renderAll(); }, 60000);
+
+  // Calendar sync: refresh on load (if connected) and every 30 minutes after — a family
+  // calendar doesn't need near-live updates, and this keeps the third-party relay call
+  // infrequent. Failures are silent here (no toast) but show up as a status line in Settings.
+  if (state.icsUrl) syncIcsCalendar(false);
+  setInterval(() => { if (state.icsUrl) syncIcsCalendar(false); }, 30*60000);
+
+  // Multi-device sync: reconnect automatically on every load if this device already has a
+  // saved family code + Firebase project (no need to re-enter it each time).
+  if (syncConfig.familyId && syncConfig.firebaseConfig) connectSync(syncConfig.familyId, syncConfig.firebaseConfig, false);
+})();
+</script>
+</body>
+</html>

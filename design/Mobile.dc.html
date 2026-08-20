@@ -1,0 +1,267 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; }
+    a { color: #1c8bc4; }
+    a:hover { color: #146590; }
+  </style>
+</helmet>
+
+<div style="width:390px; min-height:900px; background:#fffdf8; padding:28px 20px 40px; display:flex; flex-direction:column; gap:22px;">
+
+  <div style="display:flex; flex-direction:column; gap:2px;">
+    <div style="font-size:12px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:#a8afb8;">Phipps House</div>
+    <div style="font-size:15px; font-weight:600; color:#6b7280;">Thursday, 20 August</div>
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:8px;">
+    <div style="display:flex; gap:14px; overflow-x:auto; padding:2px 2px 4px;">
+      <sc-for list="{{people}}" as="p" hint-placeholder-count="5">
+        <div onClick="{{p.select}}" style="display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0; cursor:pointer;">
+          <div style="width:{{p.avatarSize}}px; height:{{p.avatarSize}}px; border-radius:999px; background:{{p.color}}; color:{{p.onColor}}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:{{p.avatarFont}}px; box-shadow:{{p.ringShadow}}; transition:all 0.15s;">{{p.initial}}</div>
+          <div style="font-size:11px; font-weight:700; color:{{p.labelColor}};">{{p.name}}</div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font-size:11.5px; font-weight:500; color:#a8afb8;">Swipe or tap an avatar to switch profile</div>
+  </div>
+
+  <div style="display:flex; flex-direction:column; align-items:center; gap:12px; background:#ffffff; border-radius:24px; padding:26px 20px; box-shadow:0 2px 8px rgba(34,38,43,0.06),0 8px 24px rgba(34,38,43,0.06);">
+
+    <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div style="font-size:22px; font-weight:800; color:#22262b; letter-spacing:-0.01em;">{{selected.name}}</div>
+        <div style="display:inline-flex; align-items:center; justify-content:center; min-width:26px; height:22px; padding:0 8px; border-radius:999px; background:{{selected.rankBg}}; color:{{selected.rankColor}}; font-size:12px; font-weight:800;">#{{selected.rank}}</div>
+      </div>
+      <div style="font-size:13px; font-weight:600; color:#6b7280;">{{selected.role}} &middot; {{selected.points}} pts</div>
+    </div>
+
+    <div style="display:inline-flex; align-items:center; gap:6px; background:{{selected.color}}; color:{{selected.onColor}}; border-radius:999px; padding:6px 14px 6px 10px; font-size:12.5px; font-weight:700;">
+      <sc-if value="{{selected.levelIsMedal}}" hint-placeholder-val="{{false}}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg>
+      </sc-if>
+      <sc-if value="{{selected.levelIsStar}}" hint-placeholder-val="{{true}}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </sc-if>
+      {{selected.levelTitle}}
+    </div>
+
+    <div style="width:220px;">
+      <div style="height:6px; background:#eef0f3; border-radius:999px; overflow:hidden;">
+        <div style="height:100%; width:{{selected.levelPercent}}%; background:{{selected.color}}; border-radius:999px;"></div>
+      </div>
+      <div style="font-size:10.5px; font-weight:600; color:#a8afb8; margin-top:4px; text-align:center;">{{selected.levelInto}} of {{selected.levelSpan}} to Level {{selected.nextLevel}}</div>
+    </div>
+
+    <div style="position:relative; width:150px; height:150px; margin-top:2px;">
+      <div style="width:100%; height:100%; border-radius:999px; background:{{selected.ringGradient}}; transform:rotate(-90deg);"></div>
+      <div style="position:absolute; inset:12px; border-radius:999px; background:#ffffff; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+        <div style="font-size:28px; font-weight:800; color:#22262b; line-height:1;">{{selected.dailyDone}}/{{selected.dailyTotal}}</div>
+        <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#a8afb8; margin-top:3px;">today</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:10px;">
+    <div style="font-size:13px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.05em;">Habits</div>
+    <sc-for list="{{selected.habits}}" as="h" hint-placeholder-count="4">
+      <div onClick="{{h.toggle}}" style="display:flex; align-items:center; gap:12px; background:#fef5e2; border-radius:14px; padding:13px 16px; cursor:pointer;">
+        <sc-if value="{{h.isDaily}}" hint-placeholder-val="{{true}}">
+          <div style="width:24px; height:24px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:{{h.boxBg}}; border:{{h.boxBorder}}; color:#ffffff;">
+            <sc-if value="{{h.done}}" hint-placeholder-val="{{true}}">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{h.isWeekly}}" hint-placeholder-val="{{false}}">
+          <div style="min-width:24px; height:24px; padding:0 7px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:{{h.weeklyBg}}; color:{{h.weeklyColor}}; font-size:11px; font-weight:800;">{{h.count}}/{{h.target}}</div>
+        </sc-if>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:15px; font-weight:600; color:#22262b; text-decoration:{{h.strike}}; opacity:{{h.textOpacity}};">{{h.name}}</div>
+          <sc-if value="{{h.isWeekly}}" hint-placeholder-val="{{false}}">
+            <div style="font-size:11px; font-weight:600; color:#a8afb8; margin-top:1px;">{{h.target}}&times; a week</div>
+          </sc-if>
+        </div>
+        <div style="display:inline-flex; align-items:center; gap:3px; flex-shrink:0; font-size:12px; font-weight:700; color:#a67800;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 17a2.5 2.5 0 0 0 2.5-2.5c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7.5 7.5 0 1 1-15 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+          {{h.streak}}{{h.unit}}
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+const LEVEL_TITLES = ['Sock drawer sergeant', 'Duty deputy', 'Chore cadet', 'Tidy titan', 'Household hero', 'Domestic dynamo', 'Grand vizier of vacuuming'];
+const LEVEL_BASE_PTS = 150;
+const LEVEL_GROWTH = 1.25;
+
+function computeLevel(points) {
+  let lvl = 1, into = points, span = LEVEL_BASE_PTS;
+  while (into >= span) {
+    into -= span;
+    lvl++;
+    span = Math.round(span * LEVEL_GROWTH);
+  }
+  return { level: lvl, into, span };
+}
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      selectedId: 'henry',
+      progress: {
+        matt: [true, 2, false],
+        jemma: [true, 3, true],
+        henry: [true, true, false, false],
+        ted: [true, false, false],
+        lorraine: [4, 1, true],
+      },
+    };
+  }
+
+  ringGradient(percent, color) {
+    if (percent <= 0) return '#eef0f3';
+    if (percent >= 100) return color;
+    return `conic-gradient(${color} 0% ${percent}%, #eef0f3 ${percent}% 100%)`;
+  }
+
+  toggleHabit(personId, index, def) {
+    const progress = { ...this.state.progress };
+    const arr = progress[personId].slice();
+    if (def.freq === 'daily') {
+      arr[index] = !arr[index];
+    } else {
+      arr[index] = (arr[index] + 1) % (def.target + 1);
+    }
+    progress[personId] = arr;
+    this.setState({ progress });
+  }
+
+  renderVals() {
+    const roster = [
+      { id: 'matt', name: 'Matt', role: 'Parent', initial: 'M', color: '#2fa9e5', onColor: '#ffffff', points: 420,
+        habits: [
+          { name: 'Take vitamins', freq: 'daily', streak: 4 },
+          { name: 'Exercise 20 min', freq: 'weekly', target: 3, streak: 6 },
+          { name: 'Screen-free wind down', freq: 'daily', streak: 0 },
+        ] },
+      { id: 'jemma', name: 'Jemma', role: 'Parent', initial: 'J', color: '#9b6bf0', onColor: '#ffffff', points: 890,
+        habits: [
+          { name: 'Take vitamins', freq: 'daily', streak: 12 },
+          { name: 'Exercise 20 min', freq: 'weekly', target: 3, streak: 9 },
+          { name: 'Tidy your space', freq: 'daily', streak: 5 },
+        ] },
+      { id: 'henry', name: 'Henry', role: 'Kid', initial: 'H', color: '#3dbe72', onColor: '#ffffff', points: 260,
+        habits: [
+          { name: 'Take vitamins', freq: 'daily', streak: 2 },
+          { name: 'Brush teeth', freq: 'daily', streak: 15 },
+          { name: 'Read 20 minutes', freq: 'daily', streak: 0 },
+          { name: 'Tidy your room', freq: 'daily', streak: 1 },
+        ] },
+      { id: 'ted', name: 'Ted', role: 'Kid', initial: 'T', color: '#ff6b5b', onColor: '#ffffff', points: 140,
+        habits: [
+          { name: 'Take vitamins', freq: 'daily', streak: 1 },
+          { name: 'Brush teeth', freq: 'daily', streak: 0 },
+          { name: 'Read 20 minutes', freq: 'daily', streak: 3 },
+        ] },
+      { id: 'lorraine', name: 'Lorraine', role: 'Grandma', initial: 'L', color: '#ffc93c', onColor: '#22262b', points: 610,
+        habits: [
+          { name: 'Afternoon walk', freq: 'weekly', target: 5, streak: 3 },
+          { name: 'Call a grandchild', freq: 'weekly', target: 1, streak: 7 },
+          { name: 'Puzzle or crossword', freq: 'daily', streak: 20 },
+        ] },
+    ];
+
+    const ranked = [...roster].sort((a, b) => b.points - a.points);
+    const rankOf = {};
+    ranked.forEach((p, i) => { rankOf[p.id] = i + 1; });
+
+    const buildPerson = (p) => {
+      const arr = this.state.progress[p.id];
+      const lv = computeLevel(p.points);
+      const levelTitle = LEVEL_TITLES[Math.min(lv.level, LEVEL_TITLES.length) - 1];
+
+      const dailyIdxs = p.habits.map((h, i) => i).filter((i) => p.habits[i].freq === 'daily');
+      const dailyDone = dailyIdxs.filter((i) => arr[i]).length;
+      const dailyTotal = dailyIdxs.length;
+      const dailyPercent = Math.round((dailyDone / dailyTotal) * 100);
+
+      const habits = p.habits.map((def, i) => {
+        const isWeekly = def.freq === 'weekly';
+        const val = arr[i];
+        const filled = isWeekly ? val >= def.target : !!val;
+        return {
+          name: def.name,
+          isDaily: !isWeekly,
+          isWeekly,
+          done: !isWeekly && val,
+          count: isWeekly ? val : undefined,
+          target: def.target,
+          boxBg: filled ? p.color : 'transparent',
+          boxBorder: filled ? '2px solid transparent' : '2px solid #a8afb8',
+          weeklyBg: filled ? p.color : '#eef0f3',
+          weeklyColor: filled ? '#ffffff' : '#3d434b',
+          strike: !isWeekly && val ? 'line-through' : 'none',
+          textOpacity: filled ? 0.6 : 1,
+          streak: def.streak,
+          unit: isWeekly ? 'w' : 'd',
+          toggle: () => this.toggleHabit(p.id, i, def),
+        };
+      });
+
+      return {
+        ...p,
+        rank: rankOf[p.id],
+        rankBg: rankOf[p.id] === 1 ? '#ffc93c' : '#eef0f3',
+        rankColor: rankOf[p.id] === 1 ? '#22262b' : '#3d434b',
+        levelTitle,
+        levelIsMedal: lv.level >= 3,
+        levelIsStar: lv.level < 3,
+        levelPercent: Math.round((lv.into / lv.span) * 100),
+        levelInto: lv.into,
+        levelSpan: lv.span,
+        nextLevel: lv.level + 1,
+        dailyDone,
+        dailyTotal,
+        ringGradient: this.ringGradient(dailyPercent, p.color),
+        habits,
+      };
+    };
+
+    const people = roster.map((p) => {
+      const isSelected = p.id === this.state.selectedId;
+      return {
+        id: p.id,
+        name: p.name,
+        color: p.color,
+        onColor: p.onColor,
+        initial: p.initial,
+        avatarSize: isSelected ? 60 : 50,
+        avatarFont: isSelected ? 22 : 18,
+        ringShadow: isSelected ? '0 0 0 3px #fffdf8, 0 0 0 6px ' + p.color : 'none',
+        labelColor: isSelected ? '#22262b' : '#a8afb8',
+        select: () => this.setState({ selectedId: p.id }),
+      };
+    });
+
+    const sel = roster.find((p) => p.id === this.state.selectedId);
+    const selected = buildPerson(sel);
+
+    return { people, selected };
+  }
+}
+</script>
+</body>
+</html>
