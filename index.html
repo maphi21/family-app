@@ -42,7 +42,8 @@
   .today{ font-size:16px; font-weight:600; color:var(--ink-secondary); }
 
   .switcher{ display:none; gap:14px; overflow-x:auto; padding:10px 6px 14px; }
-  .switcher-pill{ display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0; cursor:pointer; }
+  .filter-row{ display:flex; gap:14px; overflow-x:auto; padding:2px 2px 20px; }
+  .switcher-pill, .filter-pill{ display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0; cursor:pointer; }
   .switcher-avatar{
     width:50px; height:50px; border-radius:999px; color:#fff;
     display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px;
@@ -325,6 +326,7 @@
 
   <div class="page" id="pageSettings">
     <p class="page-sub">Everything that's happened, across the whole family.</p>
+    <div class="filter-row" id="settingsFilter"></div>
     <div class="activity-list" id="activityList"></div>
   </div>
 </div>
@@ -470,6 +472,11 @@
     s.selectedId = (saved && saved.selectedId && ROSTER.some((p) => p.id === saved.selectedId))
       ? saved.selectedId
       : ROSTER[0].id;
+    // Independent of selectedId (which is "who am I acting as" on Habits/Rewards) —
+    // this just filters the Settings activity feed. null = show everyone.
+    s.settingsFilterId = (saved && saved.settingsFilterId && ROSTER.some((p) => p.id === saved.settingsFilterId))
+      ? saved.settingsFilterId
+      : null;
     return s;
   }
 
@@ -716,6 +723,12 @@
 
   function selectPerson(id){
     state.selectedId = id;
+    saveState();
+    render();
+  }
+
+  function selectSettingsFilter(id){
+    state.settingsFilterId = id === 'all' ? null : id;
     saveState();
     render();
   }
@@ -1019,9 +1032,31 @@
     return `${d.toLocaleDateString('en-GB', { day:'numeric', month:'short' })}, ${time}`;
   }
 
+  function renderSettingsFilter(){
+    const filterId = state.settingsFilterId;
+    const allPill = `<div class="filter-pill" data-filter="all">`
+      + `<div class="switcher-avatar ${!filterId ? 'is-active' : ''}" style="background:#eef0f3;color:#3d434b;--ring-color:#3d434b;font-size:${!filterId ? '15px' : '13px'};">All</div>`
+      + `<div class="switcher-label ${!filterId ? 'is-active' : ''}">Everyone</div>`
+      + `</div>`;
+    const peoplePills = ROSTER.map((p) => {
+      const active = filterId === p.id;
+      return `<div class="filter-pill" data-filter="${p.id}">`
+        + `<div class="switcher-avatar ${active ? 'is-active' : ''}" style="background:${p.color};--ring-color:${p.color};">${p.initial}</div>`
+        + `<div class="switcher-label ${active ? 'is-active' : ''}">${escapeHtml(p.name)}</div>`
+        + `</div>`;
+    }).join('');
+    return allPill + peoplePills;
+  }
+
   function renderActivityLog(){
-    if (!state.activityLog.length) return '<div class="activity-empty">Nothing yet &mdash; habits, redemptions, and payouts will show up here.</div>';
-    return state.activityLog.map((e) => {
+    const filterId = state.settingsFilterId;
+    const entries = filterId ? state.activityLog.filter((e) => e.personId === filterId) : state.activityLog;
+    if (!entries.length) {
+      return filterId
+        ? '<div class="activity-empty">Nothing from them yet.</div>'
+        : '<div class="activity-empty">Nothing yet &mdash; habits, redemptions, and payouts will show up here.</div>';
+    }
+    return entries.map((e) => {
       const p = ROSTER.find((r) => r.id === e.personId);
       if (!p) return '';
       return `<div class="activity-row">`
@@ -1052,6 +1087,7 @@
     document.getElementById('rewardList').innerHTML = REWARDS.map((r) => renderRewardRow(r)).join('');
     document.getElementById('piggySection').innerHTML = renderPiggySection();
     document.getElementById('lbList').innerHTML = renderLeaderboard();
+    document.getElementById('settingsFilter').innerHTML = renderSettingsFilter();
     document.getElementById('activityList').innerHTML = renderActivityLog();
     document.getElementById('tabHabits').innerHTML = circleCheckSvg(20) + '<span>Habits</span>';
     document.getElementById('tabRewards').innerHTML = giftSvg(20) + '<span>Rewards</span>';
@@ -1065,6 +1101,8 @@
     if (habitRow) { toggleHabit(habitRow.dataset.person, habitRow.dataset.habit); return; }
     const pill = e.target.closest('.switcher-pill');
     if (pill) { selectPerson(pill.dataset.person); return; }
+    const filterPill = e.target.closest('.filter-pill');
+    if (filterPill) { selectSettingsFilter(filterPill.dataset.filter); return; }
     const redeemBtn = e.target.closest('.reward-row-btn');
     if (redeemBtn && !redeemBtn.disabled) { redeemReward(redeemBtn.dataset.reward); return; }
     const useBtn = e.target.closest('.wallet-use-btn');
