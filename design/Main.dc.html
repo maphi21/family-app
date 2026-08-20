@@ -41,32 +41,35 @@
           </div>
         </div>
 
-        <div style="display:inline-flex; align-items:center; gap:5px; align-self:flex-start; background:{{p.bdayBg}}; color:{{p.bdayColor}}; border-radius:999px; padding:4px 10px 4px 7px; font-size:10px; font-weight:700; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
-            <path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/>
-            <path d="M4 16s.5-1 2-1 2.5 1.5 4 1.5S12.5 15 14 15s2.5 1.5 4 1.5 2-1 2-1"/>
-            <path d="M2 21h20"/>
-            <path d="M7 8v3M12 8v3M17 8v3"/>
-            <path d="M7 4h.01M12 3h.01M17 4h.01"/>
-          </svg>
-          {{p.bdayText}}
-        </div>
-
-        <div style="display:inline-flex; align-items:center; gap:5px; align-self:flex-start; background:{{p.color}}; color:{{p.onColor}}; border-radius:999px; padding:4px 10px 4px 7px; font-size:10.5px; font-weight:700; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-          <sc-if value="{{p.levelIsMedal}}" hint-placeholder-val="{{false}}">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg>
-          </sc-if>
-          <sc-if value="{{p.levelIsStar}}" hint-placeholder-val="{{true}}">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          </sc-if>
-          {{p.levelTitle}}
-        </div>
-
-        <div>
-          <div style="height:6px; background:#eef0f3; border-radius:999px; overflow:hidden;">
-            <div style="height:100%; width:{{p.levelPercent}}%; background:{{p.color}}; border-radius:999px;"></div>
+        <sc-if value="{{p.showBday}}" hint-placeholder-val="{{false}}">
+          <div style="display:inline-flex; align-items:center; gap:5px; align-self:flex-start; background:{{p.bdayBg}}; color:{{p.bdayColor}}; border-radius:999px; padding:4px 10px 4px 7px; font-size:10px; font-weight:700; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+              <path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/>
+              <path d="M4 16s.5-1 2-1 2.5 1.5 4 1.5S12.5 15 14 15s2.5 1.5 4 1.5 2-1 2-1"/>
+              <path d="M2 21h20"/>
+              <path d="M7 8v3M12 8v3M17 8v3"/>
+              <path d="M7 4h.01M12 3h.01M17 4h.01"/>
+            </svg>
+            {{p.bdayText}}
           </div>
-          <div style="font-size:9.5px; font-weight:600; color:#a8afb8; margin-top:4px;">{{p.levelInto}} of {{p.levelSpan}} to Level {{p.nextLevel}}</div>
+        </sc-if>
+
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          <div style="display:inline-flex; align-items:center; gap:5px; align-self:flex-start; background:{{p.levelBg}}; color:{{p.color}}; border-radius:999px; padding:4px 10px 4px 7px; font-size:10.5px; font-weight:700; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            <sc-if value="{{p.levelIsMedal}}" hint-placeholder-val="{{false}}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg>
+            </sc-if>
+            <sc-if value="{{p.levelIsStar}}" hint-placeholder-val="{{true}}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </sc-if>
+            {{p.levelTitle}}
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="flex:1; height:6px; background:#eef0f3; border-radius:999px; overflow:hidden;">
+              <div style="height:100%; width:{{p.levelPercent}}%; background:{{p.color}}; border-radius:999px;"></div>
+            </div>
+            <div style="font-size:9px; font-weight:700; color:#a8afb8; flex-shrink:0; white-space:nowrap;">{{p.levelInto}}/{{p.levelSpan}}</div>
+          </div>
         </div>
 
         <div style="display:flex; justify-content:center;">
@@ -126,19 +129,21 @@ function computeLevel(points) {
 // month/week formats deterministically; the real app would use a live Date.
 const DEMO_TODAY = new Date(2026, 7, 20);
 const BIRTHDAY_BONUS = 100;
+// Keep the countdown out of the way until it's actually relevant.
+const SHOW_BDAY_WITHIN_DAYS = 60;
 
 function nextBirthdayInfo(month, day, today) {
   const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   let target = new Date(todayMid.getFullYear(), month - 1, day);
   if (target < todayMid) target = new Date(todayMid.getFullYear() + 1, month - 1, day);
   const diffDays = Math.round((target - todayMid) / 86400000);
-  if (diffDays === 0) return { today: true };
+  if (diffDays === 0) return { today: true, diffDays: 0 };
   if (diffDays < 30) return { today: false, mode: 'days', diffDays };
   let months = (target.getFullYear() - todayMid.getFullYear()) * 12 + (target.getMonth() - todayMid.getMonth());
   if (target.getDate() < todayMid.getDate()) months--;
   const afterMonths = new Date(todayMid.getFullYear(), todayMid.getMonth() + months, todayMid.getDate());
   const weeks = Math.floor(Math.round((target - afterMonths) / 86400000) / 7);
-  return { today: false, mode: 'months', months, weeks };
+  return { today: false, mode: 'months', months, weeks, diffDays };
 }
 
 function formatBirthday(info) {
@@ -147,6 +152,12 @@ function formatBirthday(info) {
   const parts = [`${info.months} month${info.months === 1 ? '' : 's'}`];
   if (info.weeks > 0) parts.push(`${info.weeks} week${info.weeks === 1 ? '' : 's'}`);
   return parts.join(', ') + ' to birthday';
+}
+
+// Light tint of a person's accent color, for badges that shouldn't shout.
+function tint(hex, alpha) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
 class Component extends DCLogic {
@@ -267,9 +278,11 @@ class Component extends DCLogic {
         rank: rankOf[p.id],
         rankBg: rankOf[p.id] === 1 ? '#ffc93c' : '#eef0f3',
         rankColor: rankOf[p.id] === 1 ? '#22262b' : '#3d434b',
+        showBday: bday.today || bday.diffDays <= SHOW_BDAY_WITHIN_DAYS,
         bdayText: formatBirthday(bday),
         bdayBg: bday.today ? '#ffc93c' : '#e9f6fe',
         bdayColor: bday.today ? '#22262b' : '#146590',
+        levelBg: tint(p.color, 0.14),
         levelTitle,
         levelIsMedal: lv.level >= 3,
         levelIsStar: lv.level < 3,
