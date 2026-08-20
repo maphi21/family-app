@@ -30,8 +30,11 @@
   body{
     margin:0; font-family:'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     background:var(--paper); color:var(--ink); min-height:100vh; -webkit-font-smoothing:antialiased;
+    padding-bottom:88px; /* clears the fixed bottom tab bar */
   }
   .wrap{ max-width:1180px; margin:0 auto; padding:28px 20px 48px; }
+  .page{ display:none; }
+  .page.active{ display:block; }
 
   header.top{ display:flex; flex-direction:column; gap:2px; margin-bottom:22px; }
   .eyebrow{ font-size:12px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-faint); }
@@ -103,6 +106,71 @@
   .habit-name{ flex:1; min-width:0; font-size:11.5px; font-weight:600; line-height:1.3; }
   .habit-streak{ display:inline-flex; align-items:center; gap:2px; flex-shrink:0; font-size:9.5px; font-weight:700; color:#a67800; }
 
+  .page-sub{ font-size:13.5px; color:var(--ink-secondary); margin:0 0 18px; }
+
+  .points-strip{ display:flex; gap:10px; overflow-x:auto; padding:2px 2px 22px; }
+  .points-pill{
+    display:flex; align-items:center; gap:8px; flex-shrink:0;
+    background:var(--surface-card); border-radius:999px; padding:6px 14px 6px 6px; box-shadow:var(--shadow-card);
+  }
+  .points-pill-avatar{ width:28px; height:28px; border-radius:999px; color:#fff; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; }
+  .points-pill-name{ font-size:12.5px; font-weight:700; }
+  .points-pill-amount{ font-size:12.5px; font-weight:800; color:var(--ink-secondary); }
+  .points-pill-cash{ font-size:11px; font-weight:700; color:#2a9c58; }
+
+  .reward-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; }
+  .reward-card{
+    display:flex; flex-direction:column; gap:12px;
+    background:var(--surface-card); border-radius:20px; padding:20px; box-shadow:var(--shadow-card);
+  }
+  .reward-title{ font-size:15px; font-weight:800; letter-spacing:-0.01em; }
+  .reward-cost-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .reward-cost{
+    display:inline-flex; align-items:center; gap:5px; background:var(--surface-sunken); color:#a67800;
+    border-radius:999px; padding:4px 11px 4px 8px; font-size:12px; font-weight:700;
+  }
+  .reward-cash{
+    display:inline-flex; align-items:center; gap:5px; background:#eaf9ef; color:#1f7643;
+    border-radius:999px; padding:4px 11px 4px 8px; font-size:12px; font-weight:700;
+  }
+  .redeem-row{ display:flex; gap:8px; margin-top:auto; }
+  .redeem-select{
+    flex:1; min-width:0; font-family:inherit; font-size:12.5px; font-weight:600; color:var(--ink);
+    padding:9px 28px 9px 12px; border-radius:999px; border:1.5px solid var(--track); background:#fff;
+    appearance:none; -webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 10px center;
+  }
+  .redeem-btn{
+    flex-shrink:0; font-family:inherit; font-size:12.5px; font-weight:700; color:var(--ink);
+    background:#ffc93c; border:none; border-radius:999px; padding:9px 16px; cursor:pointer;
+    transition:transform .12s ease;
+  }
+  .redeem-btn:active{ transform:scale(.96); }
+
+  .tab-bar{
+    position:fixed; left:0; right:0; bottom:0; z-index:65; display:flex;
+    background:#ffffff; border-top:1px solid var(--track); box-shadow:0 -2px 12px rgba(34,38,43,.06);
+    padding:6px max(16px, env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom));
+  }
+  .tab-btn{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:none; border:none; padding:8px 4px; cursor:pointer;
+    color:var(--ink-faint); font-family:inherit; font-size:11px; font-weight:700;
+  }
+  .tab-btn.active{ color:var(--ink); }
+
+  .toast{
+    position:fixed; bottom:76px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:#fff; padding:12px 18px; border-radius:999px;
+    font-size:13.5px; font-weight:600; opacity:0; pointer-events:none; z-index:120;
+    transition:opacity .2s ease, transform .2s cubic-bezier(.34,1.56,.64,1);
+    box-shadow:0 6px 20px rgba(34,38,43,.18); max-width:calc(100% - 40px); text-align:center;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.success{ background:#2a9c58; }
+  .toast.danger{ background:#e84e3d; }
+
   footer.note{ max-width:1180px; margin:32px auto 0; padding:0 20px; font-size:11.5px; color:var(--ink-faint); text-align:center; }
 
   @media (max-width:767px){
@@ -124,6 +192,9 @@
     .habit-indicator--weekly{ min-width:24px; font-size:11px; }
     .habit-name{ font-size:15px; }
     .habit-streak{ font-size:12px; }
+
+    .redeem-row{ flex-direction:column; align-items:stretch; }
+    .redeem-select, .redeem-btn{ width:100%; padding-top:11px; padding-bottom:11px; }
   }
 </style>
 </head>
@@ -135,13 +206,27 @@
     <div class="today" id="todayLabel">&nbsp;</div>
   </header>
 
-  <div class="switcher" id="switcher"></div>
-  <div class="swipe-hint">Swipe or tap an avatar to switch profile</div>
+  <div class="page active" id="pageHabits">
+    <div class="switcher" id="switcher"></div>
+    <div class="swipe-hint">Swipe or tap an avatar to switch profile</div>
+    <div class="cards" id="cards"></div>
+  </div>
 
-  <div class="cards" id="cards"></div>
+  <div class="page" id="pageRewards">
+    <p class="page-sub">Spend hard-earned points on real rewards.</p>
+    <div class="points-strip" id="pointsStrip"></div>
+    <div class="reward-grid" id="rewardGrid"></div>
+  </div>
 </div>
 
 <footer class="note">Saved on this device only &mdash; each phone or iPad keeps its own copy. Add to your Home Screen for one-tap access.</footer>
+
+<nav class="tab-bar" id="tabBar">
+  <button class="tab-btn active" data-page="pageHabits" id="tabHabits"></button>
+  <button class="tab-btn" data-page="pageRewards" id="tabRewards"></button>
+</nav>
+
+<div class="toast" id="toast"></div>
 
 <script>
 (function(){
@@ -203,12 +288,24 @@
     const today = new Date();
     return {
       bankedPoints: 0,
+      piggyReward: 0, // real money earned by redeeming a cash reward
       lastResetDate: dateKey(today),
       weekAnchor: mondayKey(today),
       bdayAwardedYear: null,
       habits: [],
     };
   }
+
+  // A reward without `cash` is a privilege (points only); one with `cash`
+  // also pays that amount into the redeemer's piggyReward balance.
+  const REWARDS = [
+    { id:'r_dinner', name:'Choose Friday dinner', cost:50 },
+    { id:'r_screen30', name:'Extra 30 min screen time', cost:30 },
+    { id:'r_late15', name:'Stay up 15 min late', cost:25 },
+    { id:'r_movie', name:'Pick the family movie', cost:40 },
+    { id:'r_chorepass', name:'Skip one chore (free pass)', cost:60 },
+    { id:'r_cash5', name:'£5 pocket money', cost:120, cash:5 },
+  ];
 
   function habitDefOf(personId, habitId){
     const p = ROSTER.find((r) => r.id === personId);
@@ -228,6 +325,7 @@
     const s = { people:{}, selectedId:null };
     ROSTER.forEach((p) => {
       s.people[p.id] = (saved && saved.people && saved.people[p.id]) || defaultPersonState();
+      if (typeof s.people[p.id].piggyReward !== 'number') s.people[p.id].piggyReward = 0;
       p.habits.forEach((h) => {
         if (!s.people[p.id].habits.find((x) => x.id === h.id)) {
           s.people[p.id].habits.push({ id:h.id, done:false, count:0, streak:0 });
@@ -362,6 +460,36 @@
     render();
   }
 
+  let toastTimer = null;
+  function showToast(msg, tone){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (tone ? ' ' + tone : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.classList.remove('show'); }, 2200);
+  }
+
+  function redeemReward(rewardId, personId){
+    const reward = REWARDS.find((r) => r.id === rewardId);
+    const p = ROSTER.find((r) => r.id === personId);
+    const points = computePersonPoints(personId);
+    if (points < reward.cost) {
+      showToast(`${p.name} needs ${reward.cost - points} more points for that.`, 'danger');
+      return;
+    }
+    const ps = state.people[personId];
+    ps.bankedPoints -= reward.cost;
+    if (reward.cash) ps.piggyReward += reward.cash;
+    saveState();
+    render();
+    showToast(`${reward.name} redeemed for ${p.name}!`, 'success');
+  }
+
+  function switchTab(pageId){
+    document.querySelectorAll('.page').forEach((el) => el.classList.toggle('active', el.id === pageId));
+    document.querySelectorAll('.tab-btn').forEach((el) => el.classList.toggle('active', el.dataset.page === pageId));
+  }
+
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   }
@@ -383,6 +511,18 @@
   }
   function flameSvg(){
     return '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 17a2.5 2.5 0 0 0 2.5-2.5c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7.5 7.5 0 1 1-15 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>';
+  }
+  function giftSvg(size){
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">`
+      + '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/>'
+      + '<path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/>'
+      + '<path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8"/><path d="M16.5 8a2.5 2.5 0 0 0 0-5C13 3 12 8 12 8"/></svg>';
+  }
+  function circleCheckSvg(size){
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/></svg>`;
+  }
+  function banknoteSvg(){
+    return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 12h.01M18 12h.01"/></svg>';
   }
 
   function renderCard(p){
@@ -457,17 +597,56 @@
     }).join('');
   }
 
+  function renderPointsStrip(){
+    return ROSTER.map((p) => {
+      const points = computePersonPoints(p.id);
+      const cash = state.people[p.id].piggyReward;
+      return `<div class="points-pill">`
+        + `<div class="points-pill-avatar" style="background:${p.color};">${p.initial}</div>`
+        + `<div><div class="points-pill-name">${escapeHtml(p.name)}</div>`
+        + `<div class="points-pill-amount">${points} pts${cash > 0 ? ` <span class="points-pill-cash">&middot; &pound;${cash} saved</span>` : ''}</div></div>`
+        + `</div>`;
+    }).join('');
+  }
+
+  function renderRewardCard(reward){
+    const options = ROSTER.map((p) => `<option value="${p.id}" ${p.id === state.selectedId ? 'selected' : ''}>${escapeHtml(p.name)}</option>`).join('');
+    return `<div class="reward-card">`
+      + `<div class="reward-title">${escapeHtml(reward.name)}</div>`
+      + `<div class="reward-cost-row">`
+      +   `<div class="reward-cost">${starSvg()}${reward.cost} pts</div>`
+      +   (reward.cash ? `<div class="reward-cash">${banknoteSvg()}+&pound;${reward.cash}</div>` : '')
+      + `</div>`
+      + `<div class="redeem-row">`
+      +   `<select class="redeem-select" data-reward="${reward.id}">${options}</select>`
+      +   `<button class="redeem-btn" data-reward="${reward.id}">Redeem</button>`
+      + `</div>`
+      + `</div>`;
+  }
+
   function render(){
     document.getElementById('todayLabel').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
     document.getElementById('switcher').innerHTML = renderSwitcher();
     document.getElementById('cards').innerHTML = ROSTER.map((p) => renderCard(p)).join('');
+    document.getElementById('pointsStrip').innerHTML = renderPointsStrip();
+    document.getElementById('rewardGrid').innerHTML = REWARDS.map((r) => renderRewardCard(r)).join('');
+    document.getElementById('tabHabits').innerHTML = circleCheckSvg(20) + '<span>Habits</span>';
+    document.getElementById('tabRewards').innerHTML = giftSvg(20) + '<span>Rewards</span>';
   }
 
   document.addEventListener('click', (e) => {
     const habitRow = e.target.closest('.habit-row');
     if (habitRow) { toggleHabit(habitRow.dataset.person, habitRow.dataset.habit); return; }
     const pill = e.target.closest('.switcher-pill');
-    if (pill) { selectPerson(pill.dataset.person); }
+    if (pill) { selectPerson(pill.dataset.person); return; }
+    const redeemBtn = e.target.closest('.redeem-btn');
+    if (redeemBtn) {
+      const select = document.querySelector(`.redeem-select[data-reward="${redeemBtn.dataset.reward}"]`);
+      redeemReward(redeemBtn.dataset.reward, select.value);
+      return;
+    }
+    const tabBtn = e.target.closest('.tab-btn');
+    if (tabBtn) { switchTab(tabBtn.dataset.page); }
   });
 
   let touchStartX = null;
