@@ -113,7 +113,14 @@
   .page-stats{ margin-bottom:18px; }
   .pts-available{ font-size:14px; font-weight:700; color:var(--ink); }
   .pts-available b{ font-weight:800; }
-  .piggy-saved{ font-size:12.5px; font-weight:700; color:#1f7643; margin-top:2px; }
+  .piggy-stats-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:4px; }
+  .piggy-saved{ font-size:12.5px; font-weight:700; color:#1f7643; }
+  .piggy-earned-tag{
+    display:inline-flex; align-items:center; gap:5px;
+    background:#eaf9ef; color:#1f7643; border-radius:999px; padding:3px 10px 3px 7px;
+    font-size:10.5px; font-weight:700;
+  }
+  .piggy-earned-tag svg{ flex-shrink:0; }
 
   .wallet-strip{ display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
   .wallet-label{ font-size:11.5px; font-weight:700; color:var(--ink-secondary); text-transform:uppercase; letter-spacing:0.04em; }
@@ -154,6 +161,36 @@
   }
   .reward-row-btn:active{ transform:scale(.96); }
   .reward-row-btn:disabled{ opacity:.4; cursor:not-allowed; }
+
+  .piggy-section{ margin-top:24px; padding-top:20px; border-top:1px solid var(--track); }
+  .piggy-section-label{ font-size:15px; font-weight:800; margin-bottom:12px; }
+  .withdraw-row{ display:flex; gap:8px; margin-bottom:18px; }
+  .withdraw-input, .withdraw-note{
+    font-family:inherit; color:var(--ink); border:1.5px solid var(--track); border-radius:999px;
+    background:#fff; padding:10px 14px;
+  }
+  .withdraw-input{ width:84px; flex-shrink:0; font-size:13px; font-weight:700; }
+  .withdraw-input:disabled, .withdraw-note:disabled{ opacity:.5; }
+  .withdraw-note{ flex:1; min-width:0; font-size:13px; font-weight:500; }
+  .withdraw-btn{
+    flex-shrink:0; font-family:inherit; font-size:12.5px; font-weight:700; color:#fff;
+    background:#2a9c58; border:none; border-radius:999px; padding:10px 18px; cursor:pointer;
+    transition:transform .12s ease;
+  }
+  .withdraw-btn:active{ transform:scale(.96); }
+  .withdraw-btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .ledger-label{ font-size:11.5px; font-weight:700; color:var(--ink-secondary); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px; }
+  .ledger-list{ display:flex; flex-direction:column; gap:2px; max-height:260px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .ledger-row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:9px 2px; border-bottom:1px solid var(--track); font-size:12.5px;
+  }
+  .ledger-row:last-child{ border-bottom:none; }
+  .ledger-reason{ flex:1; min-width:0; font-weight:600; color:var(--ink); display:flex; flex-direction:column; gap:1px; }
+  .ledger-date{ font-size:10.5px; font-weight:600; color:var(--ink-faint); }
+  .ledger-amount{ flex-shrink:0; font-weight:800; white-space:nowrap; }
+  .ledger-in{ color:#2a9c58; }
+  .ledger-out{ color:#e84e3d; }
 
   .lb-list{ display:flex; flex-direction:column; gap:10px; }
   .lb-row{
@@ -233,6 +270,10 @@
     .habit-streak{ font-size:12px; }
 
     .reward-row-btn{ padding-top:11px; padding-bottom:11px; }
+
+    .withdraw-row{ flex-direction:column; }
+    .withdraw-input{ width:100%; }
+    .withdraw-input, .withdraw-note, .withdraw-btn{ padding-top:12px; padding-bottom:12px; }
   }
 </style>
 </head>
@@ -256,6 +297,7 @@
     <div id="pageStats"></div>
     <div id="walletSection"></div>
     <div class="reward-list" id="rewardList"></div>
+    <div id="piggySection"></div>
   </div>
 
   <div class="page" id="pageLeaderboard">
@@ -340,8 +382,9 @@
     return {
       bankedPoints: 0, // spendable currency — goes down when a reward is redeemed
       totalBanked: 0,  // lifetime points ever earned — never decreases; drives level + rank
-      piggyReward: 0, // real money earned by redeeming a cash reward
-      piggyPocket: 0, // real money earned via the weekly habit-ratio allowance
+      piggyLedger: [], // append-only real-money history: {id, delta, reason, at, dateKey} —
+                        // current balance and lifetime-earned are both derived from this, see
+                        // piggyBalance / piggyEarnedTotal.
       dailyRatioHistory: {}, // dateKey -> that day's daily-habit completion ratio (0..1)
       rewardInventory: {}, // rewardId -> how many bought-but-not-yet-used are owned
       lastResetDate: dateKey(today),
@@ -352,7 +395,7 @@
   }
 
   // A reward without `cash` is a privilege (points only); one with `cash`
-  // also pays that amount into the redeemer's piggyReward balance.
+  // also credits that amount to the redeemer's piggy bank ledger.
   const REWARDS = [
     { id:'r_dinner', name:'Choose Friday dinner', cost:50 },
     { id:'r_screen30', name:'Extra 30 min screen time', cost:30 },
@@ -380,8 +423,17 @@
     const s = { people:{}, selectedId:null };
     ROSTER.forEach((p) => {
       s.people[p.id] = (saved && saved.people && saved.people[p.id]) || defaultPersonState();
-      if (typeof s.people[p.id].piggyReward !== 'number') s.people[p.id].piggyReward = 0;
-      if (typeof s.people[p.id].piggyPocket !== 'number') s.people[p.id].piggyPocket = 0;
+      // Migrate saves from before the ledger existed: seed one opening entry per
+      // non-zero legacy balance so nothing is lost, then the ledger drives everything.
+      if (!Array.isArray(s.people[p.id].piggyLedger)) {
+        const openingPocket = s.people[p.id].piggyPocket || 0;
+        const openingReward = s.people[p.id].piggyReward || 0;
+        s.people[p.id].piggyLedger = [];
+        if (openingPocket) piggyLedgerAdd(s.people[p.id], openingPocket, 'Weekly allowance (migrated balance)', `opening:${p.id}:pocket`);
+        if (openingReward) piggyLedgerAdd(s.people[p.id], openingReward, 'Reward cash-outs (migrated balance)', `opening:${p.id}:reward`);
+        delete s.people[p.id].piggyPocket;
+        delete s.people[p.id].piggyReward;
+      }
       if (typeof s.people[p.id].totalBanked !== 'number') s.people[p.id].totalBanked = s.people[p.id].bankedPoints;
       if (!s.people[p.id].rewardInventory || typeof s.people[p.id].rewardInventory !== 'object') s.people[p.id].rewardInventory = {};
       if (!s.people[p.id].dailyRatioHistory || typeof s.people[p.id].dailyRatioHistory !== 'object') s.people[p.id].dailyRatioHistory = {};
@@ -500,17 +552,52 @@
   }
 
   // Live "building" estimate for the week in progress — shown on the profile
-  // card. Not yet banked; only paid into piggyPocket at the week's rollover.
+  // card. Not yet banked; only credited to the ledger at the week's rollover.
   function weeklyEstimate(personId){
     const p = ROSTER.find((r) => r.id === personId);
     return roundMoney(p.pocketWeekly * weeklyRatioSoFar(personId));
   }
 
-  // Combined real-money balance: the weekly ratio-based allowance plus
-  // whatever's been separately cashed out by redeeming a points reward.
-  function piggyTotal(personId){
+  // Writing the same id again *replaces* that entry rather than duplicating —
+  // makes system-generated entries (a weekly payout) safe to re-apply, since a
+  // retried or re-run payout corrects in place instead of double-paying.
+  // Manual entries (redemptions, withdrawals) get a random id, each its own event.
+  function piggyLedgerAdd(ps, delta, reason, id, entryDateKey){
+    delta = roundMoney(delta);
+    if (delta === 0 && id == null) return;
+    const entry = {
+      id: id || `piggy_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      delta, reason, at: new Date().toISOString(), dateKey: entryDateKey || dateKey(new Date()),
+    };
+    const idx = ps.piggyLedger.findIndex((e) => e.id === entry.id);
+    if (idx !== -1) ps.piggyLedger[idx] = entry; else ps.piggyLedger.push(entry);
+  }
+
+  // Current spendable balance — goes up on a payout/redemption, down on a
+  // withdrawal. Just the ledger summed.
+  function piggyBalance(personId){
+    return roundMoney((state.people[personId].piggyLedger || []).reduce((a, e) => a + e.delta, 0));
+  }
+
+  // Lifetime total ever earned — sums only the credits, so withdrawing money
+  // never reduces it. This is the "total earned" figure.
+  function piggyEarnedTotal(personId){
+    return roundMoney((state.people[personId].piggyLedger || []).filter((e) => e.delta > 0).reduce((a, e) => a + e.delta, 0));
+  }
+
+  function drawDownPiggy(amount, note){
+    const personId = state.selectedId;
+    const p = ROSTER.find((r) => r.id === personId);
     const ps = state.people[personId];
-    return roundMoney(ps.piggyPocket + ps.piggyReward);
+    const balance = piggyBalance(personId);
+    if (!(amount > 0) || amount > balance + 0.001) {
+      showToast(`Enter an amount up to £${balance.toFixed(2)}.`, 'danger');
+      return;
+    }
+    piggyLedgerAdd(ps, -amount, (note || '').trim() || 'Withdrawn', null, dateKey(new Date()));
+    saveState();
+    render();
+    showToast(`£${amount.toFixed(2)} withdrawn for ${p.name}.`, 'success');
   }
 
   // Rolls yesterday's daily ticks and last week's weekly counts into banked
@@ -555,7 +642,9 @@
         if (p.pocketWeekly > 0) {
           let sum = 0;
           for (let i = 0; i < 7; i++) sum += ps.dailyRatioHistory[addDaysKey(ps.weekAnchor, i)] || 0;
-          ps.piggyPocket = roundMoney(ps.piggyPocket + roundMoney(p.pocketWeekly * (sum / 7)));
+          const payout = roundMoney(p.pocketWeekly * (sum / 7));
+          const pct = Math.round((sum / 7) * 100);
+          piggyLedgerAdd(ps, payout, `Weekly allowance (${pct}% of habits done)`, `payout:${p.id}:${ps.weekAnchor}`, ps.weekAnchor);
         }
         ps.weekAnchor = thisMonday;
         changed = true;
@@ -610,7 +699,7 @@
     }
     const ps = state.people[personId];
     ps.bankedPoints -= reward.cost;
-    if (reward.cash) ps.piggyReward += reward.cash;
+    if (reward.cash) piggyLedgerAdd(ps, reward.cash, `Redeemed: ${reward.name}`, null, dateKey(new Date()));
     ps.rewardInventory[rewardId] = (ps.rewardInventory[rewardId] || 0) + 1;
     saveState();
     render();
@@ -777,12 +866,48 @@
 
   // "How much can I spend right now" — points for the shop below, plus
   // real money saved (weekly allowance + any cashed-out rewards) if any.
+  // Earned total never drops even after a withdrawal; saved is the live balance.
   function renderPageStats(){
     const pts = computeSpendablePoints(state.selectedId);
-    const saved = piggyTotal(state.selectedId);
+    const saved = piggyBalance(state.selectedId);
+    const earned = piggyEarnedTotal(state.selectedId);
     return `<div class="page-stats">`
       + `<div class="pts-available"><b>${pts}</b> pts to spend</div>`
-      + (saved > 0 ? `<div class="piggy-saved">&pound;${saved.toFixed(2)} saved</div>` : '')
+      + (earned > 0
+          ? `<div class="piggy-stats-row">`
+            + `<div class="piggy-saved">&pound;${saved.toFixed(2)} saved</div>`
+            + `<div class="piggy-earned-tag">${piggyBankSvg()}&pound;${earned.toFixed(2)} earned total</div>`
+            + `</div>`
+          : '')
+      + `</div>`;
+  }
+
+  // The withdraw form + ledger only appear once there's any money history at
+  // all — nothing to draw down or look back on for someone who hasn't earned
+  // anything yet.
+  function renderPiggySection(){
+    const personId = state.selectedId;
+    if (piggyEarnedTotal(personId) <= 0) return '';
+    const balance = piggyBalance(personId);
+    const ledger = (state.people[personId].piggyLedger || []).slice().sort((a, b) => b.at.localeCompare(a.at));
+    const rows = ledger.map((e) => {
+      const isCredit = e.delta >= 0;
+      const d = new Date(e.at);
+      const dateStr = Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+      return `<div class="ledger-row">`
+        + `<div class="ledger-reason">${escapeHtml(e.reason)}<span class="ledger-date">${dateStr}</span></div>`
+        + `<div class="ledger-amount ${isCredit ? 'ledger-in' : 'ledger-out'}">${isCredit ? '+' : '&minus;'}&pound;${Math.abs(e.delta).toFixed(2)}</div>`
+        + `</div>`;
+    }).join('');
+    return `<div class="piggy-section">`
+      + `<div class="piggy-section-label">Piggy bank</div>`
+      + `<div class="withdraw-row">`
+      +   `<input type="number" id="withdrawAmount" class="withdraw-input" placeholder="0.00" min="0.01" max="${balance}" step="0.01" ${balance > 0 ? '' : 'disabled'}>`
+      +   `<input type="text" id="withdrawNote" class="withdraw-note" placeholder="What for? (optional)" maxlength="60" ${balance > 0 ? '' : 'disabled'}>`
+      +   `<button class="withdraw-btn" id="withdrawBtn" ${balance > 0 ? '' : 'disabled'}>Withdraw</button>`
+      + `</div>`
+      + `<div class="ledger-label">History</div>`
+      + `<div class="ledger-list">${rows}</div>`
       + `</div>`;
   }
 
@@ -850,6 +975,7 @@
     document.getElementById('pageStats').innerHTML = renderPageStats();
     document.getElementById('walletSection').innerHTML = renderWalletStrip();
     document.getElementById('rewardList').innerHTML = REWARDS.map((r) => renderRewardRow(r)).join('');
+    document.getElementById('piggySection').innerHTML = renderPiggySection();
     document.getElementById('lbList').innerHTML = renderLeaderboard();
     document.getElementById('tabHabits').innerHTML = circleCheckSvg(20) + '<span>Habits</span>';
     document.getElementById('tabRewards').innerHTML = giftSvg(20) + '<span>Rewards</span>';
@@ -866,6 +992,13 @@
     if (redeemBtn && !redeemBtn.disabled) { redeemReward(redeemBtn.dataset.reward); return; }
     const useBtn = e.target.closest('.wallet-use-btn');
     if (useBtn) { useReward(useBtn.dataset.reward); return; }
+    const withdrawBtn = e.target.closest('#withdrawBtn');
+    if (withdrawBtn && !withdrawBtn.disabled) {
+      const amountEl = document.getElementById('withdrawAmount');
+      const noteEl = document.getElementById('withdrawNote');
+      drawDownPiggy(parseFloat(amountEl.value), noteEl.value);
+      return;
+    }
     const tabBtn = e.target.closest('.tab-btn');
     if (tabBtn) { switchTab(tabBtn.dataset.page); }
   });
