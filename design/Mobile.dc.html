@@ -45,6 +45,17 @@
       <div style="font-size:13px; font-weight:600; color:#6b7280;">{{selected.role}} &middot; {{selected.points}} pts</div>
     </div>
 
+    <div style="display:inline-flex; align-items:center; gap:6px; background:{{selected.bdayBg}}; color:{{selected.bdayColor}}; border-radius:999px; padding:6px 14px 6px 10px; font-size:12.5px; font-weight:700;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+        <path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/>
+        <path d="M4 16s.5-1 2-1 2.5 1.5 4 1.5S12.5 15 14 15s2.5 1.5 4 1.5 2-1 2-1"/>
+        <path d="M2 21h20"/>
+        <path d="M7 8v3M12 8v3M17 8v3"/>
+        <path d="M7 4h.01M12 3h.01M17 4h.01"/>
+      </svg>
+      {{selected.bdayText}}
+    </div>
+
     <div style="display:inline-flex; align-items:center; gap:6px; background:{{selected.color}}; color:{{selected.onColor}}; border-radius:999px; padding:6px 14px 6px 10px; font-size:12.5px; font-weight:700;">
       <sc-if value="{{selected.levelIsMedal}}" hint-placeholder-val="{{false}}">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg>
@@ -116,6 +127,33 @@ function computeLevel(points) {
   return { level: lvl, into, span };
 }
 
+// Fixed stand-in for "today" so the mockup demonstrates both the day-count and
+// month/week formats deterministically; the real app would use a live Date.
+const DEMO_TODAY = new Date(2026, 7, 20);
+const BIRTHDAY_BONUS = 100;
+
+function nextBirthdayInfo(month, day, today) {
+  const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  let target = new Date(todayMid.getFullYear(), month - 1, day);
+  if (target < todayMid) target = new Date(todayMid.getFullYear() + 1, month - 1, day);
+  const diffDays = Math.round((target - todayMid) / 86400000);
+  if (diffDays === 0) return { today: true };
+  if (diffDays < 30) return { today: false, mode: 'days', diffDays };
+  let months = (target.getFullYear() - todayMid.getFullYear()) * 12 + (target.getMonth() - todayMid.getMonth());
+  if (target.getDate() < todayMid.getDate()) months--;
+  const afterMonths = new Date(todayMid.getFullYear(), todayMid.getMonth() + months, todayMid.getDate());
+  const weeks = Math.floor(Math.round((target - afterMonths) / 86400000) / 7);
+  return { today: false, mode: 'months', months, weeks };
+}
+
+function formatBirthday(info) {
+  if (info.today) return `Birthday today! +${BIRTHDAY_BONUS} pts`;
+  if (info.mode === 'days') return `${info.diffDays} day${info.diffDays === 1 ? '' : 's'} to birthday`;
+  const parts = [`${info.months} month${info.months === 1 ? '' : 's'}`];
+  if (info.weeks > 0) parts.push(`${info.weeks} week${info.weeks === 1 ? '' : 's'}`);
+  return parts.join(', ') + ' to birthday';
+}
+
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -152,18 +190,21 @@ class Component extends DCLogic {
   renderVals() {
     const roster = [
       { id: 'matt', name: 'Matt', role: 'Parent', initial: 'M', color: '#2fa9e5', onColor: '#ffffff', points: 420,
+        birthday: { month: 9, day: 2 },
         habits: [
           { name: 'Take vitamins', freq: 'daily', streak: 4 },
           { name: 'Exercise 20 min', freq: 'weekly', target: 3, streak: 6 },
           { name: 'Screen-free wind down', freq: 'daily', streak: 0 },
         ] },
       { id: 'jemma', name: 'Jemma', role: 'Parent', initial: 'J', color: '#9b6bf0', onColor: '#ffffff', points: 890,
+        birthday: { month: 8, day: 25 },
         habits: [
           { name: 'Take vitamins', freq: 'daily', streak: 12 },
           { name: 'Exercise 20 min', freq: 'weekly', target: 3, streak: 9 },
           { name: 'Tidy your space', freq: 'daily', streak: 5 },
         ] },
       { id: 'henry', name: 'Henry', role: 'Kid', initial: 'H', color: '#3dbe72', onColor: '#ffffff', points: 260,
+        birthday: { month: 10, day: 10 },
         habits: [
           { name: 'Take vitamins', freq: 'daily', streak: 2 },
           { name: 'Brush teeth', freq: 'daily', streak: 15 },
@@ -171,12 +212,14 @@ class Component extends DCLogic {
           { name: 'Tidy your room', freq: 'daily', streak: 1 },
         ] },
       { id: 'ted', name: 'Ted', role: 'Kid', initial: 'T', color: '#ff6b5b', onColor: '#ffffff', points: 140,
+        birthday: { month: 2, day: 14 },
         habits: [
           { name: 'Take vitamins', freq: 'daily', streak: 1 },
           { name: 'Brush teeth', freq: 'daily', streak: 0 },
           { name: 'Read 20 minutes', freq: 'daily', streak: 3 },
         ] },
       { id: 'lorraine', name: 'Lorraine', role: 'Grandma', initial: 'L', color: '#ffc93c', onColor: '#22262b', points: 610,
+        birthday: { month: 8, day: 20 },
         habits: [
           { name: 'Afternoon walk', freq: 'weekly', target: 5, streak: 3 },
           { name: 'Call a grandchild', freq: 'weekly', target: 1, streak: 7 },
@@ -221,11 +264,16 @@ class Component extends DCLogic {
         };
       });
 
+      const bday = nextBirthdayInfo(p.birthday.month, p.birthday.day, DEMO_TODAY);
+
       return {
         ...p,
         rank: rankOf[p.id],
         rankBg: rankOf[p.id] === 1 ? '#ffc93c' : '#eef0f3',
         rankColor: rankOf[p.id] === 1 ? '#22262b' : '#3d434b',
+        bdayText: formatBirthday(bday),
+        bdayBg: bday.today ? '#ffc93c' : '#e9f6fe',
+        bdayColor: bday.today ? '#22262b' : '#146590',
         levelTitle,
         levelIsMedal: lv.level >= 3,
         levelIsStar: lv.level < 3,
