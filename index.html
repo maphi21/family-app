@@ -32,30 +32,30 @@
     background:var(--paper); color:var(--ink); min-height:100vh; -webkit-font-smoothing:antialiased;
     padding-bottom:88px; /* clears the fixed bottom tab bar */
   }
-  .wrap{ max-width:1180px; margin:0 auto; padding:28px 20px 48px; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 20px 48px; }
   .page{ display:none; }
   .page.active{ display:block; }
 
-  header.top{ display:flex; flex-direction:column; gap:2px; margin-bottom:22px; }
+  .top-bar{ max-width:1180px; margin:0 auto; padding:24px 20px 0; }
+  header.top{ display:flex; flex-direction:column; gap:2px; margin-bottom:16px; }
   .eyebrow{ font-size:12px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-faint); }
   .today{ font-size:16px; font-weight:600; color:var(--ink-secondary); }
 
-  .switcher{ display:none; gap:14px; overflow-x:auto; padding:10px 6px 14px; }
-  .switcher-pill{ display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0; cursor:pointer; }
+  .switcher{ display:none; gap:12px; overflow-x:auto; padding:8px 4px 12px; }
+  .switcher-pill{ display:flex; flex-direction:column; align-items:center; gap:4px; flex-shrink:0; cursor:pointer; }
   .switcher-avatar{
-    width:50px; height:50px; border-radius:999px; color:#fff;
-    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px;
+    width:40px; height:40px; border-radius:999px; color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px;
     transition:all .15s;
   }
-  .switcher-avatar.is-active{ width:60px; height:60px; font-size:22px; box-shadow:0 0 0 3px var(--paper), 0 0 0 6px var(--ring-color); }
-  .switcher-label{ font-size:11px; font-weight:700; color:var(--ink-faint); }
+  .switcher-avatar.is-active{ width:48px; height:48px; font-size:18px; box-shadow:0 0 0 3px var(--paper), 0 0 0 5px var(--ring-color); }
+  .switcher-label{ font-size:10px; font-weight:700; color:var(--ink-faint); }
   .switcher-label.is-active{ color:var(--ink); }
-  .swipe-hint{ font-size:11.5px; font-weight:500; color:var(--ink-faint); margin:-6px 0 18px; }
 
   .cards{ display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:18px; }
   .card{
-    display:flex; flex-direction:column; gap:14px;
-    background:var(--surface-card); border-radius:20px; padding:20px; box-shadow:var(--shadow-card);
+    display:flex; flex-direction:column; gap:12px;
+    background:var(--surface-card); border-radius:20px; padding:18px; box-shadow:var(--shadow-card);
   }
 
   .card-header{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
@@ -71,7 +71,8 @@
     display:inline-flex; align-items:center; justify-content:center; min-width:24px; height:20px;
     padding:0 7px; border-radius:999px; font-size:11px; font-weight:800;
   }
-  .points-label{ font-size:9.5px; font-weight:600; color:var(--ink-faint); white-space:nowrap; }
+  .points-stat{ font-size:9.5px; font-weight:600; color:var(--ink-faint); white-space:nowrap; }
+  .points-stat b{ color:var(--ink-secondary); font-weight:800; }
 
   .bday-chip, .level-badge{
     display:inline-flex; align-items:center; gap:5px; align-self:flex-start;
@@ -175,24 +176,40 @@
   footer.note{ max-width:1180px; margin:32px auto 0; padding:0 20px; font-size:11.5px; color:var(--ink-faint); text-align:center; }
 
   @media (max-width:767px){
-    .switcher{ display:flex; }
+    .top-bar{
+      position:fixed; top:0; left:0; right:0; z-index:60;
+      background:var(--paper); padding:calc(8px + env(safe-area-inset-top)) 20px 0;
+      box-shadow:0 2px 10px rgba(34,38,43,.05);
+    }
+    header.top{ margin-bottom:2px; }
+    .eyebrow{ font-size:10.5px; }
+    .today{ font-size:13px; }
+    .wrap{ padding-top:var(--mobile-top-h, 112px); }
+
+    .switcher{ display:flex; gap:10px; padding:6px 4px 8px; }
+    .switcher-avatar{ width:36px; height:36px; font-size:13px; }
+    .switcher-avatar.is-active{ width:44px; height:44px; font-size:16px; }
+    .switcher-label{ font-size:9.5px; }
+
     .cards{ display:block; }
     .card{ display:none; }
     .card.is-selected{ display:flex; }
 
-    .avatar{ width:56px; height:56px; font-size:20px; }
-    .person-name{ font-size:20px; }
-    .person-role{ font-size:13px; }
-    .bday-chip, .level-badge{ font-size:12.5px; padding:6px 14px 6px 10px; }
-    .ring-wrap{ width:150px; height:150px; margin:0 auto; }
-    .ring-inner{ inset:12px; }
-    .ring-value{ font-size:28px; }
-    .ring-label{ font-size:10px; }
-    .habit-row{ padding:13px 16px; border-radius:14px; }
-    .habit-indicator{ width:24px; height:24px; }
-    .habit-indicator--weekly{ min-width:24px; font-size:11px; }
-    .habit-name{ font-size:15px; }
-    .habit-streak{ font-size:12px; }
+    .card{ gap:8px; padding:14px; }
+    .avatar{ width:40px; height:40px; font-size:15px; }
+    .person-name{ font-size:16px; }
+    .person-role{ font-size:11.5px; }
+    .bday-chip, .level-badge{ font-size:11px; padding:4px 11px 4px 8px; }
+    .ring-wrap{ width:88px; height:88px; margin:0 auto; }
+    .ring-inner{ inset:7px; }
+    .ring-value{ font-size:16px; }
+    .ring-label{ font-size:8px; }
+    .habit-list{ gap:4px; max-height:98px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+    .habit-row{ padding:7px 10px; border-radius:11px; }
+    .habit-indicator{ width:20px; height:20px; }
+    .habit-indicator--weekly{ min-width:20px; font-size:10px; }
+    .habit-name{ font-size:12.5px; }
+    .habit-streak{ font-size:10.5px; }
 
     .redeem-as-row{ flex-direction:column; align-items:stretch; }
     .redeem-as-left{ justify-content:space-between; }
@@ -204,15 +221,16 @@
 </head>
 <body>
 
-<div class="wrap">
+<div class="top-bar" id="topBar">
   <header class="top">
     <div class="eyebrow">Phipps House</div>
     <div class="today" id="todayLabel">&nbsp;</div>
   </header>
+  <div class="switcher" id="switcher"></div>
+</div>
 
+<div class="wrap">
   <div class="page active" id="pageHabits">
-    <div class="switcher" id="switcher"></div>
-    <div class="swipe-hint">Swipe or tap an avatar to switch profile</div>
     <div class="cards" id="cards"></div>
   </div>
 
@@ -244,35 +262,33 @@
   const LEVEL_GROWTH = 1.25;
   const LEVEL_TITLES = ['Sock drawer sergeant', 'Duty deputy', 'Chore cadet', 'Tidy titan', 'Household hero', 'Domestic dynamo', 'Grand vizier of vacuuming'];
 
-  // NOTE: birthdays below are placeholders — edit each person's { month, day }
-  // before this is useful for real.
   const ROSTER = [
-    { id:'matt', name:'Matt', role:'Parent', initial:'M', color:'#2fa9e5', birthday:{ month:9, day:2 },
+    { id:'matt', name:'Matt', role:'Parent', initial:'M', color:'#2fa9e5', birthday:{ month:3, day:21 },
       habits:[
         { id:'vitamins', name:'Take vitamins', freq:'daily' },
         { id:'exercise', name:'Exercise 20 min', freq:'weekly', target:3 },
         { id:'winddown', name:'Screen-free wind down', freq:'daily' },
       ] },
-    { id:'jemma', name:'Jemma', role:'Parent', initial:'J', color:'#9b6bf0', birthday:{ month:8, day:25 },
+    { id:'jemma', name:'Jemma', role:'Parent', initial:'J', color:'#9b6bf0', birthday:{ month:8, day:13 },
       habits:[
         { id:'vitamins', name:'Take vitamins', freq:'daily' },
         { id:'exercise', name:'Exercise 20 min', freq:'weekly', target:3 },
         { id:'tidy', name:'Tidy your space', freq:'daily' },
       ] },
-    { id:'henry', name:'Henry', role:'Kid', initial:'H', color:'#3dbe72', birthday:{ month:10, day:10 },
+    { id:'henry', name:'Henry', role:'Kid', initial:'H', color:'#3dbe72', birthday:{ month:9, day:19 },
       habits:[
         { id:'vitamins', name:'Take vitamins', freq:'daily' },
         { id:'brush', name:'Brush teeth', freq:'daily' },
         { id:'read', name:'Read 20 minutes', freq:'daily' },
         { id:'room', name:'Tidy your room', freq:'daily' },
       ] },
-    { id:'ted', name:'Ted', role:'Kid', initial:'T', color:'#ff6b5b', birthday:{ month:2, day:14 },
+    { id:'ted', name:'Ted', role:'Kid', initial:'T', color:'#ff6b5b', birthday:{ month:3, day:2 },
       habits:[
         { id:'vitamins', name:'Take vitamins', freq:'daily' },
         { id:'brush', name:'Brush teeth', freq:'daily' },
         { id:'read', name:'Read 20 minutes', freq:'daily' },
       ] },
-    { id:'lorraine', name:'Lorraine', role:'Grandma', initial:'L', color:'#ffc93c', birthday:{ month:8, day:20 },
+    { id:'lorraine', name:'Lorraine', role:'Grandma', initial:'L', color:'#ffc93c', birthday:{ month:6, day:28 },
       habits:[
         { id:'walk', name:'Afternoon walk', freq:'weekly', target:5 },
         { id:'call', name:'Call a grandchild', freq:'weekly', target:1 },
@@ -291,7 +307,8 @@
   function defaultPersonState(){
     const today = new Date();
     return {
-      bankedPoints: 0,
+      bankedPoints: 0, // spendable currency — goes down when a reward is redeemed
+      totalBanked: 0,  // lifetime points ever earned — never decreases; drives level + rank
       piggyReward: 0, // real money earned by redeeming a cash reward
       lastResetDate: dateKey(today),
       weekAnchor: mondayKey(today),
@@ -330,6 +347,7 @@
     ROSTER.forEach((p) => {
       s.people[p.id] = (saved && saved.people && saved.people[p.id]) || defaultPersonState();
       if (typeof s.people[p.id].piggyReward !== 'number') s.people[p.id].piggyReward = 0;
+      if (typeof s.people[p.id].totalBanked !== 'number') s.people[p.id].totalBanked = s.people[p.id].bankedPoints;
       p.habits.forEach((h) => {
         if (!s.people[p.id].habits.find((x) => x.id === h.id)) {
           s.people[p.id].habits.push({ id:h.id, done:false, count:0, streak:0 });
@@ -365,7 +383,8 @@
   function formatBirthday(info){
     if (info.today) return `Birthday today! +${BIRTHDAY_BONUS} pts`;
     if (info.mode === 'days') return `${info.diffDays} day${info.diffDays === 1 ? '' : 's'} to go`;
-    const parts = [`${info.months} month${info.months === 1 ? '' : 's'}`];
+    const parts = [];
+    if (info.months > 0) parts.push(`${info.months} month${info.months === 1 ? '' : 's'}`);
     if (info.weeks > 0) parts.push(`${info.weeks} week${info.weeks === 1 ? '' : 's'}`);
     return parts.join(', ');
   }
@@ -387,18 +406,36 @@
     return `conic-gradient(${color} 0% ${percent}%, #eef0f3 ${percent}% 100%)`;
   }
 
-  // Points a person has actually banked, plus whatever is checked off right
-  // now that hasn't rolled over into a banked total yet.
-  function computePersonPoints(personId){
+  // Whatever's checked off right now but hasn't rolled over into a banked
+  // total yet — contributes equally to both the spendable and lifetime pools.
+  function liveContribution(personId){
     const p = ROSTER.find((r) => r.id === personId);
-    const ps = state.people[personId];
-    let live = ps.bankedPoints;
+    let live = 0;
     p.habits.forEach((h) => {
       const hs = habitStateOf(personId, h.id);
       if (h.freq === 'daily') { if (hs.done) live += HABIT_POINTS; }
       else { live += hs.count * HABIT_POINTS; }
     });
     return live;
+  }
+
+  // Spendable currency: goes up when habits are ticked, down when a reward
+  // is redeemed. This is what "can they afford it" checks against.
+  function computeSpendablePoints(personId){
+    return state.people[personId].bankedPoints + liveContribution(personId);
+  }
+
+  // Lifetime total: never decreases, even when points are spent. Drives
+  // level/rank so redeeming a reward doesn't undo someone's progress.
+  function computeTotalPoints(personId){
+    return state.people[personId].totalBanked + liveContribution(personId);
+  }
+
+  // Credits an amount to both pools at once — the only way points are earned,
+  // so the two totals can never drift apart.
+  function awardPoints(ps, amount){
+    ps.bankedPoints += amount;
+    ps.totalBanked += amount;
   }
 
   // Rolls yesterday's daily ticks and last week's weekly counts into banked
@@ -416,7 +453,7 @@
       if (ps.lastResetDate !== todayKey) {
         p.habits.filter((h) => h.freq === 'daily').forEach((h) => {
           const hs = habitStateOf(p.id, h.id);
-          if (hs.done) { ps.bankedPoints += HABIT_POINTS; hs.streak += 1; }
+          if (hs.done) { awardPoints(ps, HABIT_POINTS); hs.streak += 1; }
           else { hs.streak = 0; }
           hs.done = false;
         });
@@ -427,7 +464,7 @@
       if (ps.weekAnchor !== thisMonday) {
         p.habits.filter((h) => h.freq === 'weekly').forEach((h) => {
           const hs = habitStateOf(p.id, h.id);
-          ps.bankedPoints += hs.count * HABIT_POINTS;
+          awardPoints(ps, hs.count * HABIT_POINTS);
           hs.streak = hs.count >= h.target ? hs.streak + 1 : 0;
           hs.count = 0;
         });
@@ -439,7 +476,7 @@
       if (bday.today) {
         const year = today.getFullYear();
         if (ps.bdayAwardedYear !== year) {
-          ps.bankedPoints += BIRTHDAY_BONUS;
+          awardPoints(ps, BIRTHDAY_BONUS);
           ps.bdayAwardedYear = year;
           changed = true;
         }
@@ -477,7 +514,7 @@
     const personId = state.selectedId;
     const reward = REWARDS.find((r) => r.id === rewardId);
     const p = ROSTER.find((r) => r.id === personId);
-    const points = computePersonPoints(personId);
+    const points = computeSpendablePoints(personId);
     if (points < reward.cost) {
       showToast(`${p.name} needs ${reward.cost - points} more points for that.`, 'danger');
       return;
@@ -531,10 +568,11 @@
   }
 
   function renderCard(p){
-    const points = computePersonPoints(p.id);
-    const lv = computeLevel(points);
+    const totalPoints = computeTotalPoints(p.id);
+    const spendablePoints = computeSpendablePoints(p.id);
+    const lv = computeLevel(totalPoints);
     const levelTitle = LEVEL_TITLES[Math.min(lv.level, LEVEL_TITLES.length) - 1];
-    const ranked = [...ROSTER].sort((a, b) => computePersonPoints(b.id) - computePersonPoints(a.id));
+    const ranked = [...ROSTER].sort((a, b) => computeTotalPoints(b.id) - computeTotalPoints(a.id));
     const rank = ranked.findIndex((r) => r.id === p.id) + 1;
 
     const dailyDefs = p.habits.filter((h) => h.freq === 'daily');
@@ -573,7 +611,8 @@
       +   `</div>`
       +   `<div class="card-header-right">`
       +     `<div class="rank-badge" style="background:${rankBg};color:${rankColor};">#${rank}</div>`
-      +     `<div class="points-label">${points} pts</div>`
+      +     `<div class="points-stat">Total <b>${totalPoints}</b></div>`
+      +     `<div class="points-stat">Now <b>${spendablePoints}</b></div>`
       +   `</div>`
       + `</div>`
       + (showBday ? `<div class="bday-chip" style="background:${bdayBg};color:${bdayColor};">${cakeSvg()}${formatBirthday(bday)}</div>` : '')
@@ -604,7 +643,7 @@
 
   function renderRedeemAsBar(){
     const options = ROSTER.map((p) => `<option value="${p.id}" ${p.id === state.selectedId ? 'selected' : ''}>${escapeHtml(p.name)}</option>`).join('');
-    const points = computePersonPoints(state.selectedId);
+    const points = computeSpendablePoints(state.selectedId);
     const cash = state.people[state.selectedId].piggyReward;
     return `<div class="redeem-as-row">`
       + `<div class="redeem-as-left">`
@@ -616,7 +655,7 @@
   }
 
   function renderRewardRow(reward){
-    const points = computePersonPoints(state.selectedId);
+    const points = computeSpendablePoints(state.selectedId);
     const affordable = points >= reward.cost;
     return `<div class="reward-row">`
       + `<div class="reward-row-info">`
@@ -630,6 +669,15 @@
       + `</div>`;
   }
 
+  // The mobile top bar (header + switcher) is fixed, so page content needs
+  // padding-top matching its real rendered height — measured rather than
+  // guessed, since it varies with font metrics and the safe-area inset.
+  function syncTopBarHeight(){
+    if (!window.matchMedia('(max-width:767px)').matches) return;
+    const h = document.getElementById('topBar').offsetHeight;
+    document.documentElement.style.setProperty('--mobile-top-h', h + 'px');
+  }
+
   function render(){
     document.getElementById('todayLabel').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
     document.getElementById('switcher').innerHTML = renderSwitcher();
@@ -638,6 +686,7 @@
     document.getElementById('rewardList').innerHTML = REWARDS.map((r) => renderRewardRow(r)).join('');
     document.getElementById('tabHabits').innerHTML = circleCheckSvg(20) + '<span>Habits</span>';
     document.getElementById('tabRewards').innerHTML = giftSvg(20) + '<span>Rewards</span>';
+    syncTopBarHeight();
   }
 
   document.addEventListener('click', (e) => {
@@ -670,6 +719,8 @@
 
   rolloverIfNeeded();
   render();
+
+  window.addEventListener('resize', syncTopBarHeight);
 
   // Catch a midnight/Monday rollover if the page is left open across it.
   setInterval(() => { rolloverIfNeeded(); render(); }, 5 * 60 * 1000);
