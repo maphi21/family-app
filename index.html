@@ -74,12 +74,13 @@
   .points-stat{ font-size:9.5px; font-weight:600; color:var(--ink-faint); white-space:nowrap; }
   .points-stat b{ color:var(--ink-secondary); font-weight:800; }
 
-  .bday-chip, .level-badge{
+  .bday-chip, .level-badge, .piggy-chip{
     display:inline-flex; align-items:center; gap:5px; align-self:flex-start;
     border-radius:999px; padding:4px 10px 4px 7px; font-size:10.5px; font-weight:700;
     max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .bday-chip svg, .level-badge svg{ flex-shrink:0; }
+  .bday-chip svg, .level-badge svg, .piggy-chip svg{ flex-shrink:0; }
+  .piggy-chip{ background:#eaf9ef; color:#1f7643; }
 
   .level-block{ display:flex; flex-direction:column; gap:5px; }
   .level-bar-row{ display:flex; align-items:center; gap:8px; }
@@ -109,18 +110,33 @@
 
   .page-sub{ font-size:13.5px; color:var(--ink-secondary); margin:0 0 18px; }
 
+  .page-stats{ margin-bottom:18px; }
+  .pts-available{ font-size:14px; font-weight:700; color:var(--ink); }
+  .pts-available b{ font-weight:800; }
+  .piggy-saved{ font-size:12.5px; font-weight:700; color:#1f7643; margin-top:2px; }
+
+  .wallet-strip{ display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+  .wallet-label{ font-size:11.5px; font-weight:700; color:var(--ink-secondary); text-transform:uppercase; letter-spacing:0.04em; }
+  .wallet-list{ display:flex; flex-direction:column; gap:8px; }
+  .wallet-chip{
+    display:flex; align-items:center; gap:10px;
+    background:#eaf9ef; border-radius:999px; padding:8px 8px 8px 16px;
+  }
+  .wallet-chip-name{ flex:1; min-width:0; font-size:13px; font-weight:700; color:#1f7643; }
+  .wallet-use-btn{
+    flex-shrink:0; font-family:inherit; font-size:12px; font-weight:800; color:#fff;
+    background:#2a9c58; border:none; border-radius:999px; padding:8px 14px; cursor:pointer;
+    transition:transform .12s ease;
+  }
+  .wallet-use-btn:active{ transform:scale(.96); }
+
   .reward-list{ display:flex; flex-direction:column; gap:8px; }
   .reward-row{
     display:flex; align-items:center; justify-content:space-between; gap:12px;
     background:var(--surface-sunken); border-radius:14px; padding:12px 14px;
   }
   .reward-row-info{ display:flex; flex-direction:column; gap:5px; min-width:0; }
-  .reward-row-name-line{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   .reward-row-name{ font-size:14px; font-weight:700; }
-  .reward-owned{
-    font-size:10.5px; font-weight:700; color:var(--ink-secondary);
-    background:var(--surface-card); border-radius:999px; padding:2px 9px;
-  }
   .reward-row-costs{ display:flex; gap:6px; flex-wrap:wrap; }
   .reward-cost{
     display:inline-flex; align-items:center; gap:5px; background:var(--surface-card); color:#a67800;
@@ -131,7 +147,6 @@
     border-radius:999px; padding:4px 11px 4px 8px; font-size:12px; font-weight:700;
   }
 
-  .reward-row-btns{ display:flex; gap:8px; flex-shrink:0; }
   .reward-row-btn{
     flex-shrink:0; font-family:inherit; font-size:12.5px; font-weight:700; color:var(--ink);
     background:#ffc93c; border:none; border-radius:999px; padding:10px 16px; cursor:pointer;
@@ -139,13 +154,6 @@
   }
   .reward-row-btn:active{ transform:scale(.96); }
   .reward-row-btn:disabled{ opacity:.4; cursor:not-allowed; }
-  .reward-use-btn{
-    flex-shrink:0; font-family:inherit; font-size:12.5px; font-weight:700; color:var(--ink);
-    background:transparent; border:1.5px solid var(--track); border-radius:999px; padding:10px 16px; cursor:pointer;
-    transition:transform .12s ease;
-  }
-  .reward-use-btn:active{ transform:scale(.96); }
-  .reward-use-btn:disabled{ opacity:.4; cursor:not-allowed; }
 
   .lb-list{ display:flex; flex-direction:column; gap:10px; }
   .lb-row{
@@ -212,7 +220,8 @@
     .avatar{ width:56px; height:56px; font-size:20px; }
     .person-name{ font-size:20px; }
     .person-role{ font-size:13px; }
-    .bday-chip, .level-badge{ font-size:12.5px; padding:6px 14px 6px 10px; }
+    .bday-chip, .level-badge, .piggy-chip{ font-size:12.5px; padding:6px 14px 6px 10px; }
+    .lb-info .level-badge{ font-size:10.5px; padding:4px 10px 4px 7px; }
     .ring-wrap{ width:150px; height:150px; margin:0 auto; }
     .ring-inner{ inset:12px; }
     .ring-value{ font-size:28px; }
@@ -223,8 +232,7 @@
     .habit-name{ font-size:15px; }
     .habit-streak{ font-size:12px; }
 
-    .reward-row{ flex-direction:column; align-items:stretch; }
-    .reward-row-btn, .reward-use-btn{ flex:1; padding-top:12px; padding-bottom:12px; }
+    .reward-row-btn{ padding-top:11px; padding-bottom:11px; }
   }
 </style>
 </head>
@@ -245,6 +253,8 @@
 
   <div class="page" id="pageRewards">
     <p class="page-sub">Spend hard-earned points on real rewards.</p>
+    <div id="pageStats"></div>
+    <div id="walletSection"></div>
     <div class="reward-list" id="rewardList"></div>
   </div>
 
@@ -276,33 +286,35 @@
   const LEVEL_GROWTH = 1.25;
   const LEVEL_TITLES = ['Sock drawer sergeant', 'Duty deputy', 'Chore cadet', 'Tidy titan', 'Household hero', 'Domestic dynamo', 'Grand vizier of vacuuming'];
 
+  // pocketWeekly: £ target per week, scaled by that week's daily-habit
+  // completion ratio (see weeklyRatioSoFar / rolloverIfNeeded). 0 = no allowance.
   const ROSTER = [
-    { id:'matt', name:'Matt', role:'Parent', initial:'M', color:'#2fa9e5', birthday:{ month:3, day:21 },
+    { id:'matt', name:'Matt', role:'Parent', initial:'M', color:'#2fa9e5', birthday:{ month:3, day:21 }, pocketWeekly:0,
       habits:[
         { id:'vitamins', name:'Take vitamins', freq:'daily' },
         { id:'exercise', name:'Exercise 20 min', freq:'weekly', target:3 },
         { id:'winddown', name:'Screen-free wind down', freq:'daily' },
       ] },
-    { id:'jemma', name:'Jemma', role:'Parent', initial:'J', color:'#9b6bf0', birthday:{ month:8, day:13 },
+    { id:'jemma', name:'Jemma', role:'Parent', initial:'J', color:'#9b6bf0', birthday:{ month:8, day:13 }, pocketWeekly:0,
       habits:[
         { id:'vitamins', name:'Take vitamins', freq:'daily' },
         { id:'exercise', name:'Exercise 20 min', freq:'weekly', target:3 },
         { id:'tidy', name:'Tidy your space', freq:'daily' },
       ] },
-    { id:'henry', name:'Henry', role:'Kid', initial:'H', color:'#3dbe72', birthday:{ month:9, day:19 },
+    { id:'henry', name:'Henry', role:'Kid', initial:'H', color:'#3dbe72', birthday:{ month:9, day:19 }, pocketWeekly:5,
       habits:[
         { id:'vitamins', name:'Take vitamins', freq:'daily' },
         { id:'brush', name:'Brush teeth', freq:'daily' },
         { id:'read', name:'Read 20 minutes', freq:'daily' },
         { id:'room', name:'Tidy your room', freq:'daily' },
       ] },
-    { id:'ted', name:'Ted', role:'Kid', initial:'T', color:'#ff6b5b', birthday:{ month:3, day:2 },
+    { id:'ted', name:'Ted', role:'Kid', initial:'T', color:'#ff6b5b', birthday:{ month:3, day:2 }, pocketWeekly:5,
       habits:[
         { id:'vitamins', name:'Take vitamins', freq:'daily' },
         { id:'brush', name:'Brush teeth', freq:'daily' },
         { id:'read', name:'Read 20 minutes', freq:'daily' },
       ] },
-    { id:'lorraine', name:'Lorraine', role:'Grandma', initial:'L', color:'#ffc93c', birthday:{ month:6, day:28 },
+    { id:'lorraine', name:'Lorraine', role:'Grandma', initial:'L', color:'#ffc93c', birthday:{ month:6, day:28 }, pocketWeekly:0,
       habits:[
         { id:'walk', name:'Afternoon walk', freq:'weekly', target:5 },
         { id:'call', name:'Call a grandchild', freq:'weekly', target:1 },
@@ -317,6 +329,11 @@
     const m = new Date(d.getFullYear(), d.getMonth(), d.getDate() - dow);
     return dateKey(m);
   }
+  function addDaysKey(k, n){
+    const [y, m, d] = k.split('-').map(Number);
+    return dateKey(new Date(y, m - 1, d + n));
+  }
+  function roundMoney(n){ return Math.round(n * 100) / 100; }
 
   function defaultPersonState(){
     const today = new Date();
@@ -324,6 +341,8 @@
       bankedPoints: 0, // spendable currency — goes down when a reward is redeemed
       totalBanked: 0,  // lifetime points ever earned — never decreases; drives level + rank
       piggyReward: 0, // real money earned by redeeming a cash reward
+      piggyPocket: 0, // real money earned via the weekly habit-ratio allowance
+      dailyRatioHistory: {}, // dateKey -> that day's daily-habit completion ratio (0..1)
       rewardInventory: {}, // rewardId -> how many bought-but-not-yet-used are owned
       lastResetDate: dateKey(today),
       weekAnchor: mondayKey(today),
@@ -362,8 +381,10 @@
     ROSTER.forEach((p) => {
       s.people[p.id] = (saved && saved.people && saved.people[p.id]) || defaultPersonState();
       if (typeof s.people[p.id].piggyReward !== 'number') s.people[p.id].piggyReward = 0;
+      if (typeof s.people[p.id].piggyPocket !== 'number') s.people[p.id].piggyPocket = 0;
       if (typeof s.people[p.id].totalBanked !== 'number') s.people[p.id].totalBanked = s.people[p.id].bankedPoints;
       if (!s.people[p.id].rewardInventory || typeof s.people[p.id].rewardInventory !== 'object') s.people[p.id].rewardInventory = {};
+      if (!s.people[p.id].dailyRatioHistory || typeof s.people[p.id].dailyRatioHistory !== 'object') s.people[p.id].dailyRatioHistory = {};
       p.habits.forEach((h) => {
         if (!s.people[p.id].habits.find((x) => x.id === h.id)) {
           s.people[p.id].habits.push({ id:h.id, done:false, count:0, streak:0 });
@@ -454,6 +475,44 @@
     ps.totalBanked += amount;
   }
 
+  // Weekly pocket money, adapted from the original prototype: each day
+  // contributes at most 1/7th of the week's allowance, so it builds up
+  // gradually rather than all-or-nothing. Only daily habits count toward the
+  // ratio — a weekly-target habit isn't a "today" concept, so it earns its
+  // own points but doesn't feed this. Past days come from the archived
+  // history; today is read live so the estimate updates as habits are ticked;
+  // future days in the week simply haven't contributed yet.
+  function weeklyRatioSoFar(personId){
+    const ps = state.people[personId];
+    const p = ROSTER.find((r) => r.id === personId);
+    const dailyDefs = p.habits.filter((h) => h.freq === 'daily');
+    const todayKeyStr = dateKey(new Date());
+    let sum = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = addDaysKey(ps.weekAnchor, i);
+      if (d === todayKeyStr) {
+        sum += dailyDefs.length ? dailyDefs.filter((h) => habitStateOf(personId, h.id).done).length / dailyDefs.length : 0;
+      } else if (d < todayKeyStr) {
+        sum += ps.dailyRatioHistory[d] || 0;
+      }
+    }
+    return sum / 7;
+  }
+
+  // Live "building" estimate for the week in progress — shown on the profile
+  // card. Not yet banked; only paid into piggyPocket at the week's rollover.
+  function weeklyEstimate(personId){
+    const p = ROSTER.find((r) => r.id === personId);
+    return roundMoney(p.pocketWeekly * weeklyRatioSoFar(personId));
+  }
+
+  // Combined real-money balance: the weekly ratio-based allowance plus
+  // whatever's been separately cashed out by redeeming a points reward.
+  function piggyTotal(personId){
+    const ps = state.people[personId];
+    return roundMoney(ps.piggyPocket + ps.piggyReward);
+  }
+
   // Rolls yesterday's daily ticks and last week's weekly counts into banked
   // points + streaks, then clears them for the new day/week. Also awards the
   // once-a-year birthday bonus. Runs on load and again at local midnight.
@@ -467,12 +526,21 @@
       const ps = state.people[p.id];
 
       if (ps.lastResetDate !== todayKey) {
-        p.habits.filter((h) => h.freq === 'daily').forEach((h) => {
+        const dailyDefs = p.habits.filter((h) => h.freq === 'daily');
+        if (dailyDefs.length) {
+          const doneCount = dailyDefs.filter((h) => habitStateOf(p.id, h.id).done).length;
+          ps.dailyRatioHistory[ps.lastResetDate] = doneCount / dailyDefs.length;
+        }
+        dailyDefs.forEach((h) => {
           const hs = habitStateOf(p.id, h.id);
           if (hs.done) { awardPoints(ps, HABIT_POINTS); hs.streak += 1; }
           else { hs.streak = 0; }
           hs.done = false;
         });
+        // Keep ~9 weeks of ratio history — plenty for the payout calc below,
+        // bounded so it doesn't grow forever.
+        const cutoff = addDaysKey(todayKey, -63);
+        Object.keys(ps.dailyRatioHistory).forEach((k) => { if (k < cutoff) delete ps.dailyRatioHistory[k]; });
         ps.lastResetDate = todayKey;
         changed = true;
       }
@@ -484,6 +552,11 @@
           hs.streak = hs.count >= h.target ? hs.streak + 1 : 0;
           hs.count = 0;
         });
+        if (p.pocketWeekly > 0) {
+          let sum = 0;
+          for (let i = 0; i < 7; i++) sum += ps.dailyRatioHistory[addDaysKey(ps.weekAnchor, i)] || 0;
+          ps.piggyPocket = roundMoney(ps.piggyPocket + roundMoney(p.pocketWeekly * (sum / 7)));
+        }
         ps.weekAnchor = thisMonday;
         changed = true;
       }
@@ -599,6 +672,11 @@
   function banknoteSvg(){
     return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 12h.01M18 12h.01"/></svg>';
   }
+  function piggyBankSvg(){
+    return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+      + '<path d="M19 5c-1.5 0-2.8 1.1-3 2.5-3.6-1.4-11-.2-11 5 0 1.7.2 2.9 2 4.2V20h4v-1.5h3V20h4v-4c1-.4 1.7-1 2-2h2v-4h-2c-.2-1-.6-1.7-1-2z"/>'
+      + '<circle cx="16.5" cy="10.5" r=".6" fill="currentColor"/><path d="M2 10.5v1.2h2.3"/></svg>';
+  }
   function trophySvg(size){
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">`
       + '<path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10"/><path d="M17 4v6a5 5 0 0 1-10 0V4"/>'
@@ -626,6 +704,8 @@
     const rankBg = rank === 1 ? '#ffc93c' : '#eef0f3';
     const rankColor = rank === 1 ? '#22262b' : '#3d434b';
     const levelBg = tint(p.color, 0.14);
+    const showPiggy = p.pocketWeekly > 0;
+    const piggyEstimate = showPiggy ? weeklyEstimate(p.id) : 0;
 
     const habitsHtml = p.habits.map((h) => {
       const hs = habitStateOf(p.id, h.id);
@@ -654,6 +734,7 @@
       +   `</div>`
       + `</div>`
       + (showBday ? `<div class="bday-chip" style="background:${bdayBg};color:${bdayColor};">${cakeSvg()}${formatBirthday(bday)}</div>` : '')
+      + (showPiggy ? `<div class="piggy-chip">${piggyBankSvg()}&pound;${piggyEstimate.toFixed(2)} this week</div>` : '')
       + `<div class="level-block">`
       +   `<div class="level-badge" style="background:${levelBg};color:${p.color};">${lv.level >= 3 ? medalSvg() : starSvg()}${escapeHtml(levelTitle)}</div>`
       +   `<div class="level-bar-row">`
@@ -682,22 +763,44 @@
   function renderRewardRow(reward){
     const points = computeSpendablePoints(state.selectedId);
     const affordable = points >= reward.cost;
-    const owned = state.people[state.selectedId].rewardInventory[reward.id] || 0;
     return `<div class="reward-row">`
       + `<div class="reward-row-info">`
-      +   `<div class="reward-row-name-line">`
-      +     `<div class="reward-row-name">${escapeHtml(reward.name)}</div>`
-      +     (owned > 0 ? `<div class="reward-owned">&times;${owned} owned</div>` : '')
-      +   `</div>`
+      +   `<div class="reward-row-name">${escapeHtml(reward.name)}</div>`
       +   `<div class="reward-row-costs">`
       +     `<div class="reward-cost">${starSvg()}${reward.cost} pts</div>`
       +     (reward.cash ? `<div class="reward-cash">${banknoteSvg()}+&pound;${reward.cash}</div>` : '')
       +   `</div>`
       + `</div>`
-      + `<div class="reward-row-btns">`
-      +   `<button class="reward-row-btn" data-reward="${reward.id}" ${affordable ? '' : 'disabled'}>Redeem</button>`
-      +   `<button class="reward-use-btn" data-reward="${reward.id}" ${owned > 0 ? '' : 'disabled'}>Use 1</button>`
-      + `</div>`
+      + `<button class="reward-row-btn" data-reward="${reward.id}" ${affordable ? '' : 'disabled'}>Redeem</button>`
+      + `</div>`;
+  }
+
+  // "How much can I spend right now" — points for the shop below, plus
+  // real money saved (weekly allowance + any cashed-out rewards) if any.
+  function renderPageStats(){
+    const pts = computeSpendablePoints(state.selectedId);
+    const saved = piggyTotal(state.selectedId);
+    return `<div class="page-stats">`
+      + `<div class="pts-available"><b>${pts}</b> pts to spend</div>`
+      + (saved > 0 ? `<div class="piggy-saved">&pound;${saved.toFixed(2)} saved</div>` : '')
+      + `</div>`;
+  }
+
+  // Only appears once the selected person owns at least one un-used reward —
+  // buying (Redeem, in the shop below) and claiming (Use, here) are separate
+  // actions, so this stays empty most of the time instead of showing dead
+  // controls for everything that hasn't been bought yet.
+  function renderWalletStrip(){
+    const inventory = state.people[state.selectedId].rewardInventory;
+    const owned = REWARDS.filter((r) => (inventory[r.id] || 0) > 0);
+    if (!owned.length) return '';
+    const chips = owned.map((r) => `<div class="wallet-chip">`
+      + `<div class="wallet-chip-name">${escapeHtml(r.name)} &times;${inventory[r.id]}</div>`
+      + `<button class="wallet-use-btn" data-reward="${r.id}">Use 1</button>`
+      + `</div>`).join('');
+    return `<div class="wallet-strip">`
+      + `<div class="wallet-label">Ready to use</div>`
+      + `<div class="wallet-list">${chips}</div>`
       + `</div>`;
   }
 
@@ -744,6 +847,8 @@
     document.getElementById('todayLabel').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
     document.getElementById('switcher').innerHTML = renderSwitcher();
     document.getElementById('cards').innerHTML = ROSTER.map((p) => renderCard(p)).join('');
+    document.getElementById('pageStats').innerHTML = renderPageStats();
+    document.getElementById('walletSection').innerHTML = renderWalletStrip();
     document.getElementById('rewardList').innerHTML = REWARDS.map((r) => renderRewardRow(r)).join('');
     document.getElementById('lbList').innerHTML = renderLeaderboard();
     document.getElementById('tabHabits').innerHTML = circleCheckSvg(20) + '<span>Habits</span>';
@@ -759,8 +864,8 @@
     if (pill) { selectPerson(pill.dataset.person); return; }
     const redeemBtn = e.target.closest('.reward-row-btn');
     if (redeemBtn && !redeemBtn.disabled) { redeemReward(redeemBtn.dataset.reward); return; }
-    const useBtn = e.target.closest('.reward-use-btn');
-    if (useBtn && !useBtn.disabled) { useReward(useBtn.dataset.reward); return; }
+    const useBtn = e.target.closest('.wallet-use-btn');
+    if (useBtn) { useReward(useBtn.dataset.reward); return; }
     const tabBtn = e.target.closest('.tab-btn');
     if (tabBtn) { switchTab(tabBtn.dataset.page); }
   });
