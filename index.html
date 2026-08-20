@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Family HQ">
+<meta name="theme-color" content="#ffc93c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23ffc93c'/%3E%3Cpath d='M32 14 L52 32 h-6 v18 H18 V32 h-6 Z' fill='%2322262b'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<title>Family HQ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+  :root{
+    --paper:#fffdf8;
+    --ink:#22262b;
+    --ink-secondary:#6b7280;
+    --ink-faint:#a8afb8;
+    --surface-card:#ffffff;
+    --surface-sunken:#fef5e2;
+    --track:#eef0f3;
+    --shadow-card:0 2px 8px rgba(34,38,43,0.06), 0 8px 24px rgba(34,38,43,0.06);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html{ -webkit-touch-callout:none; }
+  body{
+    margin:0; font-family:'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background:var(--paper); color:var(--ink); min-height:100vh; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1180px; margin:0 auto; padding:28px 20px 48px; }
+
+  header.top{ display:flex; flex-direction:column; gap:2px; margin-bottom:22px; }
+  .eyebrow{ font-size:12px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-faint); }
+  .today{ font-size:16px; font-weight:600; color:var(--ink-secondary); }
+
+  .switcher{ display:none; gap:14px; overflow-x:auto; padding:2px 2px 14px; }
+  .switcher-pill{ display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0; cursor:pointer; }
+  .switcher-avatar{
+    width:50px; height:50px; border-radius:999px; color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px;
+    transition:all .15s;
+  }
+  .switcher-avatar.is-active{ width:60px; height:60px; font-size:22px; box-shadow:0 0 0 3px var(--paper), 0 0 0 6px currentColor; }
+  .switcher-label{ font-size:11px; font-weight:700; color:var(--ink-faint); }
+  .switcher-label.is-active{ color:var(--ink); }
+  .swipe-hint{ font-size:11.5px; font-weight:500; color:var(--ink-faint); margin:-6px 0 18px; }
+
+  .cards{ display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:18px; }
+  .card{
+    display:flex; flex-direction:column; gap:14px;
+    background:var(--surface-card); border-radius:20px; padding:20px; box-shadow:var(--shadow-card);
+  }
+
+  .card-header{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+  .card-header-left{ display:flex; align-items:center; gap:10px; min-width:0; }
+  .avatar{
+    width:44px; height:44px; border-radius:999px; color:#fff; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:16px;
+  }
+  .person-name{ font-size:14.5px; font-weight:800; letter-spacing:-0.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .person-role{ font-size:11px; font-weight:600; color:var(--ink-faint); }
+  .card-header-right{ display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0; }
+  .rank-badge{
+    display:inline-flex; align-items:center; justify-content:center; min-width:24px; height:20px;
+    padding:0 7px; border-radius:999px; font-size:11px; font-weight:800;
+  }
+  .points-label{ font-size:9.5px; font-weight:600; color:var(--ink-faint); white-space:nowrap; }
+
+  .bday-chip, .level-badge{
+    display:inline-flex; align-items:center; gap:5px; align-self:flex-start;
+    border-radius:999px; padding:4px 10px 4px 7px; font-size:10.5px; font-weight:700;
+    max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .bday-chip svg, .level-badge svg{ flex-shrink:0; }
+
+  .level-block{ display:flex; flex-direction:column; gap:5px; }
+  .level-bar-row{ display:flex; align-items:center; gap:8px; }
+  .level-track{ flex:1; height:6px; background:var(--track); border-radius:999px; overflow:hidden; }
+  .level-fill{ height:100%; border-radius:999px; transition:width .3s ease; }
+  .level-caption{ font-size:9px; font-weight:700; color:var(--ink-faint); flex-shrink:0; white-space:nowrap; }
+
+  .ring-holder{ display:flex; justify-content:center; }
+  .ring-wrap{ position:relative; width:92px; height:92px; }
+  .ring-outer{ width:100%; height:100%; border-radius:999px; transform:rotate(-90deg); }
+  .ring-inner{
+    position:absolute; inset:8px; border-radius:999px; background:var(--surface-card);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .ring-value{ font-size:17px; font-weight:800; line-height:1; }
+  .ring-label{ font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-faint); margin-top:2px; }
+
+  .habit-list{ display:flex; flex-direction:column; gap:6px; }
+  .habit-row{ display:flex; align-items:center; gap:8px; background:var(--surface-sunken); border-radius:11px; padding:7px 9px; cursor:pointer; }
+  .habit-indicator{
+    width:18px; height:18px; border-radius:6px; flex-shrink:0; border:2px solid transparent;
+    display:flex; align-items:center; justify-content:center; color:#fff;
+  }
+  .habit-indicator--weekly{ width:auto; min-width:18px; padding:0 5px; font-size:9px; font-weight:800; }
+  .habit-name{ flex:1; min-width:0; font-size:11.5px; font-weight:600; line-height:1.3; }
+  .habit-streak{ display:inline-flex; align-items:center; gap:2px; flex-shrink:0; font-size:9.5px; font-weight:700; color:#a67800; }
+
+  footer.note{ max-width:1180px; margin:32px auto 0; padding:0 20px; font-size:11.5px; color:var(--ink-faint); text-align:center; }
+
+  @media (max-width:767px){
+    .switcher{ display:flex; }
+    .cards{ display:block; }
+    .card{ display:none; }
+    .card.is-selected{ display:flex; }
+
+    .avatar{ width:56px; height:56px; font-size:20px; }
+    .person-name{ font-size:20px; }
+    .person-role{ font-size:13px; }
+    .bday-chip, .level-badge{ font-size:12.5px; padding:6px 14px 6px 10px; }
+    .ring-wrap{ width:150px; height:150px; margin:0 auto; }
+    .ring-inner{ inset:12px; }
+    .ring-value{ font-size:28px; }
+    .ring-label{ font-size:10px; }
+    .habit-row{ padding:13px 16px; border-radius:14px; }
+    .habit-indicator{ width:24px; height:24px; }
+    .habit-indicator--weekly{ min-width:24px; font-size:11px; }
+    .habit-name{ font-size:15px; }
+    .habit-streak{ font-size:12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Phipps House</div>
+    <div class="today" id="todayLabel">&nbsp;</div>
+  </header>
+
+  <div class="switcher" id="switcher"></div>
+  <div class="swipe-hint">Swipe or tap an avatar to switch profile</div>
+
+  <div class="cards" id="cards"></div>
+</div>
+
+<footer class="note">Saved on this device only &mdash; each phone or iPad keeps its own copy. Add to your Home Screen for one-tap access.</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  const STORAGE_KEY = 'familyHQ_profile_v1';
+  const HABIT_POINTS = 10;
+  const BIRTHDAY_BONUS = 100;
+  const SHOW_BDAY_WITHIN_DAYS = 60;
+  const LEVEL_BASE_PTS = 150;
+  const LEVEL_GROWTH = 1.25;
+  const LEVEL_TITLES = ['Sock drawer sergeant', 'Duty deputy', 'Chore cadet', 'Tidy titan', 'Household hero', 'Domestic dynamo', 'Grand vizier of vacuuming'];
+
+  // NOTE: birthdays below are placeholders — edit each person's { month, day }
+  // before this is useful for real.
+  const ROSTER = [
+    { id:'matt', name:'Matt', role:'Parent', initial:'M', color:'#2fa9e5', birthday:{ month:9, day:2 },
+      habits:[
+        { id:'vitamins', name:'Take vitamins', freq:'daily' },
+        { id:'exercise', name:'Exercise 20 min', freq:'weekly', target:3 },
+        { id:'winddown', name:'Screen-free wind down', freq:'daily' },
+      ] },
+    { id:'jemma', name:'Jemma', role:'Parent', initial:'J', color:'#9b6bf0', birthday:{ month:8, day:25 },
+      habits:[
+        { id:'vitamins', name:'Take vitamins', freq:'daily' },
+        { id:'exercise', name:'Exercise 20 min', freq:'weekly', target:3 },
+        { id:'tidy', name:'Tidy your space', freq:'daily' },
+      ] },
+    { id:'henry', name:'Henry', role:'Kid', initial:'H', color:'#3dbe72', birthday:{ month:10, day:10 },
+      habits:[
+        { id:'vitamins', name:'Take vitamins', freq:'daily' },
+        { id:'brush', name:'Brush teeth', freq:'daily' },
+        { id:'read', name:'Read 20 minutes', freq:'daily' },
+        { id:'room', name:'Tidy your room', freq:'daily' },
+      ] },
+    { id:'ted', name:'Ted', role:'Kid', initial:'T', color:'#ff6b5b', birthday:{ month:2, day:14 },
+      habits:[
+        { id:'vitamins', name:'Take vitamins', freq:'daily' },
+        { id:'brush', name:'Brush teeth', freq:'daily' },
+        { id:'read', name:'Read 20 minutes', freq:'daily' },
+      ] },
+    { id:'lorraine', name:'Lorraine', role:'Grandma', initial:'L', color:'#ffc93c', birthday:{ month:8, day:20 },
+      habits:[
+        { id:'walk', name:'Afternoon walk', freq:'weekly', target:5 },
+        { id:'call', name:'Call a grandchild', freq:'weekly', target:1 },
+        { id:'puzzle', name:'Puzzle or crossword', freq:'daily' },
+      ] },
+  ];
+
+  function pad2(n){ return n < 10 ? '0' + n : '' + n; }
+  function dateKey(d){ return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+  function mondayKey(d){
+    const dow = (d.getDay() + 6) % 7;
+    const m = new Date(d.getFullYear(), d.getMonth(), d.getDate() - dow);
+    return dateKey(m);
+  }
+
+  function defaultPersonState(){
+    const today = new Date();
+    return {
+      bankedPoints: 0,
+      lastResetDate: dateKey(today),
+      weekAnchor: mondayKey(today),
+      bdayAwardedYear: null,
+      habits: [],
+    };
+  }
+
+  function habitDefOf(personId, habitId){
+    const p = ROSTER.find((r) => r.id === personId);
+    return p.habits.find((h) => h.id === habitId);
+  }
+  function habitStateOf(personId, habitId){
+    return state.people[personId].habits.find((h) => h.id === habitId);
+  }
+
+  function loadState(){
+    let saved = null;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) saved = JSON.parse(raw);
+    } catch (e) { /* localStorage unavailable — fall through to fresh state */ }
+
+    const s = { people:{}, selectedId:null };
+    ROSTER.forEach((p) => {
+      s.people[p.id] = (saved && saved.people && saved.people[p.id]) || defaultPersonState();
+      p.habits.forEach((h) => {
+        if (!s.people[p.id].habits.find((x) => x.id === h.id)) {
+          s.people[p.id].habits.push({ id:h.id, done:false, count:0, streak:0 });
+        }
+      });
+    });
+    s.selectedId = (saved && saved.selectedId && ROSTER.some((p) => p.id === saved.selectedId))
+      ? saved.selectedId
+      : ROSTER[0].id;
+    return s;
+  }
+
+  function saveState(){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+  }
+
+  let state = loadState();
+
+  function nextBirthdayInfo(month, day, today){
+    const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    let target = new Date(todayMid.getFullYear(), month - 1, day);
+    if (target < todayMid) target = new Date(todayMid.getFullYear() + 1, month - 1, day);
+    const diffDays = Math.round((target - todayMid) / 86400000);
+    if (diffDays === 0) return { today:true, diffDays:0 };
+    if (diffDays < 30) return { today:false, mode:'days', diffDays };
+    let months = (target.getFullYear() - todayMid.getFullYear()) * 12 + (target.getMonth() - todayMid.getMonth());
+    if (target.getDate() < todayMid.getDate()) months--;
+    const afterMonths = new Date(todayMid.getFullYear(), todayMid.getMonth() + months, todayMid.getDate());
+    const weeks = Math.floor(Math.round((target - afterMonths) / 86400000) / 7);
+    return { today:false, mode:'months', months, weeks, diffDays };
+  }
+
+  function formatBirthday(info){
+    if (info.today) return `Birthday today! +${BIRTHDAY_BONUS} pts`;
+    if (info.mode === 'days') return `${info.diffDays} day${info.diffDays === 1 ? '' : 's'} to go`;
+    const parts = [`${info.months} month${info.months === 1 ? '' : 's'}`];
+    if (info.weeks > 0) parts.push(`${info.weeks} week${info.weeks === 1 ? '' : 's'}`);
+    return parts.join(', ');
+  }
+
+  function computeLevel(points){
+    let lvl = 1, into = points, span = LEVEL_BASE_PTS;
+    while (into >= span) { into -= span; lvl++; span = Math.round(span * LEVEL_GROWTH); }
+    return { level:lvl, into, span };
+  }
+
+  function tint(hex, alpha){
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+  }
+
+  function ringGradient(percent, color){
+    if (percent <= 0) return '#eef0f3';
+    if (percent >= 100) return color;
+    return `conic-gradient(${color} 0% ${percent}%, #eef0f3 ${percent}% 100%)`;
+  }
+
+  // Points a person has actually banked, plus whatever is checked off right
+  // now that hasn't rolled over into a banked total yet.
+  function computePersonPoints(personId){
+    const p = ROSTER.find((r) => r.id === personId);
+    const ps = state.people[personId];
+    let live = ps.bankedPoints;
+    p.habits.forEach((h) => {
+      const hs = habitStateOf(personId, h.id);
+      if (h.freq === 'daily') { if (hs.done) live += HABIT_POINTS; }
+      else { live += hs.count * HABIT_POINTS; }
+    });
+    return live;
+  }
+
+  // Rolls yesterday's daily ticks and last week's weekly counts into banked
+  // points + streaks, then clears them for the new day/week. Also awards the
+  // once-a-year birthday bonus. Runs on load and again at local midnight.
+  function rolloverIfNeeded(){
+    const today = new Date();
+    const todayKey = dateKey(today);
+    const thisMonday = mondayKey(today);
+    let changed = false;
+
+    ROSTER.forEach((p) => {
+      const ps = state.people[p.id];
+
+      if (ps.lastResetDate !== todayKey) {
+        p.habits.filter((h) => h.freq === 'daily').forEach((h) => {
+          const hs = habitStateOf(p.id, h.id);
+          if (hs.done) { ps.bankedPoints += HABIT_POINTS; hs.streak += 1; }
+          else { hs.streak = 0; }
+          hs.done = false;
+        });
+        ps.lastResetDate = todayKey;
+        changed = true;
+      }
+
+      if (ps.weekAnchor !== thisMonday) {
+        p.habits.filter((h) => h.freq === 'weekly').forEach((h) => {
+          const hs = habitStateOf(p.id, h.id);
+          ps.bankedPoints += hs.count * HABIT_POINTS;
+          hs.streak = hs.count >= h.target ? hs.streak + 1 : 0;
+          hs.count = 0;
+        });
+        ps.weekAnchor = thisMonday;
+        changed = true;
+      }
+
+      const bday = nextBirthdayInfo(p.birthday.month, p.birthday.day, today);
+      if (bday.today) {
+        const year = today.getFullYear();
+        if (ps.bdayAwardedYear !== year) {
+          ps.bankedPoints += BIRTHDAY_BONUS;
+          ps.bdayAwardedYear = year;
+          changed = true;
+        }
+      }
+    });
+
+    if (changed) saveState();
+  }
+
+  function toggleHabit(personId, habitId){
+    const def = habitDefOf(personId, habitId);
+    const hs = habitStateOf(personId, habitId);
+    if (def.freq === 'daily') hs.done = !hs.done;
+    else hs.count = (hs.count + 1) % (def.target + 1);
+    saveState();
+    render();
+  }
+
+  function selectPerson(id){
+    state.selectedId = id;
+    saveState();
+    render();
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
+
+  function cakeSvg(){
+    return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+      + '<path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/>'
+      + '<path d="M4 16s.5-1 2-1 2.5 1.5 4 1.5S12.5 15 14 15s2.5 1.5 4 1.5 2-1 2-1"/>'
+      + '<path d="M2 21h20"/><path d="M7 8v3M12 8v3M17 8v3"/><path d="M7 4h.01M12 3h.01M17 4h.01"/></svg>';
+  }
+  function starSvg(){
+    return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+  }
+  function medalSvg(){
+    return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg>';
+  }
+  function checkSvg(){
+    return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  }
+  function flameSvg(){
+    return '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 17a2.5 2.5 0 0 0 2.5-2.5c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7.5 7.5 0 1 1-15 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>';
+  }
+
+  function renderCard(p){
+    const points = computePersonPoints(p.id);
+    const lv = computeLevel(points);
+    const levelTitle = LEVEL_TITLES[Math.min(lv.level, LEVEL_TITLES.length) - 1];
+    const ranked = [...ROSTER].sort((a, b) => computePersonPoints(b.id) - computePersonPoints(a.id));
+    const rank = ranked.findIndex((r) => r.id === p.id) + 1;
+
+    const dailyDefs = p.habits.filter((h) => h.freq === 'daily');
+    const dailyDone = dailyDefs.filter((h) => habitStateOf(p.id, h.id).done).length;
+    const dailyTotal = dailyDefs.length;
+    const dailyPercent = dailyTotal ? Math.round((dailyDone / dailyTotal) * 100) : 0;
+
+    const bday = nextBirthdayInfo(p.birthday.month, p.birthday.day, new Date());
+    const showBday = bday.today || bday.diffDays <= SHOW_BDAY_WITHIN_DAYS;
+    const bdayBg = bday.today ? '#ffc93c' : '#e9f6fe';
+    const bdayColor = bday.today ? '#22262b' : '#146590';
+
+    const rankBg = rank === 1 ? '#ffc93c' : '#eef0f3';
+    const rankColor = rank === 1 ? '#22262b' : '#3d434b';
+    const levelBg = tint(p.color, 0.14);
+
+    const habitsHtml = p.habits.map((h) => {
+      const hs = habitStateOf(p.id, h.id);
+      const isWeekly = h.freq === 'weekly';
+      const filled = isWeekly ? hs.count >= h.target : hs.done;
+      const indicator = isWeekly
+        ? `<div class="habit-indicator habit-indicator--weekly" style="background:${filled ? p.color : '#eef0f3'};color:${filled ? '#ffffff' : '#3d434b'};">${hs.count}/${h.target}</div>`
+        : `<div class="habit-indicator" style="background:${filled ? p.color : 'transparent'};border-color:${filled ? 'transparent' : '#a8afb8'};">${filled ? checkSvg() : ''}</div>`;
+      return `<div class="habit-row" data-person="${p.id}" data-habit="${h.id}">`
+        + indicator
+        + `<div class="habit-name" style="text-decoration:${filled && !isWeekly ? 'line-through' : 'none'};opacity:${filled ? 0.6 : 1};">${escapeHtml(h.name)}</div>`
+        + `<div class="habit-streak">${flameSvg()}${hs.streak}${isWeekly ? 'w' : 'd'}</div>`
+        + `</div>`;
+    }).join('');
+
+    return `<div class="card ${p.id === state.selectedId ? 'is-selected' : ''}" data-person="${p.id}">`
+      + `<div class="card-header">`
+      +   `<div class="card-header-left">`
+      +     `<div class="avatar" style="background:${p.color};">${p.initial}</div>`
+      +     `<div><div class="person-name">${escapeHtml(p.name)}</div><div class="person-role">${escapeHtml(p.role)}</div></div>`
+      +   `</div>`
+      +   `<div class="card-header-right">`
+      +     `<div class="rank-badge" style="background:${rankBg};color:${rankColor};">#${rank}</div>`
+      +     `<div class="points-label">${points} pts</div>`
+      +   `</div>`
+      + `</div>`
+      + (showBday ? `<div class="bday-chip" style="background:${bdayBg};color:${bdayColor};">${cakeSvg()}${formatBirthday(bday)}</div>` : '')
+      + `<div class="level-block">`
+      +   `<div class="level-badge" style="background:${levelBg};color:${p.color};">${lv.level >= 3 ? medalSvg() : starSvg()}${escapeHtml(levelTitle)}</div>`
+      +   `<div class="level-bar-row">`
+      +     `<div class="level-track"><div class="level-fill" style="width:${Math.round((lv.into / lv.span) * 100)}%;background:${p.color};"></div></div>`
+      +     `<div class="level-caption">${lv.into}/${lv.span}</div>`
+      +   `</div>`
+      + `</div>`
+      + `<div class="ring-holder"><div class="ring-wrap">`
+      +   `<div class="ring-outer" style="background:${ringGradient(dailyPercent, p.color)};"></div>`
+      +   `<div class="ring-inner"><div class="ring-value">${dailyDone}/${dailyTotal}</div><div class="ring-label">today</div></div>`
+      + `</div></div>`
+      + `<div class="habit-list">${habitsHtml}</div>`
+      + `</div>`;
+  }
+
+  function renderSwitcher(){
+    return ROSTER.map((p) => {
+      const active = p.id === state.selectedId;
+      return `<div class="switcher-pill" data-person="${p.id}">`
+        + `<div class="switcher-avatar ${active ? 'is-active' : ''}" style="background:${p.color};color:${p.color};">${p.initial}</div>`
+        + `<div class="switcher-label ${active ? 'is-active' : ''}">${escapeHtml(p.name)}</div>`
+        + `</div>`;
+    }).join('');
+  }
+
+  function render(){
+    document.getElementById('todayLabel').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
+    document.getElementById('switcher').innerHTML = renderSwitcher();
+    document.getElementById('cards').innerHTML = ROSTER.map((p) => renderCard(p)).join('');
+  }
+
+  document.addEventListener('click', (e) => {
+    const habitRow = e.target.closest('.habit-row');
+    if (habitRow) { toggleHabit(habitRow.dataset.person, habitRow.dataset.habit); return; }
+    const pill = e.target.closest('.switcher-pill');
+    if (pill) { selectPerson(pill.dataset.person); }
+  });
+
+  let touchStartX = null;
+  const cardsEl = document.getElementById('cards');
+  cardsEl.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive:true });
+  cardsEl.addEventListener('touchend', (e) => {
+    if (touchStartX === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    touchStartX = null;
+    if (Math.abs(dx) < 50) return;
+    const idx = ROSTER.findIndex((p) => p.id === state.selectedId);
+    const nextIdx = dx < 0 ? (idx + 1) % ROSTER.length : (idx - 1 + ROSTER.length) % ROSTER.length;
+    selectPerson(ROSTER[nextIdx].id);
+  }, { passive:true });
+
+  rolloverIfNeeded();
+  render();
+
+  // Catch a midnight/Monday rollover if the page is left open across it.
+  setInterval(() => { rolloverIfNeeded(); render(); }, 5 * 60 * 1000);
+})();
+</script>
+</body>
+</html>
