@@ -82,6 +82,8 @@
   .bday-chip svg, .level-badge svg, .piggy-chip svg{ flex-shrink:0; }
   .piggy-chip{ background:#eaf9ef; color:#1f7643; }
 
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
+
   .level-block{ display:flex; flex-direction:column; gap:5px; }
   .level-bar-row{ display:flex; align-items:center; gap:8px; }
   .level-track{ flex:1; height:6px; background:var(--track); border-radius:999px; overflow:hidden; }
@@ -867,10 +869,12 @@
       +     `<div class="points-stat">Now <b>${spendablePoints}</b></div>`
       +   `</div>`
       + `</div>`
-      + (showBday ? `<div class="bday-chip" style="background:${bdayBg};color:${bdayColor};">${cakeSvg()}${formatBirthday(bday)}</div>` : '')
+      + `<div class="chip-row">`
+      +   (showBday ? `<div class="bday-chip" style="background:${bdayBg};color:${bdayColor};">${cakeSvg()}${formatBirthday(bday)}</div>` : '')
+      +   `<div class="level-badge" style="background:${levelBg};color:${p.color};">${lv.level >= 3 ? medalSvg() : starSvg()}${escapeHtml(levelTitle)}</div>`
+      + `</div>`
       + (showPiggy ? `<div class="piggy-chip">${piggyBankSvg()}&pound;${piggyEstimate.toFixed(2)} this week</div>` : '')
       + `<div class="level-block">`
-      +   `<div class="level-badge" style="background:${levelBg};color:${p.color};">${lv.level >= 3 ? medalSvg() : starSvg()}${escapeHtml(levelTitle)}</div>`
       +   `<div class="level-bar-row">`
       +     `<div class="level-track"><div class="level-fill" style="width:${Math.round((lv.into / lv.span) * 100)}%;background:${p.color};"></div></div>`
       +     `<div class="level-caption">${lv.into}/${lv.span}</div>`
