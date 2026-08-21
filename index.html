@@ -118,6 +118,52 @@
   .habit-name{ flex:1; min-width:0; font-size:11.5px; font-weight:600; line-height:1.3; }
   .habit-streak{ display:inline-flex; align-items:center; gap:2px; flex-shrink:0; font-size:9.5px; font-weight:700; color:#a67800; }
 
+  .cal{ margin-top:6px; }
+  .cal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .cal-title{ font-size:12px; font-weight:700; color:var(--ink-secondary); }
+  .cal-streak{
+    display:inline-flex; align-items:center; gap:4px; background:var(--surface-sunken);
+    border-radius:999px; padding:3px 9px 3px 7px; font-size:10.5px; font-weight:700; color:#a67800;
+  }
+  .cal-dow{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:8px; }
+  .cal-dow-label{ text-align:center; font-size:9px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; }
+  .cal-weeks{ display:flex; flex-direction:column; gap:8px; }
+  .cal-week{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal-cell-wrap{ display:flex; justify-content:center; position:relative; }
+  .cal-month-tag{
+    position:absolute; top:-9px; left:-2px; font-size:8px; font-weight:800; color:var(--ink-faint);
+    text-transform:uppercase; letter-spacing:0.02em; white-space:nowrap;
+    transform:rotate(-25deg); transform-origin:left bottom;
+  }
+  .cal-cell{ position:relative; width:28px; height:28px; border-radius:999px; }
+  .cal-cell.clickable{ cursor:pointer; }
+  .cal-cell-ring{ width:100%; height:100%; border-radius:999px; transform:rotate(-90deg); }
+  .cal-cell-num{
+    position:absolute; inset:3px; border-radius:999px; background:var(--surface-card);
+    display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;
+  }
+
+  .cal-day-panel{
+    margin-top:12px; padding-top:14px; border-top:1px solid var(--track);
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .cal-day-panel-head{ display:flex; align-items:center; justify-content:space-between; }
+  .cal-day-panel-title{ font-size:13px; font-weight:800; color:var(--ink); }
+  .cal-day-panel-close{
+    width:26px; height:26px; border:none; background:var(--surface-sunken); border-radius:999px;
+    display:flex; align-items:center; justify-content:center; color:var(--ink-secondary); cursor:pointer;
+  }
+  .cal-day-note{ font-size:11.5px; color:var(--ink-faint); font-style:italic; }
+  .cal-day-row{
+    display:flex; align-items:center; gap:10px; background:var(--surface-sunken);
+    border-radius:11px; padding:9px 12px; cursor:pointer;
+  }
+  .cal-day-check{
+    width:20px; height:20px; border-radius:6px; flex-shrink:0; border:2px solid transparent;
+    display:flex; align-items:center; justify-content:center; color:#fff;
+  }
+  .cal-day-name{ flex:1; font-size:13px; font-weight:600; color:var(--ink); }
+
   .page-sub{ font-size:13.5px; color:var(--ink-secondary); margin:0 0 18px; }
 
   .page-stats{ margin-bottom:18px; }
@@ -468,11 +514,15 @@
     const today = new Date();
     return {
       bankedPoints: 0, // spendable currency — goes down when a reward is redeemed
-      totalBanked: 0,  // lifetime points ever earned — never decreases; drives level + rank
+      totalBanked: 0,  // lifetime points ever earned; never decreases from spending, but a
+                        // retroactive correction to a past day (see setHabitDoneOnDay) can
+                        // adjust it — that's fixing an error in the record, not spending.
       piggyLedger: [], // append-only real-money history: {id, delta, reason, at, dateKey} —
                         // current balance and lifetime-earned are both derived from this, see
                         // piggyBalance / piggyEarnedTotal.
       dailyRatioHistory: {}, // dateKey -> that day's daily-habit completion ratio (0..1)
+      habitDayLog: {}, // dateKey -> {habitId: done} — per-habit detail for past days, feeds
+                        // the calendar and lets a past day be individually corrected.
       rewardInventory: {}, // rewardId -> how many bought-but-not-yet-used are owned
       lastResetDate: dateKey(today),
       weekAnchor: mondayKey(today),
@@ -526,6 +576,7 @@
       if (typeof s.people[p.id].totalBanked !== 'number') s.people[p.id].totalBanked = s.people[p.id].bankedPoints;
       if (!s.people[p.id].rewardInventory || typeof s.people[p.id].rewardInventory !== 'object') s.people[p.id].rewardInventory = {};
       if (!s.people[p.id].dailyRatioHistory || typeof s.people[p.id].dailyRatioHistory !== 'object') s.people[p.id].dailyRatioHistory = {};
+      if (!s.people[p.id].habitDayLog || typeof s.people[p.id].habitDayLog !== 'object') s.people[p.id].habitDayLog = {};
       // Habit *definitions* (name/frequency/target/points) used to be fixed
       // in ROSTER; they're editable now, so they live in state — seeded once
       // from ROSTER's list as that person's starting habits.
@@ -624,6 +675,89 @@
   function awardPoints(ps, amount){
     ps.bankedPoints += amount;
     ps.totalBanked += amount;
+  }
+
+  const CALENDAR_WEEKS_BACK = 4;
+  const CALENDAR_WEEKS_FORWARD = 1;
+
+  // { done, total } of daily habits for one day. Today is read live off
+  // current habit state (it's still changing); a past day comes from the
+  // per-habit log where one exists. A day whose log predates this feature
+  // (only the old aggregate ratio survives) falls back to that ratio against
+  // today's habit count — close enough for display, but not editable, since
+  // there's no per-habit detail to show or correct.
+  function dayCompletion(personId, dateKeyStr){
+    const ps = state.people[personId];
+    const dailyDefs = habitDefsOf(personId).filter((h) => h.freq === 'daily');
+    const total = dailyDefs.length;
+    if (dateKeyStr === ps.lastResetDate) {
+      const done = dailyDefs.filter((h) => habitStateOf(personId, h.id).done).length;
+      return { done, total, editable: true };
+    }
+    const log = ps.habitDayLog[dateKeyStr];
+    if (log) {
+      const done = dailyDefs.filter((h) => log[h.id]).length;
+      return { done, total, editable: true };
+    }
+    if (dateKeyStr in ps.dailyRatioHistory) {
+      const ratio = ps.dailyRatioHistory[dateKeyStr];
+      return { done: Math.round(ratio * total), total, editable: false };
+    }
+    return { done: null, total, editable: false }; // no record at all
+  }
+
+  // Walks backward from a day, counting consecutive done days — used to
+  // resync a habit's stored streak after a past day is corrected, since the
+  // normal incremental +1/reset-to-0 only runs forward at daily rollover.
+  function recomputeHabitStreak(personId, habitId, fromDateKeyExclusive){
+    const ps = state.people[personId];
+    let streak = 0;
+    let cursor = addDaysKey(fromDateKeyExclusive, -1);
+    while (true) {
+      const log = ps.habitDayLog[cursor];
+      if (!log || !log[habitId]) break;
+      streak++;
+      cursor = addDaysKey(cursor, -1);
+    }
+    return streak;
+  }
+
+  // Corrects a single habit's done state on a past day. Adjusts points by
+  // exactly the delta (a correction, not a spend — see totalBanked's note)
+  // and re-derives the habit's streak from history rather than nudging the
+  // stored counter, since the edit can land anywhere in the run.
+  function setHabitDoneOnDay(personId, habitId, dateKeyStr, newDone){
+    const ps = state.people[personId];
+    const def = habitDefOf(personId, habitId);
+    if (!def || def.freq !== 'daily') return;
+    if (dateKeyStr >= ps.lastResetDate) return; // today+ isn't edited this way
+
+    if (!ps.habitDayLog[dateKeyStr]) ps.habitDayLog[dateKeyStr] = {};
+    const dayLog = ps.habitDayLog[dateKeyStr];
+    const oldDone = !!dayLog[habitId];
+    if (oldDone === newDone) return;
+    dayLog[habitId] = newDone;
+
+    awardPoints(ps, (newDone ? 1 : -1) * def.points);
+    ps.bankedPoints = Math.max(0, ps.bankedPoints);
+    ps.totalBanked = Math.max(0, ps.totalBanked);
+
+    const dailyDefs = habitDefsOf(personId).filter((h) => h.freq === 'daily');
+    if (dailyDefs.length) {
+      const doneCount = dailyDefs.filter((h) => dayLog[h.id]).length;
+      ps.dailyRatioHistory[dateKeyStr] = doneCount / dailyDefs.length;
+    }
+
+    const hs = habitStateOf(personId, habitId);
+    hs.streak = recomputeHabitStreak(personId, habitId, ps.lastResetDate);
+
+    const dateLabel = parseDateKeyToDate(dateKeyStr).toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+    logActivity(personId, `corrected ${dateLabel}: ${newDone ? 'marked' : 'unmarked'} <b>${escapeHtml(def.name)}</b>`);
+  }
+
+  function parseDateKeyToDate(k){
+    const [y, m, d] = k.split('-').map(Number);
+    return new Date(y, m - 1, d);
   }
 
   // Weekly pocket money, adapted from the original prototype: each day
@@ -735,16 +869,20 @@
           const doneCount = dailyDefs.filter((h) => habitStateOf(p.id, h.id).done).length;
           ps.dailyRatioHistory[ps.lastResetDate] = doneCount / dailyDefs.length;
         }
+        const dayLog = {};
         dailyDefs.forEach((h) => {
           const hs = habitStateOf(p.id, h.id);
+          dayLog[h.id] = hs.done;
           if (hs.done) { awardPoints(ps, h.points); hs.streak += 1; }
           else { hs.streak = 0; }
           hs.done = false;
         });
-        // Keep ~9 weeks of ratio history — plenty for the payout calc below,
-        // bounded so it doesn't grow forever.
+        ps.habitDayLog[ps.lastResetDate] = dayLog;
+        // Keep ~9 weeks of history — plenty for the payout calc below and for
+        // the calendar's 4-weeks-back view, bounded so it doesn't grow forever.
         const cutoff = addDaysKey(todayKey, -63);
         Object.keys(ps.dailyRatioHistory).forEach((k) => { if (k < cutoff) delete ps.dailyRatioHistory[k]; });
+        Object.keys(ps.habitDayLog).forEach((k) => { if (k < cutoff) delete ps.habitDayLog[k]; });
         ps.lastResetDate = todayKey;
         changed = true;
       }
@@ -1005,6 +1143,118 @@
     return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
   }
 
+  function closeSvg(){
+    return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+  }
+
+  // dateKey the calendar is expanded to, per person — at most one open at a
+  // time per card. Ephemeral, not persisted.
+  const expandedCalendarDay = {};
+
+  function calendarRingGradient(percent, color){
+    if (percent <= 0) return '#eef0f3';
+    if (percent >= 100) return color;
+    return `conic-gradient(${color} 0% ${percent}%, #eef0f3 ${percent}% 100%)`;
+  }
+
+  function renderCalendar(p){
+    const today = new Date();
+    const todayKeyStr = dateKey(today);
+    const gridStart = addDaysKey(mondayKey(today), -7 * CALENDAR_WEEKS_BACK);
+    const totalDays = 7 * (CALENDAR_WEEKS_BACK + 1 + CALENDAR_WEEKS_FORWARD);
+
+    // "Full days in a row" streak, walking back from yesterday (today's own
+    // in-progress state is shown separately by the ring above) — bounded
+    // only by how far back per-day records actually exist, not by the
+    // visible 4-week grid, so it doesn't understate a longer real streak.
+    let streak = 0;
+    let cursor = addDaysKey(todayKeyStr, -1);
+    while (true) {
+      const c = dayCompletion(p.id, cursor);
+      if (c.total === 0 || c.done === null || c.done !== c.total) break;
+      streak++;
+      cursor = addDaysKey(cursor, -1);
+    }
+
+    const dowHtml = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+      .map((l) => `<div class="cal-dow-label">${l}</div>`).join('');
+
+    let weeksHtml = '';
+    for (let w = 0; w * 7 < totalDays; w++) {
+      let rowHtml = '';
+      for (let d = 0; d < 7; d++) {
+        const off = w * 7 + d;
+        const k = addDaysKey(gridStart, off);
+        const date = parseDateKeyToDate(k);
+        const isToday = k === todayKeyStr;
+        const isFuture = k > todayKeyStr;
+        const c = dayCompletion(p.id, k);
+        const percent = c.total ? Math.round((c.done / c.total) * 100) : 0;
+        const hasRecord = c.done !== null;
+        // Today isn't editable here — it already has its own tap-to-toggle
+        // checkboxes in the habit list above; this cell is display-only.
+        const clickable = !isFuture && !isToday && hasRecord && c.total > 0;
+
+        let ring = '#ffffff', border = 'none';
+        if (isFuture) { border = '1.5px dashed #a8afb8'; }
+        else if (!hasRecord) { border = '1.5px dotted #d8dbe0'; }
+        else { ring = calendarRingGradient(percent, p.color); }
+
+        const isMonthStart = date.getDate() === 1;
+        const monthTag = isMonthStart
+          ? `<div class="cal-month-tag">${date.toLocaleDateString('en-GB', { month:'short' })}</div>`
+          : '';
+        const todayShadow = isToday ? 'box-shadow:0 0 0 2px #22262b;' : '';
+        const opacity = isFuture ? 'opacity:.55;' : '';
+
+        rowHtml += `<div class="cal-cell-wrap">`
+          + monthTag
+          + `<div class="cal-cell ${clickable ? 'clickable' : ''}" data-person="${p.id}" data-date="${k}" style="${todayShadow}${opacity}">`
+          +   `<div class="cal-cell-ring" style="background:${ring};border:${border};"></div>`
+          +   `<div class="cal-cell-num">${date.getDate()}</div>`
+          + `</div>`
+          + `</div>`;
+      }
+      weeksHtml += `<div class="cal-week">${rowHtml}</div>`;
+    }
+
+    return `<div class="cal-head">`
+      +   `<div class="cal-title">Last ${CALENDAR_WEEKS_BACK} weeks</div>`
+      +   `<div class="cal-streak">${flameSvg()}${streak}d full</div>`
+      + `</div>`
+      + `<div class="cal-dow">${dowHtml}</div>`
+      + `<div class="cal-weeks">${weeksHtml}</div>`;
+  }
+
+  // Shows only while a past/today day is expanded for this person — lets
+  // each daily habit be corrected for that specific day.
+  function renderCalendarDayPanel(p){
+    const dateKeyStr = expandedCalendarDay[p.id];
+    if (!dateKeyStr) return '';
+    const c = dayCompletion(p.id, dateKeyStr);
+    const date = parseDateKeyToDate(dateKeyStr);
+    const label = date.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
+    const dailyDefs = habitDefsOf(p.id).filter((h) => h.freq === 'daily');
+    const log = state.people[p.id].habitDayLog[dateKeyStr];
+
+    const rows = dailyDefs.map((h) => {
+      const done = log ? !!log[h.id] : false;
+      return `<div class="cal-day-row" data-person="${p.id}" data-date="${dateKeyStr}" data-habit="${h.id}">`
+        + `<div class="cal-day-check" style="background:${done ? p.color : 'transparent'};border-color:${done ? 'transparent' : '#a8afb8'};">${done ? checkSvg() : ''}</div>`
+        + `<div class="cal-day-name">${escapeHtml(h.name)}</div>`
+        + `</div>`;
+    }).join('');
+
+    return `<div class="cal-day-panel">`
+      + `<div class="cal-day-panel-head">`
+      +   `<div class="cal-day-panel-title">${label}</div>`
+      +   `<button class="cal-day-panel-close" data-person="${p.id}">${closeSvg()}</button>`
+      + `</div>`
+      + (!c.editable ? `<div class="cal-day-note">From before this device tracked which habits &mdash; edit to set it.</div>` : '')
+      + rows
+      + `</div>`;
+  }
+
   function renderCard(p){
     const totalPoints = computeTotalPoints(p.id);
     const spendablePoints = computeSpendablePoints(p.id);
@@ -1072,6 +1322,8 @@
       +   `<div class="ring-inner"><div class="ring-value">${dailyDone}/${dailyTotal}</div><div class="ring-label">today</div></div>`
       + `</div></div>`
       + `<div class="habit-list">${habitsHtml}</div>`
+      + `<div class="cal">${renderCalendar(p)}</div>`
+      + renderCalendarDayPanel(p)
       + `</div>`;
   }
 
@@ -1332,6 +1584,25 @@
   document.addEventListener('click', (e) => {
     const habitRow = e.target.closest('.habit-row');
     if (habitRow) { toggleHabit(habitRow.dataset.person, habitRow.dataset.habit); return; }
+    const calCell = e.target.closest('.cal-cell.clickable');
+    if (calCell) {
+      const pid = calCell.dataset.person, dk = calCell.dataset.date;
+      expandedCalendarDay[pid] = expandedCalendarDay[pid] === dk ? null : dk;
+      render();
+      return;
+    }
+    const calClose = e.target.closest('.cal-day-panel-close');
+    if (calClose) { expandedCalendarDay[calClose.dataset.person] = null; render(); return; }
+    const calDayRow = e.target.closest('.cal-day-row');
+    if (calDayRow) {
+      const { person, date, habit } = calDayRow.dataset;
+      const log = state.people[person].habitDayLog[date];
+      const current = log ? !!log[habit] : false;
+      setHabitDoneOnDay(person, habit, date, !current);
+      saveState();
+      render();
+      return;
+    }
     const pill = e.target.closest('.switcher-pill');
     if (pill) {
       if (currentPage === 'pageSettings') toggleSettingsFilter(pill.dataset.person);
