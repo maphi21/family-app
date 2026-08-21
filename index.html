@@ -165,6 +165,11 @@
   .cal-day-name{ flex:1; font-size:13px; font-weight:600; color:var(--ink); }
 
   .page-sub{ font-size:13.5px; color:var(--ink-secondary); margin:0 0 18px; }
+  .settings-sub-toggle{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    width:100%; text-align:left; font-family:inherit; background:none; border:none; padding:0; cursor:pointer;
+  }
+  .settings-sub-chevron{ flex-shrink:0; color:var(--ink-faint); display:flex; }
 
   .page-stats{ margin-bottom:18px; }
   .pts-available{ font-size:14px; font-weight:700; color:var(--ink); }
@@ -247,6 +252,11 @@
   .ledger-amount{ flex-shrink:0; font-weight:800; white-space:nowrap; }
   .ledger-in{ color:#2a9c58; }
   .ledger-out{ color:#e84e3d; }
+  .ledger-toggle-btn{
+    width:100%; margin-top:10px; padding:9px; border-radius:999px; border:1.5px dashed #d8dbe0;
+    background:transparent; font-family:inherit; font-size:12.5px; font-weight:700; color:var(--ink-secondary); cursor:pointer;
+  }
+  .ledger-capped-note{ font-size:10.5px; color:var(--ink-faint); text-align:center; margin-top:8px; }
 
   .pocket-editor{ display:flex; flex-direction:column; gap:8px; margin-bottom:24px; padding-bottom:24px; border-bottom:1px solid var(--track); }
   .pocket-editor .withdraw-row{ margin-bottom:0; }
@@ -478,11 +488,16 @@
   <div class="page" id="pageSettings">
     <div id="settingsGateSection"></div>
     <div id="settingsContent">
-      <p class="page-sub">Everything that's happened, across the whole family.</p>
-      <div id="pocketEditorSection"></div>
-      <div id="habitEditorSection"></div>
-      <div class="activity-list" id="activityList"></div>
-      <div id="securitySection"></div>
+      <button class="page-sub settings-sub-toggle" id="settingsSubToggle">
+        <span>Everything that's happened, across the whole family.</span>
+        <span class="settings-sub-chevron" id="settingsSubChevron"></span>
+      </button>
+      <div id="settingsBody">
+        <div id="pocketEditorSection"></div>
+        <div id="habitEditorSection"></div>
+        <div class="activity-list" id="activityList"></div>
+        <div id="securitySection"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -851,6 +866,14 @@
   }
 
   const MAX_ACTIVITY_LOG = 150;
+  const LEDGER_DEFAULT_ROWS = 10;
+  const LEDGER_MAX_ROWS = 100;
+  // Ephemeral, not persisted — which person's piggy ledger is expanded past
+  // the default 10 rows. Resets to collapsed on reload.
+  let ledgerExpanded = {};
+  // Ephemeral, not persisted — whether the Settings body (everything below
+  // the subheading) is expanded. Starts collapsed so the page opens tidy.
+  let settingsBodyExpanded = false;
   // Family-wide, not per-person — the settings-page ledger of everything
   // that's happened. Newest first; trimmed so storage doesn't grow forever.
   function logActivity(personId, msg){
@@ -1499,7 +1522,10 @@
     if (!piggyEligible(personId)) return '';
     const balance = piggyBalance(personId);
     const ledger = (state.people[personId].piggyLedger || []).slice().sort((a, b) => b.at.localeCompare(a.at));
-    const rows = ledger.map((e) => {
+    const expanded = !!ledgerExpanded[personId];
+    const cappedTotal = Math.min(ledger.length, LEDGER_MAX_ROWS);
+    const visible = ledger.slice(0, expanded ? LEDGER_MAX_ROWS : LEDGER_DEFAULT_ROWS);
+    const rows = visible.map((e) => {
       const isCredit = e.delta >= 0;
       const d = new Date(e.at);
       const dateStr = Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
@@ -1508,6 +1534,12 @@
         + `<div class="ledger-amount ${isCredit ? 'ledger-in' : 'ledger-out'}">${isCredit ? '+' : '&minus;'}&pound;${Math.abs(e.delta).toFixed(2)}</div>`
         + `</div>`;
     }).join('');
+    const toggleHtml = ledger.length > LEDGER_DEFAULT_ROWS
+      ? `<button class="ledger-toggle-btn" data-person="${personId}">${expanded ? 'Show less' : `Show more (${cappedTotal - LEDGER_DEFAULT_ROWS})`}</button>`
+      : '';
+    const cappedNote = (expanded && ledger.length > LEDGER_MAX_ROWS)
+      ? `<div class="ledger-capped-note">Showing the most recent ${LEDGER_MAX_ROWS} of ${ledger.length}.</div>`
+      : '';
     return `<div class="piggy-section">`
       + `<div class="piggy-section-label">Piggy bank</div>`
       + `<div class="withdraw-row">`
@@ -1517,6 +1549,8 @@
       + `</div>`
       + `<div class="ledger-label">History</div>`
       + `<div class="ledger-list">${rows}</div>`
+      + toggleHtml
+      + cappedNote
       + `</div>`;
   }
 
@@ -1745,6 +1779,9 @@
       document.getElementById('habitEditorSection').innerHTML = renderHabitEditor();
       document.getElementById('activityList').innerHTML = renderActivityLog();
       document.getElementById('securitySection').innerHTML = renderSecuritySection();
+      document.getElementById('settingsBody').style.display = settingsBodyExpanded ? '' : 'none';
+      document.getElementById('settingsSubToggle').classList.toggle('expanded', settingsBodyExpanded);
+      document.getElementById('settingsSubChevron').innerHTML = settingsBodyExpanded ? chevronUpSvg() : chevronDownSvg();
     }
     document.getElementById('tabHabits').innerHTML = circleCheckSvg(20) + '<span>Habits</span>';
     document.getElementById('tabRewards').innerHTML = giftSvg(20) + '<span>Rewards</span>';
@@ -1794,6 +1831,19 @@
       const amountEl = document.getElementById('withdrawAmount');
       const noteEl = document.getElementById('withdrawNote');
       drawDownPiggy(parseFloat(amountEl.value), noteEl.value);
+      return;
+    }
+    const ledgerToggleBtn = e.target.closest('.ledger-toggle-btn');
+    if (ledgerToggleBtn) {
+      const pid = ledgerToggleBtn.dataset.person;
+      ledgerExpanded[pid] = !ledgerExpanded[pid];
+      render();
+      return;
+    }
+    const settingsSubToggle = e.target.closest('#settingsSubToggle');
+    if (settingsSubToggle) {
+      settingsBodyExpanded = !settingsBodyExpanded;
+      render();
       return;
     }
     const moveBtn = e.target.closest('.habit-move-btn');
