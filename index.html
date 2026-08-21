@@ -165,11 +165,17 @@
   .cal-day-name{ flex:1; font-size:13px; font-weight:600; color:var(--ink); }
 
   .page-sub{ font-size:13.5px; color:var(--ink-secondary); margin:0 0 18px; }
-  .settings-sub-toggle{
+
+  .settings-section{ border-bottom:1px solid var(--track); padding-bottom:16px; margin-bottom:16px; }
+  .settings-section:last-child{ border-bottom:none; margin-bottom:0; padding-bottom:0; }
+  .settings-section-toggle{
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     width:100%; text-align:left; font-family:inherit; background:none; border:none; padding:0; cursor:pointer;
   }
-  .settings-sub-chevron{ flex-shrink:0; color:var(--ink-faint); display:flex; }
+  .settings-section-heading{ font-size:15px; font-weight:800; color:var(--ink); }
+  .settings-section-heading.is-sub{ font-size:13.5px; font-weight:600; color:var(--ink-secondary); }
+  .settings-section-chevron{ flex-shrink:0; color:var(--ink-faint); display:flex; }
+  .settings-section-body{ margin-top:14px; }
 
   .page-stats{ margin-bottom:18px; }
   .pts-available{ font-size:14px; font-weight:700; color:var(--ink); }
@@ -252,13 +258,13 @@
   .ledger-amount{ flex-shrink:0; font-weight:800; white-space:nowrap; }
   .ledger-in{ color:#2a9c58; }
   .ledger-out{ color:#e84e3d; }
-  .ledger-toggle-btn{
+  .ledger-toggle-btn, .activity-toggle-btn{
     width:100%; margin-top:10px; padding:9px; border-radius:999px; border:1.5px dashed #d8dbe0;
     background:transparent; font-family:inherit; font-size:12.5px; font-weight:700; color:var(--ink-secondary); cursor:pointer;
   }
   .ledger-capped-note{ font-size:10.5px; color:var(--ink-faint); text-align:center; margin-top:8px; }
 
-  .pocket-editor{ display:flex; flex-direction:column; gap:8px; margin-bottom:24px; padding-bottom:24px; border-bottom:1px solid var(--track); }
+  .pocket-editor{ display:flex; flex-direction:column; gap:8px; }
   .pocket-editor .withdraw-row{ margin-bottom:0; }
   .pocket-editor-note{ font-size:11.5px; color:var(--ink-faint); line-height:1.4; }
 
@@ -283,7 +289,6 @@
   }
   .pin-unlock-btn:active{ transform:scale(.96); }
 
-  .security-section{ margin-top:24px; padding-top:20px; border-top:1px solid var(--track); }
   .security-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
   .security-note{ font-size:12.5px; font-weight:600; color:var(--ink-secondary); }
   .security-btn{
@@ -330,8 +335,7 @@
   .lb-total{ font-size:16px; font-weight:800; color:var(--ink); white-space:nowrap; }
   .lb-now{ font-size:10.5px; font-weight:600; color:var(--ink-faint); white-space:nowrap; }
 
-  .habit-editor{ display:flex; flex-direction:column; gap:14px; margin-bottom:24px; padding-bottom:24px; border-bottom:1px solid var(--track); }
-  .habit-editor-heading{ font-size:15px; font-weight:800; color:var(--ink); }
+  .habit-editor{ display:flex; flex-direction:column; gap:14px; }
   .habit-editor-list{ display:flex; flex-direction:column; gap:8px; }
   .habit-editor-row{
     display:flex; align-items:center; gap:10px;
@@ -488,16 +492,7 @@
   <div class="page" id="pageSettings">
     <div id="settingsGateSection"></div>
     <div id="settingsContent">
-      <button class="page-sub settings-sub-toggle" id="settingsSubToggle">
-        <span>Everything that's happened, across the whole family.</span>
-        <span class="settings-sub-chevron" id="settingsSubChevron"></span>
-      </button>
-      <div id="settingsBody">
-        <div id="pocketEditorSection"></div>
-        <div id="habitEditorSection"></div>
-        <div class="activity-list" id="activityList"></div>
-        <div id="securitySection"></div>
-      </div>
+      <div id="settingsSections"></div>
     </div>
   </div>
 </div>
@@ -871,9 +866,13 @@
   // Ephemeral, not persisted — which person's piggy ledger is expanded past
   // the default 10 rows. Resets to collapsed on reload.
   let ledgerExpanded = {};
-  // Ephemeral, not persisted — whether the Settings body (everything below
-  // the subheading) is expanded. Starts collapsed so the page opens tidy.
-  let settingsBodyExpanded = false;
+  // Ephemeral, not persisted — whether the family activity log (on Settings)
+  // is expanded past the default 10 rows.
+  let activityExpanded = false;
+  // Ephemeral, not persisted — which Settings sections (pocket money, habit
+  // editor, activity log, security) are expanded. Each starts collapsed so
+  // the page opens tidy, with its heading always visible as the toggle.
+  let settingsSectionOpen = {};
   // Family-wide, not per-person — the settings-page ledger of everything
   // that's happened. Newest first; trimmed so storage doesn't grow forever.
   function logActivity(personId, msg){
@@ -1653,15 +1652,12 @@
       + `</div>`;
   }
 
-  // Only shows once a specific person is focused via the switcher on
-  // Settings — editing needs one person, so this stays empty for "everyone".
-  function renderPocketEditor(){
-    const personId = state.settingsFilterId;
-    if (!personId) return '';
-    const p = ROSTER.find((r) => r.id === personId);
+  // Only rendered once a specific person is focused via the switcher on
+  // Settings — editing needs one person, so this section is skipped for
+  // "everyone". Just the body — heading lives in the collapsible wrapper.
+  function renderPocketEditorBody(personId){
     const current = pocketWeeklyOf(personId);
     return `<div class="pocket-editor">`
-      + `<div class="habit-editor-heading">${escapeHtml(p.name)}&rsquo;s weekly pocket money</div>`
       + `<div class="withdraw-row">`
       +   `<input type="number" id="pocketWeeklyInput" class="withdraw-input" min="0" step="0.5" value="${current}">`
       +   `<button class="withdraw-btn" id="pocketWeeklySaveBtn">Save</button>`
@@ -1680,29 +1676,20 @@
       + `</div>`;
   }
 
-  function renderSecuritySection(){
+  function renderSecuritySectionBody(){
     if (state.settingsPin) {
-      return `<div class="security-section">`
-        + `<div class="ledger-label">Security</div>`
-        + `<div class="security-row">`
+      return `<div class="security-row">`
         +   `<div class="security-note">This page is locked with a PIN.</div>`
         +   `<button class="security-btn" id="pinRemoveBtn">Remove PIN</button>`
-        + `</div>`
         + `</div>`;
     }
-    return `<div class="security-section">`
-      + `<div class="ledger-label">Security</div>`
-      + `<div class="withdraw-row">`
+    return `<div class="withdraw-row">`
       +   `<input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="pinNewInput" class="withdraw-input" placeholder="4+ digits">`
       +   `<button class="withdraw-btn" id="pinSetBtn">Lock with PIN</button>`
-      + `</div>`
       + `</div>`;
   }
 
-  function renderHabitEditor(){
-    const personId = state.settingsFilterId;
-    if (!personId) return '';
-    const p = ROSTER.find((r) => r.id === personId);
+  function renderHabitEditorBody(personId){
     const defs = habitDefsOf(personId);
 
     const rows = defs.map((h, i) => {
@@ -1725,12 +1712,14 @@
     const addSection = habitEditingId === 'new' ? renderHabitForm() : `<button class="habit-add-btn" id="habitAddBtn">+ Add habit</button>`;
 
     return `<div class="habit-editor">`
-      + `<div class="habit-editor-heading">Editing ${escapeHtml(p.name)}&rsquo;s habits</div>`
       + `<div class="habit-editor-list">${rows}</div>`
       + addSection
       + `</div>`;
   }
 
+  // Same 10-default/100-max cap as the piggy ledger, with its own toggle —
+  // this list grows fast (every habit tick logs an entry) so it needs its
+  // own limit rather than showing the family's entire history at once.
   function renderActivityLog(){
     const filterId = state.settingsFilterId;
     const entries = filterId ? state.activityLog.filter((e) => e.personId === filterId) : state.activityLog;
@@ -1739,7 +1728,9 @@
         ? '<div class="activity-empty">Nothing from them yet.</div>'
         : '<div class="activity-empty">Nothing yet &mdash; habits, redemptions, and payouts will show up here.</div>';
     }
-    return entries.map((e) => {
+    const cappedTotal = Math.min(entries.length, LEDGER_MAX_ROWS);
+    const visible = entries.slice(0, activityExpanded ? LEDGER_MAX_ROWS : LEDGER_DEFAULT_ROWS);
+    const rows = visible.map((e) => {
       const p = ROSTER.find((r) => r.id === e.personId);
       if (!p) return '';
       return `<div class="activity-row">`
@@ -1750,6 +1741,40 @@
         + `</div>`
         + `</div>`;
     }).join('');
+    const toggleHtml = entries.length > LEDGER_DEFAULT_ROWS
+      ? `<button class="activity-toggle-btn">${activityExpanded ? 'Show less' : `Show more (${cappedTotal - LEDGER_DEFAULT_ROWS})`}</button>`
+      : '';
+    const cappedNote = (activityExpanded && entries.length > LEDGER_MAX_ROWS)
+      ? `<div class="ledger-capped-note">Showing the most recent ${LEDGER_MAX_ROWS} of ${entries.length}.</div>`
+      : '';
+    return rows + toggleHtml + cappedNote;
+  }
+
+  // Each Settings section keeps its heading always visible as a collapse/
+  // expand toggle for its own body, rather than one big all-or-nothing
+  // switch — the pocket-money/habit editors only exist for a focused person.
+  function renderSettingsSection(key, headingHtml, bodyHtml, bodyClass, headingClass){
+    const expanded = !!settingsSectionOpen[key];
+    return `<div class="settings-section">`
+      + `<button class="settings-section-toggle" data-section="${key}">`
+      +   `<span class="settings-section-heading${headingClass ? ' ' + headingClass : ''}">${headingHtml}</span>`
+      +   `<span class="settings-section-chevron">${expanded ? chevronUpSvg() : chevronDownSvg()}</span>`
+      + `</button>`
+      + `<div class="settings-section-body${bodyClass ? ' ' + bodyClass : ''}" style="${expanded ? '' : 'display:none;'}">${bodyHtml}</div>`
+      + `</div>`;
+  }
+
+  function renderSettingsSections(){
+    const personId = state.settingsFilterId;
+    let html = '';
+    if (personId) {
+      const p = ROSTER.find((r) => r.id === personId);
+      html += renderSettingsSection('pocket', `${escapeHtml(p.name)}&rsquo;s weekly pocket money`, renderPocketEditorBody(personId));
+      html += renderSettingsSection('habits', `Editing ${escapeHtml(p.name)}&rsquo;s habits`, renderHabitEditorBody(personId));
+    }
+    html += renderSettingsSection('activity', `Everything that's happened, across the whole family.`, renderActivityLog(), 'activity-list', 'is-sub');
+    html += renderSettingsSection('security', 'Security', renderSecuritySectionBody());
+    return html;
   }
 
   // The mobile top bar (header + switcher) is fixed, so page content needs
@@ -1775,13 +1800,7 @@
     document.getElementById('settingsGateSection').innerHTML = settingsLocked ? renderSettingsGate() : '';
     document.getElementById('settingsContent').style.display = settingsLocked ? 'none' : '';
     if (!settingsLocked) {
-      document.getElementById('pocketEditorSection').innerHTML = renderPocketEditor();
-      document.getElementById('habitEditorSection').innerHTML = renderHabitEditor();
-      document.getElementById('activityList').innerHTML = renderActivityLog();
-      document.getElementById('securitySection').innerHTML = renderSecuritySection();
-      document.getElementById('settingsBody').style.display = settingsBodyExpanded ? '' : 'none';
-      document.getElementById('settingsSubToggle').classList.toggle('expanded', settingsBodyExpanded);
-      document.getElementById('settingsSubChevron').innerHTML = settingsBodyExpanded ? chevronUpSvg() : chevronDownSvg();
+      document.getElementById('settingsSections').innerHTML = renderSettingsSections();
     }
     document.getElementById('tabHabits').innerHTML = circleCheckSvg(20) + '<span>Habits</span>';
     document.getElementById('tabRewards').innerHTML = giftSvg(20) + '<span>Rewards</span>';
@@ -1840,9 +1859,16 @@
       render();
       return;
     }
-    const settingsSubToggle = e.target.closest('#settingsSubToggle');
-    if (settingsSubToggle) {
-      settingsBodyExpanded = !settingsBodyExpanded;
+    const activityToggleBtn = e.target.closest('.activity-toggle-btn');
+    if (activityToggleBtn) {
+      activityExpanded = !activityExpanded;
+      render();
+      return;
+    }
+    const settingsSectionToggle = e.target.closest('.settings-section-toggle');
+    if (settingsSectionToggle) {
+      const key = settingsSectionToggle.dataset.section;
+      settingsSectionOpen[key] = !settingsSectionOpen[key];
       render();
       return;
     }
