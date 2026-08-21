@@ -129,11 +129,12 @@
   .cal-dow-label{ text-align:center; font-size:9px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; }
   .cal-weeks{ display:flex; flex-direction:column; gap:8px; }
   .cal-week{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal-week.has-month-tag{ margin-top:13px; }
   .cal-cell-wrap{ display:flex; justify-content:center; position:relative; }
   .cal-month-tag{
-    position:absolute; top:-9px; left:-2px; font-size:8px; font-weight:800; color:var(--ink-faint);
+    position:absolute; top:-13px; left:50%; transform:translateX(-50%);
+    font-size:8px; font-weight:800; color:var(--ink-faint);
     text-transform:uppercase; letter-spacing:0.02em; white-space:nowrap;
-    transform:rotate(-25deg); transform-origin:left bottom;
   }
   .cal-cell{ position:relative; width:28px; height:28px; border-radius:999px; }
   .cal-cell.clickable{ cursor:pointer; }
@@ -1192,6 +1193,7 @@
     let weeksHtml = '';
     for (let w = 0; w * 7 < totalDays; w++) {
       let rowHtml = '';
+      let rowHasMonthTag = false;
       for (let d = 0; d < 7; d++) {
         const off = w * 7 + d;
         const k = addDaysKey(gridStart, off);
@@ -1211,6 +1213,7 @@
         else { ring = calendarRingGradient(percent, p.color); }
 
         const isMonthStart = date.getDate() === 1;
+        if (isMonthStart) rowHasMonthTag = true;
         const monthTag = isMonthStart
           ? `<div class="cal-month-tag">${date.toLocaleDateString('en-GB', { month:'short' })}</div>`
           : '';
@@ -1225,7 +1228,7 @@
           + `</div>`
           + `</div>`;
       }
-      weeksHtml += `<div class="cal-week">${rowHtml}</div>`;
+      weeksHtml += `<div class="cal-week${rowHasMonthTag ? ' has-month-tag' : ''}">${rowHtml}</div>`;
     }
 
     return `<div class="cal-head">`
