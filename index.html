@@ -307,6 +307,7 @@
     flex-shrink:0; font-family:inherit; font-size:12px; font-weight:700; color:#e84e3d;
     background:var(--surface-sunken); border:none; border-radius:999px; padding:9px 16px; cursor:pointer;
   }
+  .backup-status{ font-size:12.5px; font-weight:600; color:var(--ink-secondary); margin-bottom:10px; }
 
   .activity-list{
     display:flex; flex-direction:column;
@@ -418,6 +419,10 @@
     position:absolute; right:-6px; bottom:-4px; width:13px; height:13px; border-radius:999px;
     background:#e84e3d; color:#fff; display:flex; align-items:center; justify-content:center;
     border:1.5px solid #fff; box-sizing:border-box;
+  }
+  .tab-backup-badge{
+    position:absolute; right:-4px; top:-2px; width:10px; height:10px; border-radius:999px;
+    background:#ffc93c; border:1.5px solid #fff; box-sizing:border-box;
   }
 
   .toast{
@@ -685,6 +690,8 @@
       : null;
     // Family-wide PIN gating the Settings tab. null = no PIN set, page is open.
     s.settingsPin = (saved && typeof saved.settingsPin === 'string' && saved.settingsPin) ? saved.settingsPin : null;
+    // ISO timestamp of the last JSON export, for the stale-backup nudge. null = never.
+    s.lastExportAt = (saved && typeof saved.lastExportAt === 'string') ? saved.lastExportAt : null;
     return s;
   }
 
@@ -1127,6 +1134,72 @@
     showToast('Settings PIN removed.', 'success');
   }
 
+  // A daily/automatic export isn't really possible from a static, server-less
+  // page — there's no background process to run one, and iOS Safari can't
+  // silently write files. So instead: a manual export/import, plus a quiet
+  // nudge (a tab badge, not a popup) once it's been a while since the last one.
+  const STALE_BACKUP_DAYS = 7;
+  function daysSinceLastExport(){
+    if (!state.lastExportAt) return Infinity;
+    return (Date.now() - new Date(state.lastExportAt).getTime()) / 86400000;
+  }
+  // Don't nag a brand-new profile that has nothing worth backing up yet.
+  function backupIsStale(){
+    return state.activityLog.length > 0 && daysSinceLastExport() >= STALE_BACKUP_DAYS;
+  }
+  function lastExportLabel(){
+    if (!state.lastExportAt) return 'Never backed up';
+    const days = Math.floor(daysSinceLastExport());
+    if (days <= 0) return 'Backed up today';
+    if (days === 1) return 'Backed up 1 day ago';
+    return `Backed up ${days} days ago`;
+  }
+
+  function exportBackup(){
+    const payload = JSON.parse(JSON.stringify(state));
+    payload.settingsPin = null; // don't let a shared/uploaded backup carry this device's PIN
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `family-hq-backup-${dateKey(new Date())}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    state.lastExportAt = new Date().toISOString();
+    saveState();
+    render();
+    showToast('Backup downloaded.', 'success');
+  }
+
+  // Writes the raw file into localStorage and reloads, rather than swapping
+  // the in-memory state object directly, so loadState()'s existing per-field
+  // migration/backfill logic runs on whatever the file actually contains —
+  // same as it would for any other stored save, old format or new.
+  function importBackupFile(file){
+    const reader = new FileReader();
+    reader.onload = () => {
+      let parsed;
+      try { parsed = JSON.parse(reader.result); } catch (e) {
+        showToast("That file isn't valid JSON.", 'danger');
+        return;
+      }
+      const looksValid = parsed && typeof parsed === 'object'
+        && parsed.people && typeof parsed.people === 'object'
+        && ROSTER.every((p) => parsed.people[p.id]);
+      if (!looksValid) {
+        showToast("That doesn't look like a Family HQ backup.", 'danger');
+        return;
+      }
+      if (!confirm('Replace all current data on this device with this backup? This cannot be undone.')) return;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)); } catch (e) { /* ignore */ }
+      location.reload();
+    };
+    reader.readAsText(file);
+  }
+
   // Habit-editor UI state — which habit (or 'new') is expanded for editing,
   // and its working copy of fields. Ephemeral, not persisted: always starts
   // closed on load.
@@ -1305,6 +1378,10 @@
   function lockSvg(size){
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">`
       + '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+  }
+  function downloadSvg(size){
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">`
+      + '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>';
   }
   function trophySvg(size){
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">`
@@ -1780,6 +1857,16 @@
       + `</div>`;
   }
 
+  function renderBackupSectionBody(){
+    return `<div class="backup-status">${lastExportLabel()}</div>`
+      + `<div class="withdraw-row">`
+      +   `<button class="withdraw-btn" id="exportBackupBtn">Export backup</button>`
+      +   `<button class="security-btn" id="importBackupBtn">Import backup</button>`
+      + `</div>`
+      + `<input type="file" id="importFileInput" accept="application/json" style="display:none;">`
+      + `<div class="pocket-editor-note">Downloads everything as a JSON file you can keep somewhere safe, then use Import to restore it later &mdash; on this device or a new one.</div>`;
+  }
+
   function renderHabitEditorBody(personId){
     const defs = habitDefsOf(personId);
 
@@ -1873,6 +1960,7 @@
     }
     html += renderSettingsSection('activity', settingsSvg(16), `${escapeHtml(activityName)}&rsquo;s recent activity`, renderActivityLog(), 'activity-list');
     html += renderSettingsSection('security', lockSvg(16), 'Security', renderSecuritySectionBody());
+    html += renderSettingsSection('backup', downloadSvg(16), 'Backup', renderBackupSectionBody());
     return html;
   }
 
@@ -1905,8 +1993,12 @@
     document.getElementById('tabRewards').innerHTML = giftSvg(18) + '<span>Rewards</span>';
     document.getElementById('tabWallet').innerHTML = piggyBankSvg(18) + '<span>Wallet</span>';
     document.getElementById('tabLeaderboard').innerHTML = trophySvg(18) + '<span>Ranking</span>';
-    const settingsIcon = settingsLocked
-      ? `<span class="tab-icon-wrap">${settingsSvg(18)}<span class="tab-lock-badge">${lockSvg(9)}</span></span>`
+    const backupStale = !settingsLocked && backupIsStale();
+    const settingsIcon = (settingsLocked || backupStale)
+      ? `<span class="tab-icon-wrap">${settingsSvg(18)}`
+        + (settingsLocked ? `<span class="tab-lock-badge">${lockSvg(9)}</span>` : '')
+        + (backupStale ? `<span class="tab-backup-badge"></span>` : '')
+        + `</span>`
       : settingsSvg(18);
     document.getElementById('tabSettings').innerHTML = settingsIcon + '<span>Settings</span>';
     syncTopBarHeight();
@@ -1997,12 +2089,23 @@
     if (pinSetBtn) { setSettingsPin(); return; }
     const pinRemoveBtn = e.target.closest('#pinRemoveBtn');
     if (pinRemoveBtn) { removeSettingsPin(); return; }
+    const exportBackupBtn = e.target.closest('#exportBackupBtn');
+    if (exportBackupBtn) { exportBackup(); return; }
+    const importBackupBtn = e.target.closest('#importBackupBtn');
+    if (importBackupBtn) { document.getElementById('importFileInput').click(); return; }
   });
 
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
     if (e.target.id === 'pinInput') { submitSettingsPin(); }
     else if (e.target.id === 'pinNewInput') { setSettingsPin(); }
+  });
+
+  document.addEventListener('change', (e) => {
+    if (e.target.id === 'importFileInput' && e.target.files && e.target.files[0]) {
+      importBackupFile(e.target.files[0]);
+      e.target.value = '';
+    }
   });
 
   // Kept separate from the click handler and deliberately does NOT call
