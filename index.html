@@ -253,12 +253,12 @@
   .pocket-editor-note{ font-size:11.5px; color:var(--ink-faint); line-height:1.4; }
 
   .pin-gate{
-    display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px;
-    padding:56px 20px;
+    display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px;
+    padding:8px 20px 20px;
   }
   .pin-gate-icon{
-    width:56px; height:56px; border-radius:999px; background:var(--surface-sunken);
-    display:flex; align-items:center; justify-content:center; color:#a67800; margin-bottom:4px;
+    width:48px; height:48px; border-radius:999px; background:var(--surface-sunken);
+    display:flex; align-items:center; justify-content:center; color:#a67800; margin-bottom:2px;
   }
   .pin-gate-title{ font-size:16px; font-weight:800; color:var(--ink); }
   .pin-gate-sub{ font-size:13px; color:var(--ink-faint); margin-bottom:8px; }
@@ -385,6 +385,12 @@
     color:var(--ink-faint); font-family:inherit; font-size:11px; font-weight:700;
   }
   .tab-btn.active{ color:var(--ink); }
+  .tab-icon-wrap{ position:relative; display:inline-flex; }
+  .tab-lock-badge{
+    position:absolute; right:-6px; bottom:-4px; width:13px; height:13px; border-radius:999px;
+    background:#e84e3d; color:#fff; display:flex; align-items:center; justify-content:center;
+    border:1.5px solid #fff; box-sizing:border-box;
+  }
 
   .toast{
     position:fixed; bottom:76px; left:50%; transform:translateX(-50%) translateY(20px);
@@ -1632,7 +1638,7 @@
 
   function renderSettingsGate(){
     return `<div class="pin-gate">`
-      + `<div class="pin-gate-icon">${lockSvg(28)}</div>`
+      + `<div class="pin-gate-icon">${lockSvg(24)}</div>`
       + `<div class="pin-gate-title">Settings locked</div>`
       + `<div class="pin-gate-sub">Enter the PIN to continue.</div>`
       + `<input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" class="pin-input" id="pinInput" placeholder="PIN" autocomplete="off" autofocus>`
@@ -1744,7 +1750,10 @@
     document.getElementById('tabRewards').innerHTML = giftSvg(20) + '<span>Rewards</span>';
     document.getElementById('tabWallet').innerHTML = piggyBankSvg(20) + '<span>Wallet</span>';
     document.getElementById('tabLeaderboard').innerHTML = trophySvg(20) + '<span>Ranking</span>';
-    document.getElementById('tabSettings').innerHTML = settingsSvg(20) + '<span>Settings</span>';
+    const settingsIcon = settingsLocked
+      ? `<span class="tab-icon-wrap">${settingsSvg(20)}<span class="tab-lock-badge">${lockSvg(9)}</span></span>`
+      : settingsSvg(20);
+    document.getElementById('tabSettings').innerHTML = settingsIcon + '<span>Settings</span>';
     syncTopBarHeight();
   }
 
