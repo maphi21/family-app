@@ -129,11 +129,10 @@
   .cal-dow-label{ text-align:center; font-size:9px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; }
   .cal-weeks{ display:flex; flex-direction:column; gap:8px; }
   .cal-week{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
-  .cal-week.has-month-tag{ margin-top:13px; }
   .cal-cell-wrap{ display:flex; justify-content:center; position:relative; }
   .cal-month-tag{
-    position:absolute; top:-13px; left:50%; transform:translateX(-50%);
-    font-size:8px; font-weight:800; color:var(--ink-faint);
+    position:absolute; top:-8px; left:50%; transform:translateX(-50%); line-height:1;
+    font-size:7px; font-weight:800; color:var(--ink-faint);
     text-transform:uppercase; letter-spacing:0.02em; white-space:nowrap;
   }
   .cal-cell{ position:relative; width:28px; height:28px; border-radius:999px; }
@@ -248,6 +247,39 @@
   .ledger-amount{ flex-shrink:0; font-weight:800; white-space:nowrap; }
   .ledger-in{ color:#2a9c58; }
   .ledger-out{ color:#e84e3d; }
+
+  .pocket-editor{ display:flex; flex-direction:column; gap:8px; margin-bottom:24px; padding-bottom:24px; border-bottom:1px solid var(--track); }
+  .pocket-editor .withdraw-row{ margin-bottom:0; }
+  .pocket-editor-note{ font-size:11.5px; color:var(--ink-faint); line-height:1.4; }
+
+  .pin-gate{
+    display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px;
+    padding:56px 20px;
+  }
+  .pin-gate-icon{
+    width:56px; height:56px; border-radius:999px; background:var(--surface-sunken);
+    display:flex; align-items:center; justify-content:center; color:#a67800; margin-bottom:4px;
+  }
+  .pin-gate-title{ font-size:16px; font-weight:800; color:var(--ink); }
+  .pin-gate-sub{ font-size:13px; color:var(--ink-faint); margin-bottom:8px; }
+  .pin-input{
+    width:140px; text-align:center; letter-spacing:0.3em; font-size:18px; font-weight:800;
+    font-family:inherit; color:var(--ink); border:1.5px solid var(--track); border-radius:999px;
+    background:#fff; padding:12px 14px; outline:none;
+  }
+  .pin-unlock-btn{
+    font-family:inherit; font-size:13px; font-weight:700; color:#fff; background:var(--ink);
+    border:none; border-radius:999px; padding:11px 22px; cursor:pointer; transition:transform .12s ease;
+  }
+  .pin-unlock-btn:active{ transform:scale(.96); }
+
+  .security-section{ margin-top:24px; padding-top:20px; border-top:1px solid var(--track); }
+  .security-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .security-note{ font-size:12.5px; font-weight:600; color:var(--ink-secondary); }
+  .security-btn{
+    flex-shrink:0; font-family:inherit; font-size:12px; font-weight:700; color:#e84e3d;
+    background:var(--surface-sunken); border:none; border-radius:999px; padding:9px 16px; cursor:pointer;
+  }
 
   .activity-list{
     display:flex; flex-direction:column;
@@ -438,9 +470,14 @@
   </div>
 
   <div class="page" id="pageSettings">
-    <p class="page-sub">Everything that's happened, across the whole family.</p>
-    <div id="habitEditorSection"></div>
-    <div class="activity-list" id="activityList"></div>
+    <div id="settingsGateSection"></div>
+    <div id="settingsContent">
+      <p class="page-sub">Everything that's happened, across the whole family.</p>
+      <div id="pocketEditorSection"></div>
+      <div id="habitEditorSection"></div>
+      <div class="activity-list" id="activityList"></div>
+      <div id="securitySection"></div>
+    </div>
   </div>
 </div>
 
@@ -558,6 +595,9 @@
   function habitStateOf(personId, habitId){
     return state.people[personId].habits.find((h) => h.id === habitId);
   }
+  function pocketWeeklyOf(personId){
+    return state.people[personId].pocketWeekly;
+  }
 
   function loadState(){
     let saved = null;
@@ -584,6 +624,9 @@
       if (!s.people[p.id].rewardInventory || typeof s.people[p.id].rewardInventory !== 'object') s.people[p.id].rewardInventory = {};
       if (!s.people[p.id].dailyRatioHistory || typeof s.people[p.id].dailyRatioHistory !== 'object') s.people[p.id].dailyRatioHistory = {};
       if (!s.people[p.id].habitDayLog || typeof s.people[p.id].habitDayLog !== 'object') s.people[p.id].habitDayLog = {};
+      // Weekly pocket-money target used to be fixed in ROSTER; editable now
+      // from Settings, so it lives in state — seeded once from ROSTER.
+      if (typeof s.people[p.id].pocketWeekly !== 'number') s.people[p.id].pocketWeekly = p.pocketWeekly;
       // Habit *definitions* (name/frequency/target/points) used to be fixed
       // in ROSTER; they're editable now, so they live in state — seeded once
       // from ROSTER's list as that person's starting habits.
@@ -604,6 +647,8 @@
     s.settingsFilterId = (saved && saved.settingsFilterId && ROSTER.some((p) => p.id === saved.settingsFilterId))
       ? saved.settingsFilterId
       : null;
+    // Family-wide PIN gating the Settings tab. null = no PIN set, page is open.
+    s.settingsPin = (saved && typeof saved.settingsPin === 'string' && saved.settingsPin) ? saved.settingsPin : null;
     return s;
   }
 
@@ -612,6 +657,9 @@
   }
 
   let state = loadState();
+  // Not persisted — a PIN unlocks Settings for the rest of this session only;
+  // a fresh page load (or reload) re-locks it if a PIN is set.
+  let settingsUnlocked = false;
 
   function nextBirthdayInfo(month, day, today){
     const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -793,8 +841,7 @@
   // Live "building" estimate for the week in progress — shown on the profile
   // card. Not yet banked; only credited to the ledger at the week's rollover.
   function weeklyEstimate(personId){
-    const p = ROSTER.find((r) => r.id === personId);
-    return roundMoney(p.pocketWeekly * weeklyRatioSoFar(personId));
+    return roundMoney(pocketWeeklyOf(personId) * weeklyRatioSoFar(personId));
   }
 
   const MAX_ACTIVITY_LOG = 150;
@@ -836,8 +883,7 @@
   // they're eligible for a weekly allowance (even at £0.00 so far), or
   // they've earned money some other way (redeeming a cash reward).
   function piggyEligible(personId){
-    const p = ROSTER.find((r) => r.id === personId);
-    return p.pocketWeekly > 0 || piggyEarnedTotal(personId) > 0;
+    return pocketWeeklyOf(personId) > 0 || piggyEarnedTotal(personId) > 0;
   }
 
   function drawDownPiggy(amount, note){
@@ -901,10 +947,10 @@
           hs.streak = hs.count >= h.target ? hs.streak + 1 : 0;
           hs.count = 0;
         });
-        if (p.pocketWeekly > 0) {
+        if (pocketWeeklyOf(p.id) > 0) {
           let sum = 0;
           for (let i = 0; i < 7; i++) sum += ps.dailyRatioHistory[addDaysKey(ps.weekAnchor, i)] || 0;
-          const payout = roundMoney(p.pocketWeekly * (sum / 7));
+          const payout = roundMoney(pocketWeeklyOf(p.id) * (sum / 7));
           const pct = Math.round((sum / 7) * 100);
           piggyLedgerAdd(ps, payout, `Weekly allowance (${pct}% of habits done)`, `payout:${p.id}:${ps.weekAnchor}`, ps.weekAnchor);
           if (payout > 0) logActivity(p.id, `earned &pound;${payout.toFixed(2)} weekly allowance (${pct}% of habits done)`);
@@ -955,6 +1001,53 @@
     state.settingsFilterId = state.settingsFilterId === id ? null : id;
     saveState();
     render();
+  }
+
+  function setPocketWeekly(){
+    const personId = state.settingsFilterId;
+    if (!personId) return;
+    const input = document.getElementById('pocketWeeklyInput');
+    const val = Math.max(0, roundMoney(parseFloat(input.value) || 0));
+    const p = ROSTER.find((r) => r.id === personId);
+    state.people[personId].pocketWeekly = val;
+    logActivity(personId, `set weekly pocket money to &pound;${val.toFixed(2)}`);
+    saveState();
+    render();
+    showToast(`${p.name}'s weekly pocket money set to £${val.toFixed(2)}.`, 'success');
+  }
+
+  function submitSettingsPin(){
+    const input = document.getElementById('pinInput');
+    const val = (input.value || '').trim();
+    if (val && val === state.settingsPin) {
+      settingsUnlocked = true;
+      render();
+      showToast('Settings unlocked.', 'success');
+    } else {
+      showToast('Wrong PIN.', 'danger');
+      if (input) { input.value = ''; input.focus(); }
+    }
+  }
+
+  function setSettingsPin(){
+    const input = document.getElementById('pinNewInput');
+    const val = (input.value || '').trim();
+    if (!/^\d{4,8}$/.test(val)) {
+      showToast('PIN must be 4-8 digits.', 'danger');
+      return;
+    }
+    state.settingsPin = val;
+    settingsUnlocked = true;
+    saveState();
+    render();
+    showToast('Settings PIN set.', 'success');
+  }
+
+  function removeSettingsPin(){
+    state.settingsPin = null;
+    saveState();
+    render();
+    showToast('Settings PIN removed.', 'success');
   }
 
   // Habit-editor UI state — which habit (or 'new') is expanded for editing,
@@ -1132,6 +1225,10 @@
       + '<path d="M19 5c-1.5 0-2.8 1.1-3 2.5-3.6-1.4-11-.2-11 5 0 1.7.2 2.9 2 4.2V20h4v-1.5h3V20h4v-4c1-.4 1.7-1 2-2h2v-4h-2c-.2-1-.6-1.7-1-2z"/>'
       + '<circle cx="16.5" cy="10.5" r=".6" fill="currentColor"/><path d="M2 10.5v1.2h2.3"/></svg>';
   }
+  function lockSvg(size){
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">`
+      + '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+  }
   function trophySvg(size){
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">`
       + '<path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10"/><path d="M17 4v6a5 5 0 0 1-10 0V4"/>'
@@ -1193,7 +1290,6 @@
     let weeksHtml = '';
     for (let w = 0; w * 7 < totalDays; w++) {
       let rowHtml = '';
-      let rowHasMonthTag = false;
       for (let d = 0; d < 7; d++) {
         const off = w * 7 + d;
         const k = addDaysKey(gridStart, off);
@@ -1213,7 +1309,6 @@
         else { ring = calendarRingGradient(percent, p.color); }
 
         const isMonthStart = date.getDate() === 1;
-        if (isMonthStart) rowHasMonthTag = true;
         const monthTag = isMonthStart
           ? `<div class="cal-month-tag">${date.toLocaleDateString('en-GB', { month:'short' })}</div>`
           : '';
@@ -1228,7 +1323,7 @@
           + `</div>`
           + `</div>`;
       }
-      weeksHtml += `<div class="cal-week${rowHasMonthTag ? ' has-month-tag' : ''}">${rowHtml}</div>`;
+      weeksHtml += `<div class="cal-week">${rowHtml}</div>`;
     }
 
     return `<div class="cal-head">`
@@ -1290,7 +1385,7 @@
     const rankBg = rank === 1 ? '#ffc93c' : '#eef0f3';
     const rankColor = rank === 1 ? '#22262b' : '#3d434b';
     const levelBg = tint(p.color, 0.14);
-    const showPiggy = p.pocketWeekly > 0;
+    const showPiggy = pocketWeeklyOf(p.id) > 0;
     const piggyEstimate = showPiggy ? weeklyEstimate(p.id) : 0;
 
     const habitsHtml = defs.map((h) => {
@@ -1520,6 +1615,50 @@
 
   // Only shows once a specific person is focused via the switcher on
   // Settings — editing needs one person, so this stays empty for "everyone".
+  function renderPocketEditor(){
+    const personId = state.settingsFilterId;
+    if (!personId) return '';
+    const p = ROSTER.find((r) => r.id === personId);
+    const current = pocketWeeklyOf(personId);
+    return `<div class="pocket-editor">`
+      + `<div class="habit-editor-heading">${escapeHtml(p.name)}&rsquo;s weekly pocket money</div>`
+      + `<div class="withdraw-row">`
+      +   `<input type="number" id="pocketWeeklyInput" class="withdraw-input" min="0" step="0.5" value="${current}">`
+      +   `<button class="withdraw-btn" id="pocketWeeklySaveBtn">Save</button>`
+      + `</div>`
+      + `<div class="pocket-editor-note">Paid out at the end of each week, scaled by how many days&rsquo; habits were completed. &pound;0 turns the piggy bank off.</div>`
+      + `</div>`;
+  }
+
+  function renderSettingsGate(){
+    return `<div class="pin-gate">`
+      + `<div class="pin-gate-icon">${lockSvg(28)}</div>`
+      + `<div class="pin-gate-title">Settings locked</div>`
+      + `<div class="pin-gate-sub">Enter the PIN to continue.</div>`
+      + `<input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" class="pin-input" id="pinInput" placeholder="PIN" autocomplete="off" autofocus>`
+      + `<button class="pin-unlock-btn" id="pinUnlockBtn">Unlock</button>`
+      + `</div>`;
+  }
+
+  function renderSecuritySection(){
+    if (state.settingsPin) {
+      return `<div class="security-section">`
+        + `<div class="ledger-label">Security</div>`
+        + `<div class="security-row">`
+        +   `<div class="security-note">This page is locked with a PIN.</div>`
+        +   `<button class="security-btn" id="pinRemoveBtn">Remove PIN</button>`
+        + `</div>`
+        + `</div>`;
+    }
+    return `<div class="security-section">`
+      + `<div class="ledger-label">Security</div>`
+      + `<div class="withdraw-row">`
+      +   `<input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="pinNewInput" class="withdraw-input" placeholder="4+ digits">`
+      +   `<button class="withdraw-btn" id="pinSetBtn">Lock with PIN</button>`
+      + `</div>`
+      + `</div>`;
+  }
+
   function renderHabitEditor(){
     const personId = state.settingsFilterId;
     if (!personId) return '';
@@ -1592,8 +1731,15 @@
     document.getElementById('piggyStats').innerHTML = renderPiggyStats();
     document.getElementById('piggySection').innerHTML = renderPiggySection();
     document.getElementById('lbList').innerHTML = renderLeaderboard();
-    document.getElementById('habitEditorSection').innerHTML = renderHabitEditor();
-    document.getElementById('activityList').innerHTML = renderActivityLog();
+    const settingsLocked = !!state.settingsPin && !settingsUnlocked;
+    document.getElementById('settingsGateSection').innerHTML = settingsLocked ? renderSettingsGate() : '';
+    document.getElementById('settingsContent').style.display = settingsLocked ? 'none' : '';
+    if (!settingsLocked) {
+      document.getElementById('pocketEditorSection').innerHTML = renderPocketEditor();
+      document.getElementById('habitEditorSection').innerHTML = renderHabitEditor();
+      document.getElementById('activityList').innerHTML = renderActivityLog();
+      document.getElementById('securitySection').innerHTML = renderSecuritySection();
+    }
     document.getElementById('tabHabits').innerHTML = circleCheckSvg(20) + '<span>Habits</span>';
     document.getElementById('tabRewards').innerHTML = giftSvg(20) + '<span>Rewards</span>';
     document.getElementById('tabWallet').innerHTML = piggyBankSvg(20) + '<span>Wallet</span>';
@@ -1658,7 +1804,21 @@
     const habitSaveBtn = e.target.closest('#habitSaveBtn');
     if (habitSaveBtn) { saveHabitEdit(); return; }
     const tabBtn = e.target.closest('.tab-btn');
-    if (tabBtn) { switchTab(tabBtn.dataset.page); }
+    if (tabBtn) { switchTab(tabBtn.dataset.page); return; }
+    const pocketSaveBtn = e.target.closest('#pocketWeeklySaveBtn');
+    if (pocketSaveBtn) { setPocketWeekly(); return; }
+    const pinUnlockBtn = e.target.closest('#pinUnlockBtn');
+    if (pinUnlockBtn) { submitSettingsPin(); return; }
+    const pinSetBtn = e.target.closest('#pinSetBtn');
+    if (pinSetBtn) { setSettingsPin(); return; }
+    const pinRemoveBtn = e.target.closest('#pinRemoveBtn');
+    if (pinRemoveBtn) { removeSettingsPin(); return; }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    if (e.target.id === 'pinInput') { submitSettingsPin(); }
+    else if (e.target.id === 'pinNewInput') { setSettingsPin(); }
   });
 
   // Kept separate from the click handler and deliberately does NOT call
