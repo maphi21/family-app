@@ -128,9 +128,11 @@
     border-radius:999px; padding:3px 9px 3px 7px; font-size:10.5px; font-weight:700; color:#a67800;
   }
   .cal-dow{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:8px; }
+  .cal-dow.has-weekly, .cal-week.has-weekly{ grid-template-columns:repeat(7,1fr) 4px 1fr; }
   .cal-dow-label{ text-align:center; font-size:9px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; }
   .cal-weeks{ display:flex; flex-direction:column; gap:8px; }
-  .cal-week{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal-week{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; align-items:center; }
+  .cal-week-divider{ width:1px; height:22px; background:var(--track); justify-self:center; align-self:center; }
   .cal-cell-wrap{ display:flex; justify-content:center; position:relative; }
   .cal-month-tag{
     position:absolute; top:-8px; left:50%; transform:translateX(-50%); line-height:1;
@@ -586,6 +588,9 @@
                         // current balance and lifetime-earned are both derived from this, see
                         // piggyBalance / piggyEarnedTotal.
       dailyRatioHistory: {}, // dateKey -> that day's daily-habit completion ratio (0..1)
+      weeklyRatioHistory: {}, // Monday weekAnchor key -> that week's weekly-habit completion
+                        // ratio (0..1), sum(count)/sum(target) across weekly habits, archived
+                        // at week rollover. Feeds the calendar's weekly ring.
       habitDayLog: {}, // dateKey -> {habitId: done} — per-habit detail for past days, feeds
                         // the calendar and lets a past day be individually corrected.
       rewardInventory: {}, // rewardId -> how many bought-but-not-yet-used are owned
@@ -644,6 +649,7 @@
       if (typeof s.people[p.id].totalBanked !== 'number') s.people[p.id].totalBanked = s.people[p.id].bankedPoints;
       if (!s.people[p.id].rewardInventory || typeof s.people[p.id].rewardInventory !== 'object') s.people[p.id].rewardInventory = {};
       if (!s.people[p.id].dailyRatioHistory || typeof s.people[p.id].dailyRatioHistory !== 'object') s.people[p.id].dailyRatioHistory = {};
+      if (!s.people[p.id].weeklyRatioHistory || typeof s.people[p.id].weeklyRatioHistory !== 'object') s.people[p.id].weeklyRatioHistory = {};
       if (!s.people[p.id].habitDayLog || typeof s.people[p.id].habitDayLog !== 'object') s.people[p.id].habitDayLog = {};
       // Weekly pocket-money target used to be fixed in ROSTER; editable now
       // from Settings, so it lives in state — seeded once from ROSTER.
@@ -780,6 +786,27 @@
       return { done: Math.round(ratio * total), total, editable: false };
     }
     return { done: null, total, editable: false }; // no record at all
+  }
+
+  // Same idea as dayCompletion but for a whole Monday-anchored week: the
+  // live in-progress week reads straight off current habit counts, a past
+  // week reads its archived ratio (reinterpreted against today's weekly
+  // habit list, same accepted approximation dayCompletion makes), and a
+  // week with neither has no record. Not editable — no per-habit weekly
+  // detail is kept, only the aggregate.
+  function weekCompletion(personId, weekAnchorKeyStr){
+    const ps = state.people[personId];
+    const weeklyDefs = habitDefsOf(personId).filter((h) => h.freq === 'weekly');
+    const total = weeklyDefs.reduce((sum, h) => sum + h.target, 0);
+    if (weekAnchorKeyStr === ps.weekAnchor) {
+      const done = weeklyDefs.reduce((sum, h) => sum + habitStateOf(personId, h.id).count, 0);
+      return { done, total };
+    }
+    if (weekAnchorKeyStr in ps.weeklyRatioHistory) {
+      const ratio = ps.weeklyRatioHistory[weekAnchorKeyStr];
+      return { done: Math.round(ratio * total), total };
+    }
+    return { done: null, total }; // no record at all
   }
 
   // Walks backward from a day, counting consecutive done days — used to
@@ -974,12 +1001,20 @@
       }
 
       if (ps.weekAnchor !== thisMonday) {
-        defs.filter((h) => h.freq === 'weekly').forEach((h) => {
+        const weeklyDefs = defs.filter((h) => h.freq === 'weekly');
+        if (weeklyDefs.length) {
+          const doneSum = weeklyDefs.reduce((sum, h) => sum + habitStateOf(p.id, h.id).count, 0);
+          const targetSum = weeklyDefs.reduce((sum, h) => sum + h.target, 0);
+          ps.weeklyRatioHistory[ps.weekAnchor] = targetSum ? doneSum / targetSum : 0;
+        }
+        weeklyDefs.forEach((h) => {
           const hs = habitStateOf(p.id, h.id);
           awardPoints(ps, hs.count * h.points);
           hs.streak = hs.count >= h.target ? hs.streak + 1 : 0;
           hs.count = 0;
         });
+        const weeklyCutoff = addDaysKey(thisMonday, -63);
+        Object.keys(ps.weeklyRatioHistory).forEach((k) => { if (k < weeklyCutoff) delete ps.weeklyRatioHistory[k]; });
         if (pocketWeeklyOf(p.id) > 0) {
           let sum = 0;
           for (let i = 0; i < 7; i++) sum += ps.dailyRatioHistory[addDaysKey(ps.weekAnchor, i)] || 0;
@@ -1303,6 +1338,10 @@
     const todayKeyStr = dateKey(today);
     const gridStart = addDaysKey(mondayKey(today), -7 * CALENDAR_WEEKS_BACK);
     const totalDays = 7 * (CALENDAR_WEEKS_BACK + 1 + CALENDAR_WEEKS_FORWARD);
+    // Only people with a weekly habit get the extra "WK" column — otherwise
+    // it would be an always-empty ring on every row, pure clutter.
+    const hasWeekly = habitDefsOf(p.id).some((h) => h.freq === 'weekly');
+    const liveWeekAnchor = state.people[p.id].weekAnchor;
 
     // "Full days in a row" streak, walking back from yesterday (today's own
     // in-progress state is shown separately by the ring above) — bounded
@@ -1318,7 +1357,8 @@
     }
 
     const dowHtml = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-      .map((l) => `<div class="cal-dow-label">${l}</div>`).join('');
+      .map((l) => `<div class="cal-dow-label">${l}</div>`).join('')
+      + (hasWeekly ? `<div class="cal-week-divider"></div><div class="cal-dow-label">WK</div>` : '');
 
     let weeksHtml = '';
     for (let w = 0; w * 7 < totalDays; w++) {
@@ -1356,14 +1396,36 @@
           + `</div>`
           + `</div>`;
       }
-      weeksHtml += `<div class="cal-week">${rowHtml}</div>`;
+      if (hasWeekly) {
+        const weekAnchorKey = addDaysKey(gridStart, w * 7);
+        const wc = weekCompletion(p.id, weekAnchorKey);
+        const isFutureWeek = weekAnchorKey > liveWeekAnchor;
+        const wHasRecord = wc.done !== null;
+        const wPercent = wc.total ? Math.round((wc.done / wc.total) * 100) : 0;
+        let wRing = '#ffffff', wBorder = 'none';
+        if (isFutureWeek) { wBorder = '1.5px dashed #a8afb8'; }
+        else if (!wHasRecord) { wBorder = '1.5px dotted #d8dbe0'; }
+        else { wRing = calendarRingGradient(wPercent, p.color); }
+        const wInner = (!isFutureWeek && wHasRecord)
+          ? (wPercent >= 100 ? checkSvg() : `<span style="font-size:8px;">${wc.done}/${wc.total}</span>`)
+          : '';
+        const wOpacity = isFutureWeek ? 'opacity:.55;' : '';
+        rowHtml += `<div class="cal-week-divider"></div>`
+          + `<div class="cal-cell-wrap">`
+          +   `<div class="cal-cell" style="${wOpacity}">`
+          +     `<div class="cal-cell-ring" style="background:${wRing};border:${wBorder};"></div>`
+          +     `<div class="cal-cell-num">${wInner}</div>`
+          +   `</div>`
+          + `</div>`;
+      }
+      weeksHtml += `<div class="cal-week${hasWeekly ? ' has-weekly' : ''}">${rowHtml}</div>`;
     }
 
     return `<div class="cal-head">`
       +   `<div class="cal-title">Last ${CALENDAR_WEEKS_BACK} weeks</div>`
       +   `<div class="cal-streak">${flameSvg()}${streak}d full</div>`
       + `</div>`
-      + `<div class="cal-dow">${dowHtml}</div>`
+      + `<div class="cal-dow${hasWeekly ? ' has-weekly' : ''}">${dowHtml}</div>`
       + `<div class="cal-weeks">${weeksHtml}</div>`;
   }
 
