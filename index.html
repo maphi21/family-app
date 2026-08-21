@@ -423,6 +423,11 @@
     <div id="pageStats"></div>
     <div id="walletSection"></div>
     <div class="reward-list" id="rewardList"></div>
+  </div>
+
+  <div class="page" id="pageWallet">
+    <p class="page-sub">Pocket money saved from habits, ready to draw down.</p>
+    <div id="piggyStats"></div>
     <div id="piggySection"></div>
   </div>
 
@@ -443,6 +448,7 @@
 <nav class="tab-bar" id="tabBar">
   <button class="tab-btn active" data-page="pageHabits" id="tabHabits"></button>
   <button class="tab-btn" data-page="pageRewards" id="tabRewards"></button>
+  <button class="tab-btn" data-page="pageWallet" id="tabWallet"></button>
   <button class="tab-btn" data-page="pageLeaderboard" id="tabLeaderboard"></button>
   <button class="tab-btn" data-page="pageSettings" id="tabSettings"></button>
 </nav>
@@ -1048,8 +1054,11 @@
     }
     const ps = state.people[personId];
     ps.bankedPoints -= reward.cost;
-    if (reward.cash) piggyLedgerAdd(ps, reward.cash, `Redeemed: ${reward.name}`, null, dateKey(new Date()));
-    ps.rewardInventory[rewardId] = (ps.rewardInventory[rewardId] || 0) + 1;
+    if (reward.cash) {
+      piggyLedgerAdd(ps, reward.cash, `Redeemed: ${reward.name}`, null, dateKey(new Date()));
+    } else {
+      ps.rewardInventory[rewardId] = (ps.rewardInventory[rewardId] || 0) + 1;
+    }
     logActivity(personId, `redeemed <b>${escapeHtml(reward.name)}</b> for ${reward.cost} pts`);
     saveState();
     render();
@@ -1116,8 +1125,9 @@
   function banknoteSvg(){
     return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 12h.01M18 12h.01"/></svg>';
   }
-  function piggyBankSvg(){
-    return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+  function piggyBankSvg(size){
+    const s = size || 12;
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">`
       + '<path d="M19 5c-1.5 0-2.8 1.1-3 2.5-3.6-1.4-11-.2-11 5 0 1.7.2 2.9 2 4.2V20h4v-1.5h3V20h4v-4c1-.4 1.7-1 2-2h2v-4h-2c-.2-1-.6-1.7-1-2z"/>'
       + '<circle cx="16.5" cy="10.5" r=".6" fill="currentColor"/><path d="M2 10.5v1.2h2.3"/></svg>';
   }
@@ -1352,22 +1362,28 @@
       + `</div>`;
   }
 
-  // "How much can I spend right now" — points for the shop below, plus
-  // real money saved (weekly allowance + any cashed-out rewards) if any.
-  // Earned total never drops even after a withdrawal; saved is the live balance.
+  // "How much can I spend right now" — points for the shop below.
   function renderPageStats(){
     const personId = state.selectedId;
     const pts = computeSpendablePoints(personId);
+    return `<div class="page-stats">`
+      + `<div class="pts-available"><b>${pts}</b> pts to spend</div>`
+      + `</div>`;
+  }
+
+  // Real money saved (weekly allowance + any cashed-out rewards), on the
+  // Wallet tab. Earned total never drops even after a withdrawal; saved is
+  // the live balance.
+  function renderPiggyStats(){
+    const personId = state.selectedId;
+    if (!piggyEligible(personId)) return '';
     const saved = piggyBalance(personId);
     const earned = piggyEarnedTotal(personId);
     return `<div class="page-stats">`
-      + `<div class="pts-available"><b>${pts}</b> pts to spend</div>`
-      + (piggyEligible(personId)
-          ? `<div class="piggy-stats-row">`
-            + `<div class="piggy-saved">&pound;${saved.toFixed(2)} saved</div>`
-            + `<div class="piggy-earned-tag">${piggyBankSvg()}&pound;${earned.toFixed(2)} earned total</div>`
-            + `</div>`
-          : '')
+      + `<div class="piggy-stats-row">`
+      +   `<div class="piggy-saved">&pound;${saved.toFixed(2)} saved</div>`
+      +   `<div class="piggy-earned-tag">${piggyBankSvg()}&pound;${earned.toFixed(2)} earned total</div>`
+      + `</div>`
       + `</div>`;
   }
 
@@ -1570,12 +1586,14 @@
     document.getElementById('pageStats').innerHTML = renderPageStats();
     document.getElementById('walletSection').innerHTML = renderWalletStrip();
     document.getElementById('rewardList').innerHTML = REWARDS.map((r) => renderRewardRow(r)).join('');
+    document.getElementById('piggyStats').innerHTML = renderPiggyStats();
     document.getElementById('piggySection').innerHTML = renderPiggySection();
     document.getElementById('lbList').innerHTML = renderLeaderboard();
     document.getElementById('habitEditorSection').innerHTML = renderHabitEditor();
     document.getElementById('activityList').innerHTML = renderActivityLog();
     document.getElementById('tabHabits').innerHTML = circleCheckSvg(20) + '<span>Habits</span>';
     document.getElementById('tabRewards').innerHTML = giftSvg(20) + '<span>Rewards</span>';
+    document.getElementById('tabWallet').innerHTML = piggyBankSvg(20) + '<span>Wallet</span>';
     document.getElementById('tabLeaderboard').innerHTML = trophySvg(20) + '<span>Ranking</span>';
     document.getElementById('tabSettings').innerHTML = settingsSvg(20) + '<span>Settings</span>';
     syncTopBarHeight();
