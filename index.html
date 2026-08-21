@@ -396,13 +396,15 @@
   .tab-bar{
     position:fixed; left:0; right:0; bottom:0; z-index:65; display:flex;
     background:#ffffff; border-top:1px solid var(--track); box-shadow:0 -2px 12px rgba(34,38,43,.06);
-    padding:6px max(16px, env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom));
+    padding:6px max(10px, env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom));
   }
   .tab-btn{
-    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
-    background:none; border:none; padding:8px 4px; cursor:pointer;
-    color:var(--ink-faint); font-family:inherit; font-size:11px; font-weight:700;
+    flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:2px;
+    background:none; border:none; padding:8px 2px; cursor:pointer;
+    color:var(--ink-faint); font-family:inherit; font-size:10px; font-weight:700;
   }
+  .tab-btn svg{ flex-shrink:0; }
+  .tab-btn span{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .tab-btn.active{ color:var(--ink); }
   .tab-icon-wrap{ position:relative; display:inline-flex; }
   .tab-lock-badge{
@@ -1892,13 +1894,13 @@
     if (!settingsLocked) {
       document.getElementById('settingsSections').innerHTML = renderSettingsSections();
     }
-    document.getElementById('tabHabits').innerHTML = circleCheckSvg(20) + '<span>Habits</span>';
-    document.getElementById('tabRewards').innerHTML = giftSvg(20) + '<span>Rewards</span>';
-    document.getElementById('tabWallet').innerHTML = piggyBankSvg(20) + '<span>Wallet</span>';
-    document.getElementById('tabLeaderboard').innerHTML = trophySvg(20) + '<span>Ranking</span>';
+    document.getElementById('tabHabits').innerHTML = circleCheckSvg(18) + '<span>Habits</span>';
+    document.getElementById('tabRewards').innerHTML = giftSvg(18) + '<span>Rewards</span>';
+    document.getElementById('tabWallet').innerHTML = piggyBankSvg(18) + '<span>Wallet</span>';
+    document.getElementById('tabLeaderboard').innerHTML = trophySvg(18) + '<span>Ranking</span>';
     const settingsIcon = settingsLocked
-      ? `<span class="tab-icon-wrap">${settingsSvg(20)}<span class="tab-lock-badge">${lockSvg(9)}</span></span>`
-      : settingsSvg(20);
+      ? `<span class="tab-icon-wrap">${settingsSvg(18)}<span class="tab-lock-badge">${lockSvg(9)}</span></span>`
+      : settingsSvg(18);
     document.getElementById('tabSettings').innerHTML = settingsIcon + '<span>Settings</span>';
     syncTopBarHeight();
   }
