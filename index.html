@@ -98,17 +98,19 @@
   .level-fill{ height:100%; border-radius:999px; transition:width .3s ease; }
   .level-caption{ font-size:9px; font-weight:700; color:var(--ink-faint); flex-shrink:0; white-space:nowrap; }
 
-  .ring-holder{ display:flex; justify-content:center; }
-  .ring-wrap{ position:relative; width:92px; height:92px; }
+  .ring-holder{ display:flex; justify-content:center; gap:14px; }
+  .ring-wrap{ position:relative; width:76px; height:76px; }
   .ring-outer{ width:100%; height:100%; border-radius:999px; transform:rotate(-90deg); }
   .ring-inner{
-    position:absolute; inset:8px; border-radius:999px; background:var(--surface-card);
+    position:absolute; inset:6px; border-radius:999px; background:var(--surface-card);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
   }
-  .ring-value{ font-size:17px; font-weight:800; line-height:1; }
-  .ring-label{ font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-faint); margin-top:2px; }
+  .ring-value{ font-size:13px; font-weight:800; line-height:1; }
+  .ring-label{ font-size:7px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-faint); margin-top:2px; }
 
   .habit-list{ display:flex; flex-direction:column; gap:6px; }
+  .habit-group-label{ font-size:11px; font-weight:700; color:var(--ink-secondary); text-transform:uppercase; letter-spacing:0.05em; margin-top:8px; }
+  .habit-list > .habit-group-label:first-child{ margin-top:0; }
   .habit-row{ display:flex; align-items:center; gap:8px; background:var(--surface-sunken); border-radius:11px; padding:7px 9px; cursor:pointer; }
   .habit-indicator{
     width:18px; height:18px; border-radius:6px; flex-shrink:0; border:2px solid transparent;
@@ -172,8 +174,9 @@
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     width:100%; text-align:left; font-family:inherit; background:none; border:none; padding:0; cursor:pointer;
   }
+  .settings-section-heading-group{ display:flex; align-items:center; gap:9px; min-width:0; }
+  .settings-section-icon{ flex-shrink:0; display:flex; color:var(--ink); }
   .settings-section-heading{ font-size:15px; font-weight:800; color:var(--ink); }
-  .settings-section-heading.is-sub{ font-size:13.5px; font-weight:600; color:var(--ink-secondary); }
   .settings-section-chevron{ flex-shrink:0; color:var(--ink-faint); display:flex; }
   .settings-section-body{ margin-top:14px; }
 
@@ -438,15 +441,17 @@
     .person-role{ font-size:13px; }
     .bday-chip, .level-badge, .piggy-chip{ font-size:12.5px; padding:6px 14px 6px 10px; }
     .lb-info .level-badge{ font-size:10.5px; padding:4px 10px 4px 7px; }
-    .ring-wrap{ width:150px; height:150px; margin:0 auto; }
-    .ring-inner{ inset:12px; }
-    .ring-value{ font-size:28px; }
-    .ring-label{ font-size:10px; }
+    .ring-holder{ gap:18px; }
+    .ring-wrap{ width:110px; height:110px; }
+    .ring-inner{ inset:9px; }
+    .ring-value{ font-size:20px; }
+    .ring-label{ font-size:8px; }
     .habit-row{ padding:13px 16px; border-radius:14px; }
     .habit-indicator{ width:24px; height:24px; }
     .habit-indicator--weekly{ min-width:24px; font-size:11px; }
     .habit-name{ font-size:15px; }
     .habit-streak{ font-size:12px; }
+    .habit-group-label{ font-size:13px; }
 
     .reward-row-btn{ padding-top:11px; padding-bottom:11px; }
 
@@ -1391,6 +1396,20 @@
       + `</div>`;
   }
 
+  function renderHabitRow(p, h){
+    const hs = habitStateOf(p.id, h.id);
+    const isWeekly = h.freq === 'weekly';
+    const filled = isWeekly ? hs.count >= h.target : hs.done;
+    const indicator = isWeekly
+      ? `<div class="habit-indicator habit-indicator--weekly" style="background:${filled ? p.color : '#eef0f3'};color:${filled ? '#ffffff' : '#3d434b'};">${hs.count}/${h.target}</div>`
+      : `<div class="habit-indicator" style="background:${filled ? p.color : 'transparent'};border-color:${filled ? 'transparent' : '#a8afb8'};">${filled ? checkSvg() : ''}</div>`;
+    return `<div class="habit-row" data-person="${p.id}" data-habit="${h.id}">`
+      + indicator
+      + `<div class="habit-name" style="text-decoration:${filled && !isWeekly ? 'line-through' : 'none'};opacity:${filled ? 0.6 : 1};">${escapeHtml(h.name)}</div>`
+      + `<div class="habit-streak">${flameSvg()}${hs.streak}${isWeekly ? 'w' : 'd'}</div>`
+      + `</div>`;
+  }
+
   function renderCard(p){
     const totalPoints = computeTotalPoints(p.id);
     const spendablePoints = computeSpendablePoints(p.id);
@@ -1401,9 +1420,15 @@
 
     const defs = habitDefsOf(p.id);
     const dailyDefs = defs.filter((h) => h.freq === 'daily');
+    const weeklyDefs = defs.filter((h) => h.freq === 'weekly');
     const dailyDone = dailyDefs.filter((h) => habitStateOf(p.id, h.id).done).length;
     const dailyTotal = dailyDefs.length;
     const dailyPercent = dailyTotal ? Math.round((dailyDone / dailyTotal) * 100) : 0;
+    // Weekly ring mirrors the daily one but sums count/target across every
+    // weekly habit, since a single weekly habit isn't binary done/not-done.
+    const weeklyDone = weeklyDefs.reduce((sum, h) => sum + habitStateOf(p.id, h.id).count, 0);
+    const weeklyTotal = weeklyDefs.reduce((sum, h) => sum + h.target, 0);
+    const weeklyPercent = weeklyTotal ? Math.round((weeklyDone / weeklyTotal) * 100) : 0;
 
     const bday = nextBirthdayInfo(p.birthday.month, p.birthday.day, new Date());
     const showBday = bday.today || bday.diffDays <= SHOW_BDAY_WITHIN_DAYS;
@@ -1416,19 +1441,8 @@
     const showPiggy = pocketWeeklyOf(p.id) > 0;
     const piggyEstimate = showPiggy ? weeklyEstimate(p.id) : 0;
 
-    const habitsHtml = defs.map((h) => {
-      const hs = habitStateOf(p.id, h.id);
-      const isWeekly = h.freq === 'weekly';
-      const filled = isWeekly ? hs.count >= h.target : hs.done;
-      const indicator = isWeekly
-        ? `<div class="habit-indicator habit-indicator--weekly" style="background:${filled ? p.color : '#eef0f3'};color:${filled ? '#ffffff' : '#3d434b'};">${hs.count}/${h.target}</div>`
-        : `<div class="habit-indicator" style="background:${filled ? p.color : 'transparent'};border-color:${filled ? 'transparent' : '#a8afb8'};">${filled ? checkSvg() : ''}</div>`;
-      return `<div class="habit-row" data-person="${p.id}" data-habit="${h.id}">`
-        + indicator
-        + `<div class="habit-name" style="text-decoration:${filled && !isWeekly ? 'line-through' : 'none'};opacity:${filled ? 0.6 : 1};">${escapeHtml(h.name)}</div>`
-        + `<div class="habit-streak">${flameSvg()}${hs.streak}${isWeekly ? 'w' : 'd'}</div>`
-        + `</div>`;
-    }).join('');
+    const habitsHtml = (dailyDefs.length ? `<div class="habit-group-label">Daily</div>${dailyDefs.map((h) => renderHabitRow(p, h)).join('')}` : '')
+      + (weeklyDefs.length ? `<div class="habit-group-label">Weekly</div>${weeklyDefs.map((h) => renderHabitRow(p, h)).join('')}` : '');
 
     return `<div class="card ${p.id === state.selectedId ? 'is-selected' : ''}" data-person="${p.id}">`
       + `<div class="card-header">`
@@ -1453,10 +1467,16 @@
       +     `<div class="level-caption">${lv.into}/${lv.span}</div>`
       +   `</div>`
       + `</div>`
-      + `<div class="ring-holder"><div class="ring-wrap">`
-      +   `<div class="ring-outer" style="background:${ringGradient(dailyPercent, p.color)};"></div>`
-      +   `<div class="ring-inner"><div class="ring-value">${dailyDone}/${dailyTotal}</div><div class="ring-label">today</div></div>`
-      + `</div></div>`
+      + `<div class="ring-holder">`
+      +   `<div class="ring-wrap">`
+      +     `<div class="ring-outer" style="background:${ringGradient(dailyPercent, p.color)};"></div>`
+      +     `<div class="ring-inner"><div class="ring-value">${dailyDone}/${dailyTotal}</div><div class="ring-label">today</div></div>`
+      +   `</div>`
+      +   `<div class="ring-wrap">`
+      +     `<div class="ring-outer" style="background:${ringGradient(weeklyPercent, p.color)};"></div>`
+      +     `<div class="ring-inner"><div class="ring-value">${weeklyDone}/${weeklyTotal}</div><div class="ring-label">this week</div></div>`
+      +   `</div>`
+      + `</div>`
       + `<div class="habit-list">${habitsHtml}</div>`
       + `<div class="cal">${renderCalendar(p)}</div>`
       + renderCalendarDayPanel(p)
@@ -1753,27 +1773,35 @@
   // Each Settings section keeps its heading always visible as a collapse/
   // expand toggle for its own body, rather than one big all-or-nothing
   // switch — the pocket-money/habit editors only exist for a focused person.
-  function renderSettingsSection(key, headingHtml, bodyHtml, bodyClass, headingClass){
+  function renderSettingsSection(key, iconHtml, headingHtml, bodyHtml, bodyClass){
     const expanded = !!settingsSectionOpen[key];
     return `<div class="settings-section">`
       + `<button class="settings-section-toggle" data-section="${key}">`
-      +   `<span class="settings-section-heading${headingClass ? ' ' + headingClass : ''}">${headingHtml}</span>`
+      +   `<span class="settings-section-heading-group">`
+      +     `<span class="settings-section-icon">${iconHtml}</span>`
+      +     `<span class="settings-section-heading">${headingHtml}</span>`
+      +   `</span>`
       +   `<span class="settings-section-chevron">${expanded ? chevronUpSvg() : chevronDownSvg()}</span>`
       + `</button>`
       + `<div class="settings-section-body${bodyClass ? ' ' + bodyClass : ''}" style="${expanded ? '' : 'display:none;'}">${bodyHtml}</div>`
       + `</div>`;
   }
 
+  // Each heading is prefixed with the icon of the tab it relates to: Pocket
+  // money -> Wallet, Habit editor -> Habits. Activity log and Security have
+  // no matching tab, so they borrow the Settings gear and the lock icon
+  // already used for the locked state elsewhere in the app.
   function renderSettingsSections(){
     const personId = state.settingsFilterId;
+    const activityName = personId ? ROSTER.find((r) => r.id === personId).name : 'Everyone';
     let html = '';
     if (personId) {
       const p = ROSTER.find((r) => r.id === personId);
-      html += renderSettingsSection('pocket', `${escapeHtml(p.name)}&rsquo;s weekly pocket money`, renderPocketEditorBody(personId));
-      html += renderSettingsSection('habits', `Editing ${escapeHtml(p.name)}&rsquo;s habits`, renderHabitEditorBody(personId));
+      html += renderSettingsSection('pocket', piggyBankSvg(16), `${escapeHtml(p.name)}&rsquo;s weekly pocket money`, renderPocketEditorBody(personId));
+      html += renderSettingsSection('habits', circleCheckSvg(16), `Editing ${escapeHtml(p.name)}&rsquo;s habits`, renderHabitEditorBody(personId));
     }
-    html += renderSettingsSection('activity', `Everything that's happened, across the whole family.`, renderActivityLog(), 'activity-list', 'is-sub');
-    html += renderSettingsSection('security', 'Security', renderSecuritySectionBody());
+    html += renderSettingsSection('activity', settingsSvg(16), `${escapeHtml(activityName)}&rsquo;s recent activity`, renderActivityLog(), 'activity-list');
+    html += renderSettingsSection('security', lockSvg(16), 'Security', renderSecuritySectionBody());
     return html;
   }
 
