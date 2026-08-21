@@ -308,6 +308,7 @@
     background:var(--surface-sunken); border:none; border-radius:999px; padding:9px 16px; cursor:pointer;
   }
   .backup-status{ font-size:12.5px; font-weight:600; color:var(--ink-secondary); margin-bottom:10px; }
+  .backup-reset-row{ margin-top:16px; padding-top:16px; border-top:1px solid var(--track); }
 
   .activity-list{
     display:flex; flex-direction:column;
@@ -1121,10 +1122,13 @@
       return;
     }
     state.settingsPin = val;
-    settingsUnlocked = true;
+    // Lock immediately (don't leave this session unlocked) so setting a PIN
+    // visibly does something — the gate + tab badge appear right away, and
+    // typing the PIN back in confirms it actually works.
+    settingsUnlocked = false;
     saveState();
     render();
-    showToast('Settings PIN set.', 'success');
+    showToast('Settings PIN set — enter it to unlock.', 'success');
   }
 
   function removeSettingsPin(){
@@ -1198,6 +1202,14 @@
       location.reload();
     };
     reader.readAsText(file);
+  }
+
+  // Wipes everything back to a fresh install — for switching from testing to
+  // real use. Export first is on the user; this doesn't force it.
+  function resetAllData(){
+    if (!confirm('Reset all data on this device back to zero? Points, streaks, history and settings for everyone will be lost. This cannot be undone.')) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+    location.reload();
   }
 
   // Habit-editor UI state — which habit (or 'new') is expanded for editing,
@@ -1864,7 +1876,11 @@
       +   `<button class="security-btn" id="importBackupBtn">Import backup</button>`
       + `</div>`
       + `<input type="file" id="importFileInput" accept="application/json" style="display:none;">`
-      + `<div class="pocket-editor-note">Downloads everything as a JSON file you can keep somewhere safe, then use Import to restore it later &mdash; on this device or a new one.</div>`;
+      + `<div class="pocket-editor-note">Downloads everything as a JSON file you can keep somewhere safe, then use Import to restore it later &mdash; on this device or a new one.</div>`
+      + `<div class="security-row backup-reset-row">`
+      +   `<div class="security-note">Done testing? Wipe everything and start from zero.</div>`
+      +   `<button class="security-btn" id="resetDataBtn">Reset data</button>`
+      + `</div>`;
   }
 
   function renderHabitEditorBody(personId){
@@ -2093,6 +2109,8 @@
     if (exportBackupBtn) { exportBackup(); return; }
     const importBackupBtn = e.target.closest('#importBackupBtn');
     if (importBackupBtn) { document.getElementById('importFileInput').click(); return; }
+    const resetDataBtn = e.target.closest('#resetDataBtn');
+    if (resetDataBtn) { resetAllData(); return; }
   });
 
   document.addEventListener('keydown', (e) => {
