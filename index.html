@@ -46,10 +46,13 @@
   .today{ font-size:16px; font-weight:600; color:var(--ink-secondary); }
 
   .switcher{ display:none; gap:8px; overflow-x:auto; padding:10px 6px 14px; }
-  /* On Settings the switcher also drives who's being filtered/edited, so it
-     stays visible there even on desktop, where Habits/Rewards hide it
-     because the card grid already shows everyone. */
-  body.is-settings .switcher{ display:flex; }
+  /* Habits shows every person at once in its card grid on wider screens, so
+     the switcher there only needs to appear on mobile's single-card view.
+     Every other page (Rewards, Wallet, Ranking, Settings) always operates
+     on one selected/filtered person with no equivalent grid, so it needs
+     the switcher visible at any width — otherwise there's no way to pick
+     who you're looking at once the mobile-only breakpoint no longer applies. */
+  body.show-switcher .switcher{ display:flex; }
   /* flex:1 on the pills (rather than a fixed avatar size) is what makes this
      row adapt to available width — five pills always share the row evenly,
      shrinking together on a narrow phone and capping out at max-width on a
@@ -1347,7 +1350,7 @@
   let currentPage = 'pageHabits';
   function switchTab(pageId){
     currentPage = pageId;
-    document.body.classList.toggle('is-settings', pageId === 'pageSettings');
+    document.body.classList.toggle('show-switcher', pageId !== 'pageHabits');
     document.querySelectorAll('.page').forEach((el) => el.classList.toggle('active', el.id === pageId));
     document.querySelectorAll('.tab-btn').forEach((el) => el.classList.toggle('active', el.dataset.page === pageId));
     render();
