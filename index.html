@@ -45,19 +45,26 @@
   .eyebrow{ font-size:12px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-faint); }
   .today{ font-size:16px; font-weight:600; color:var(--ink-secondary); }
 
-  .switcher{ display:none; gap:14px; overflow-x:auto; padding:10px 6px 14px; }
+  .switcher{ display:none; gap:8px; overflow-x:auto; padding:10px 6px 14px; }
   /* On Settings the switcher also drives who's being filtered/edited, so it
      stays visible there even on desktop, where Habits/Rewards hide it
      because the card grid already shows everyone. */
   body.is-settings .switcher{ display:flex; }
-  .switcher-pill{ display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0; cursor:pointer; }
+  /* flex:1 on the pills (rather than a fixed avatar size) is what makes this
+     row adapt to available width — five pills always share the row evenly,
+     shrinking together on a narrow phone and capping out at max-width on a
+     wide one, instead of overflowing into a horizontal scroll. */
+  .switcher-pill{ display:flex; flex-direction:column; align-items:center; gap:5px; flex:1 1 0; min-width:0; cursor:pointer; }
   .switcher-avatar{
-    width:60px; height:60px; border-radius:999px; color:#fff;
-    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:22px;
+    width:100%; max-width:52px; aspect-ratio:1; border-radius:999px; color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:19px;
     transform:scale(0.8333); transition:transform .15s ease, box-shadow .15s ease;
   }
   .switcher-avatar.is-active{ transform:scale(1); box-shadow:0 0 0 3px var(--paper), 0 0 0 6px var(--ring-color); }
-  .switcher-label{ font-size:11px; font-weight:700; color:var(--ink-faint); }
+  .switcher-label{
+    font-size:10px; font-weight:700; color:var(--ink-faint);
+    max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
   .switcher-label.is-active{ color:var(--ink); }
 
   .cards{ display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:18px; }
