@@ -70,9 +70,14 @@
   }
   .switcher-label.is-active{ color:var(--ink); }
 
-  .cards{ display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:18px; }
+  /* flex-wrap (not grid) so a short last row centers itself too, instead of
+     sitting flush left with dead space to its right — grid shares column
+     tracks across every row, which can't do that on its own. Capping width
+     keeps cards a comfortable size instead of stretching to fill whatever's
+     left on a wide screen. */
+  .cards{ display:flex; flex-wrap:wrap; justify-content:center; gap:18px; }
   .card{
-    display:flex; flex-direction:column; gap:14px;
+    display:flex; flex-direction:column; gap:14px; flex:1 1 210px; max-width:260px;
     background:var(--surface-card); border-radius:20px; padding:20px; box-shadow:var(--shadow-card);
   }
 
@@ -101,6 +106,11 @@
   .piggy-chip{ background:#eaf9ef; color:#1f7643; }
 
   .chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  /* Always render the birthday chip and piggy chip, just made invisible
+     (visibility:hidden, not removed) when that person doesn't have one, so
+     every card reserves the same space here and the rings below always
+     start at the same height regardless of who has what. */
+  .chip-placeholder{ visibility:hidden; }
 
   .level-block{ display:flex; flex-direction:column; gap:5px; }
   .level-bar-row{ display:flex; align-items:center; gap:8px; }
@@ -460,7 +470,7 @@
 
     .cards{ display:block; }
     .card{ display:none; }
-    .card.is-selected{ display:flex; }
+    .card.is-selected{ display:flex; max-width:none; }
 
     .avatar{ width:56px; height:56px; font-size:20px; }
     .person-name{ font-size:20px; }
@@ -1609,6 +1619,12 @@
     const levelBg = tint(p.color, 0.14);
     const showPiggy = pocketWeeklyOf(p.id) > 0;
     const piggyEstimate = showPiggy ? weeklyEstimate(p.id) : 0;
+    // Both chips always render — just invisible (not removed) when this
+    // person doesn't have one — so every card reserves identical space here
+    // and the rings below always start at the same height, regardless of
+    // who actually has a birthday coming up or pocket money set.
+    const bdayPlaceholder = showBday ? '' : ' chip-placeholder';
+    const piggyPlaceholder = showPiggy ? '' : ' chip-placeholder';
 
     const habitsHtml = (dailyDefs.length ? `<div class="habit-group-label">Daily</div>${dailyDefs.map((h) => renderHabitRow(p, h)).join('')}` : '')
       + (weeklyDefs.length ? `<div class="habit-group-label">Weekly</div>${weeklyDefs.map((h) => renderHabitRow(p, h)).join('')}` : '');
@@ -1626,10 +1642,10 @@
       +   `</div>`
       + `</div>`
       + `<div class="chip-row">`
-      +   (showBday ? `<div class="bday-chip" style="background:${bdayBg};color:${bdayColor};">${cakeSvg()}${formatBirthday(bday)}</div>` : '')
+      +   `<div class="bday-chip${bdayPlaceholder}" style="background:${bdayBg};color:${bdayColor};">${cakeSvg()}${formatBirthday(bday)}</div>`
       +   `<div class="level-badge" style="background:${levelBg};color:${p.color};">${lv.level >= 3 ? medalSvg() : starSvg()}${escapeHtml(levelTitle)}</div>`
       + `</div>`
-      + (showPiggy ? `<div class="piggy-chip">${piggyBankSvg()}&pound;${piggyEstimate.toFixed(2)} this week</div>` : '')
+      + `<div class="piggy-chip${piggyPlaceholder}">${piggyBankSvg()}&pound;${piggyEstimate.toFixed(2)} this week</div>`
       + `<div class="level-block">`
       +   `<div class="level-bar-row">`
       +     `<div class="level-track"><div class="level-fill" style="width:${Math.round((lv.into / lv.span) * 100)}%;background:${p.color};"></div></div>`
