@@ -25,8 +25,12 @@
     --track:#eef0f3;
     --shadow-card:0 2px 8px rgba(34,38,43,0.06), 0 8px 24px rgba(34,38,43,0.06);
   }
-  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  *{
+    box-sizing:border-box; -webkit-tap-highlight-color:transparent;
+    user-select:none; -webkit-user-select:none;
+  }
   html{ -webkit-touch-callout:none; }
+  input, textarea{ user-select:text; -webkit-user-select:text; }
   body{
     margin:0; font-family:'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     background:var(--paper); color:var(--ink); min-height:100vh; -webkit-font-smoothing:antialiased;
@@ -42,8 +46,11 @@
   .today{ font-size:16px; font-weight:600; color:var(--ink-secondary); }
 
   .switcher{ display:none; gap:14px; overflow-x:auto; padding:10px 6px 14px; }
-  .filter-row{ display:flex; gap:14px; overflow-x:auto; padding:2px 2px 20px; }
-  .switcher-pill, .filter-pill{ display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0; cursor:pointer; }
+  /* On Settings the switcher also drives who's being filtered/edited, so it
+     stays visible there even on desktop, where Habits/Rewards hide it
+     because the card grid already shows everyone. */
+  body.is-settings .switcher{ display:flex; }
+  .switcher-pill{ display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0; cursor:pointer; }
   .switcher-avatar{
     width:50px; height:50px; border-radius:999px; color:#fff;
     display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px;
@@ -234,6 +241,60 @@
   .lb-total{ font-size:16px; font-weight:800; color:var(--ink); white-space:nowrap; }
   .lb-now{ font-size:10.5px; font-weight:600; color:var(--ink-faint); white-space:nowrap; }
 
+  .habit-editor{ display:flex; flex-direction:column; gap:14px; margin-bottom:24px; padding-bottom:24px; border-bottom:1px solid var(--track); }
+  .habit-editor-heading{ font-size:15px; font-weight:800; color:var(--ink); }
+  .habit-editor-list{ display:flex; flex-direction:column; gap:8px; }
+  .habit-editor-row{
+    display:flex; align-items:center; gap:10px;
+    background:var(--surface-sunken); border-radius:14px; padding:10px 10px 10px 8px;
+  }
+  .habit-editor-reorder{ display:flex; flex-direction:column; gap:2px; flex-shrink:0; }
+  .habit-move-btn{
+    width:24px; height:20px; border:none; background:var(--surface-card); border-radius:6px;
+    display:flex; align-items:center; justify-content:center; color:var(--ink-secondary); cursor:pointer;
+  }
+  .habit-move-btn:disabled{ opacity:.35; cursor:not-allowed; }
+  .habit-editor-info{ flex:1; min-width:0; }
+  .habit-editor-name{ font-size:15px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .habit-editor-meta{ font-size:12px; font-weight:600; color:var(--ink-secondary); margin-top:2px; }
+  .habit-edit-btn, .habit-delete-btn{
+    width:32px; height:32px; border:none; background:var(--surface-card); border-radius:999px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .habit-edit-btn{ color:#3d434b; }
+  .habit-delete-btn{ color:#e84e3d; }
+  .habit-add-btn{
+    padding:13px; border-radius:14px; border:1.5px dashed #d8dbe0; background:transparent;
+    font-family:inherit; font-size:13.5px; font-weight:700; color:var(--ink-secondary); cursor:pointer;
+  }
+  .habit-form{
+    display:flex; flex-direction:column; gap:14px;
+    background:var(--surface-card); border-radius:16px; padding:18px; box-shadow:var(--shadow-card);
+  }
+  .habit-form-label{ font-size:11px; font-weight:700; color:var(--ink-secondary); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px; }
+  .habit-form-input{
+    width:100%; font-family:inherit; font-size:14px; font-weight:600; color:var(--ink);
+    padding:10px 14px; border-radius:12px; border:1.5px solid var(--track); background:var(--paper); outline:none;
+  }
+  .habit-form-toggle{ display:flex; gap:8px; }
+  .habit-freq-btn{
+    flex:1; padding:9px; border-radius:999px; border:none; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer;
+    background:var(--track); color:#3d434b;
+  }
+  .habit-freq-btn.active{ background:var(--ink); color:#fff; }
+  .habit-stepper{ display:flex; align-items:center; gap:14px; }
+  .habit-step-btn{
+    width:34px; height:34px; border-radius:999px; border:1.5px solid var(--track); background:var(--surface-card);
+    font-family:inherit; font-size:18px; font-weight:700; color:var(--ink); cursor:pointer;
+  }
+  .habit-step-value{ font-size:16px; font-weight:800; color:var(--ink); min-width:30px; text-align:center; }
+  .habit-form-actions{ display:flex; gap:10px; margin-top:2px; }
+  .habit-cancel-btn, .habit-save-btn{
+    flex:1; padding:11px; border-radius:999px; border:none; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer;
+  }
+  .habit-cancel-btn{ background:var(--track); color:var(--ink); }
+  .habit-save-btn{ background:#ffc93c; color:var(--ink); }
+
   .tab-bar{
     position:fixed; left:0; right:0; bottom:0; z-index:65; display:flex;
     background:#ffffff; border-top:1px solid var(--track); box-shadow:0 -2px 12px rgba(34,38,43,.06);
@@ -326,7 +387,7 @@
 
   <div class="page" id="pageSettings">
     <p class="page-sub">Everything that's happened, across the whole family.</p>
-    <div class="filter-row" id="settingsFilter"></div>
+    <div id="habitEditorSection"></div>
     <div class="activity-list" id="activityList"></div>
   </div>
 </div>
@@ -382,7 +443,7 @@
         { id:'brush', name:'Brush teeth', freq:'daily' },
         { id:'read', name:'Read 20 minutes', freq:'daily' },
       ] },
-    { id:'lorraine', name:'Lorraine', role:'Grandma', initial:'L', color:'#ffc93c', birthday:{ month:6, day:28 }, pocketWeekly:0,
+    { id:'lorraine', name:'Lorraine', role:'Grandma', initial:'L', color:'#ec6a9c', birthday:{ month:6, day:28 }, pocketWeekly:0,
       habits:[
         { id:'walk', name:'Afternoon walk', freq:'weekly', target:5 },
         { id:'call', name:'Call a grandchild', freq:'weekly', target:1 },
@@ -431,9 +492,11 @@
     { id:'r_cash5', name:'£5 pocket money', cost:120, cash:5 },
   ];
 
+  function habitDefsOf(personId){
+    return state.people[personId].habitDefs;
+  }
   function habitDefOf(personId, habitId){
-    const p = ROSTER.find((r) => r.id === personId);
-    return p.habits.find((h) => h.id === habitId);
+    return habitDefsOf(personId).find((h) => h.id === habitId);
   }
   function habitStateOf(personId, habitId){
     return state.people[personId].habits.find((h) => h.id === habitId);
@@ -463,7 +526,13 @@
       if (typeof s.people[p.id].totalBanked !== 'number') s.people[p.id].totalBanked = s.people[p.id].bankedPoints;
       if (!s.people[p.id].rewardInventory || typeof s.people[p.id].rewardInventory !== 'object') s.people[p.id].rewardInventory = {};
       if (!s.people[p.id].dailyRatioHistory || typeof s.people[p.id].dailyRatioHistory !== 'object') s.people[p.id].dailyRatioHistory = {};
-      p.habits.forEach((h) => {
+      // Habit *definitions* (name/frequency/target/points) used to be fixed
+      // in ROSTER; they're editable now, so they live in state — seeded once
+      // from ROSTER's list as that person's starting habits.
+      if (!Array.isArray(s.people[p.id].habitDefs)) {
+        s.people[p.id].habitDefs = p.habits.map((h) => ({ id:h.id, name:h.name, freq:h.freq, target:h.target || 1, points:HABIT_POINTS }));
+      }
+      s.people[p.id].habitDefs.forEach((h) => {
         if (!s.people[p.id].habits.find((x) => x.id === h.id)) {
           s.people[p.id].habits.push({ id:h.id, done:false, count:0, streak:0 });
         }
@@ -529,12 +598,11 @@
   // Whatever's checked off right now but hasn't rolled over into a banked
   // total yet — contributes equally to both the spendable and lifetime pools.
   function liveContribution(personId){
-    const p = ROSTER.find((r) => r.id === personId);
     let live = 0;
-    p.habits.forEach((h) => {
+    habitDefsOf(personId).forEach((h) => {
       const hs = habitStateOf(personId, h.id);
-      if (h.freq === 'daily') { if (hs.done) live += HABIT_POINTS; }
-      else { live += hs.count * HABIT_POINTS; }
+      if (h.freq === 'daily') { if (hs.done) live += h.points; }
+      else { live += hs.count * h.points; }
     });
     return live;
   }
@@ -567,8 +635,7 @@
   // future days in the week simply haven't contributed yet.
   function weeklyRatioSoFar(personId){
     const ps = state.people[personId];
-    const p = ROSTER.find((r) => r.id === personId);
-    const dailyDefs = p.habits.filter((h) => h.freq === 'daily');
+    const dailyDefs = habitDefsOf(personId).filter((h) => h.freq === 'daily');
     const todayKeyStr = dateKey(new Date());
     let sum = 0;
     for (let i = 0; i < 7; i++) {
@@ -624,6 +691,14 @@
     return roundMoney((state.people[personId].piggyLedger || []).filter((e) => e.delta > 0).reduce((a, e) => a + e.delta, 0));
   }
 
+  // Whether the piggy bank is worth showing at all for this person: either
+  // they're eligible for a weekly allowance (even at £0.00 so far), or
+  // they've earned money some other way (redeeming a cash reward).
+  function piggyEligible(personId){
+    const p = ROSTER.find((r) => r.id === personId);
+    return p.pocketWeekly > 0 || piggyEarnedTotal(personId) > 0;
+  }
+
   function drawDownPiggy(amount, note){
     const personId = state.selectedId;
     const p = ROSTER.find((r) => r.id === personId);
@@ -652,16 +727,17 @@
 
     ROSTER.forEach((p) => {
       const ps = state.people[p.id];
+      const defs = habitDefsOf(p.id);
 
       if (ps.lastResetDate !== todayKey) {
-        const dailyDefs = p.habits.filter((h) => h.freq === 'daily');
+        const dailyDefs = defs.filter((h) => h.freq === 'daily');
         if (dailyDefs.length) {
           const doneCount = dailyDefs.filter((h) => habitStateOf(p.id, h.id).done).length;
           ps.dailyRatioHistory[ps.lastResetDate] = doneCount / dailyDefs.length;
         }
         dailyDefs.forEach((h) => {
           const hs = habitStateOf(p.id, h.id);
-          if (hs.done) { awardPoints(ps, HABIT_POINTS); hs.streak += 1; }
+          if (hs.done) { awardPoints(ps, h.points); hs.streak += 1; }
           else { hs.streak = 0; }
           hs.done = false;
         });
@@ -674,9 +750,9 @@
       }
 
       if (ps.weekAnchor !== thisMonday) {
-        p.habits.filter((h) => h.freq === 'weekly').forEach((h) => {
+        defs.filter((h) => h.freq === 'weekly').forEach((h) => {
           const hs = habitStateOf(p.id, h.id);
-          awardPoints(ps, hs.count * HABIT_POINTS);
+          awardPoints(ps, hs.count * h.points);
           hs.streak = hs.count >= h.target ? hs.streak + 1 : 0;
           hs.count = 0;
         });
@@ -727,9 +803,90 @@
     render();
   }
 
-  function selectSettingsFilter(id){
-    state.settingsFilterId = id === 'all' ? null : id;
+  // Same pill, two meanings depending on which page you're on: clicking it
+  // on Settings toggles the filter (click the active one again to clear
+  // back to everyone), rather than always selecting like Habits/Rewards do.
+  function toggleSettingsFilter(id){
+    state.settingsFilterId = state.settingsFilterId === id ? null : id;
     saveState();
+    render();
+  }
+
+  // Habit-editor UI state — which habit (or 'new') is expanded for editing,
+  // and its working copy of fields. Ephemeral, not persisted: always starts
+  // closed on load.
+  let habitEditingId = null;
+  let habitDraft = null;
+
+  function startHabitEdit(habitId){
+    const h = habitDefOf(state.settingsFilterId, habitId);
+    if (!h) return;
+    habitEditingId = habitId;
+    habitDraft = { name: h.name, freq: h.freq, target: h.target, points: h.points };
+    render();
+  }
+  function startHabitAdd(){
+    habitEditingId = 'new';
+    habitDraft = { name: '', freq: 'daily', target: 1, points: 10 };
+    render();
+  }
+  function cancelHabitEdit(){
+    habitEditingId = null;
+    habitDraft = null;
+    render();
+  }
+  function saveHabitEdit(){
+    const personId = state.settingsFilterId;
+    if (!personId || !habitDraft) { cancelHabitEdit(); return; }
+    const name = (habitDraft.name || '').trim();
+    if (!name) { cancelHabitEdit(); return; }
+    const defs = habitDefsOf(personId);
+    if (habitEditingId === 'new') {
+      const id = 'h_' + Date.now().toString(36);
+      defs.push({ id, name, freq: habitDraft.freq, target: habitDraft.target, points: habitDraft.points });
+      state.people[personId].habits.push({ id, done:false, count:0, streak:0 });
+      logActivity(personId, `added a new habit: <b>${escapeHtml(name)}</b>`);
+    } else {
+      const h = defs.find((x) => x.id === habitEditingId);
+      if (h) {
+        h.name = name; h.freq = habitDraft.freq; h.target = habitDraft.target; h.points = habitDraft.points;
+        logActivity(personId, `updated the habit: <b>${escapeHtml(name)}</b>`);
+      }
+    }
+    habitEditingId = null;
+    habitDraft = null;
+    saveState();
+    render();
+  }
+  function moveHabitDef(habitId, dir){
+    const personId = state.settingsFilterId;
+    const defs = habitDefsOf(personId);
+    const idx = defs.findIndex((h) => h.id === habitId);
+    const newIdx = idx + dir;
+    if (idx === -1 || newIdx < 0 || newIdx >= defs.length) return;
+    [defs[idx], defs[newIdx]] = [defs[newIdx], defs[idx]];
+    saveState();
+    render();
+  }
+  function deleteHabitDef(habitId){
+    const personId = state.settingsFilterId;
+    const defs = habitDefsOf(personId);
+    const h = defs.find((x) => x.id === habitId);
+    state.people[personId].habitDefs = defs.filter((x) => x.id !== habitId);
+    state.people[personId].habits = state.people[personId].habits.filter((x) => x.id !== habitId);
+    if (habitEditingId === habitId) { habitEditingId = null; habitDraft = null; }
+    if (h) logActivity(personId, `removed the habit: <b>${escapeHtml(h.name)}</b>`);
+    saveState();
+    render();
+  }
+  function setHabitDraftFreq(freq){
+    habitDraft = { ...habitDraft, freq };
+    render();
+  }
+  function stepHabitDraft(field, delta){
+    const current = habitDraft[field] != null ? habitDraft[field] : (field === 'target' ? 1 : 10);
+    const val = current + delta;
+    habitDraft = { ...habitDraft, [field]: field === 'target' ? Math.max(1, Math.min(7, val)) : Math.max(5, Math.min(50, val)) };
     render();
   }
 
@@ -778,9 +935,13 @@
     showToast(`${p.name} used ${reward.name}.`, 'success');
   }
 
+  let currentPage = 'pageHabits';
   function switchTab(pageId){
+    currentPage = pageId;
+    document.body.classList.toggle('is-settings', pageId === 'pageSettings');
     document.querySelectorAll('.page').forEach((el) => el.classList.toggle('active', el.id === pageId));
     document.querySelectorAll('.tab-btn').forEach((el) => el.classList.toggle('active', el.dataset.page === pageId));
+    render();
   }
 
   function escapeHtml(s){
@@ -831,6 +992,18 @@
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">`
       + '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82A1.65 1.65 0 0 0 3 13.09H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
   }
+  function pencilSvg(){
+    return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>';
+  }
+  function trashSvg(){
+    return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
+  }
+  function chevronUpSvg(){
+    return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>';
+  }
+  function chevronDownSvg(){
+    return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+  }
 
   function renderCard(p){
     const totalPoints = computeTotalPoints(p.id);
@@ -840,7 +1013,8 @@
     const ranked = [...ROSTER].sort((a, b) => computeTotalPoints(b.id) - computeTotalPoints(a.id));
     const rank = ranked.findIndex((r) => r.id === p.id) + 1;
 
-    const dailyDefs = p.habits.filter((h) => h.freq === 'daily');
+    const defs = habitDefsOf(p.id);
+    const dailyDefs = defs.filter((h) => h.freq === 'daily');
     const dailyDone = dailyDefs.filter((h) => habitStateOf(p.id, h.id).done).length;
     const dailyTotal = dailyDefs.length;
     const dailyPercent = dailyTotal ? Math.round((dailyDone / dailyTotal) * 100) : 0;
@@ -856,7 +1030,7 @@
     const showPiggy = p.pocketWeekly > 0;
     const piggyEstimate = showPiggy ? weeklyEstimate(p.id) : 0;
 
-    const habitsHtml = p.habits.map((h) => {
+    const habitsHtml = defs.map((h) => {
       const hs = habitStateOf(p.id, h.id);
       const isWeekly = h.freq === 'weekly';
       const filled = isWeekly ? hs.count >= h.target : hs.done;
@@ -903,7 +1077,7 @@
 
   function renderSwitcher(){
     return ROSTER.map((p) => {
-      const active = p.id === state.selectedId;
+      const active = currentPage === 'pageSettings' ? p.id === state.settingsFilterId : p.id === state.selectedId;
       return `<div class="switcher-pill" data-person="${p.id}">`
         + `<div class="switcher-avatar ${active ? 'is-active' : ''}" style="background:${p.color};--ring-color:${p.color};">${p.initial}</div>`
         + `<div class="switcher-label ${active ? 'is-active' : ''}">${escapeHtml(p.name)}</div>`
@@ -930,12 +1104,13 @@
   // real money saved (weekly allowance + any cashed-out rewards) if any.
   // Earned total never drops even after a withdrawal; saved is the live balance.
   function renderPageStats(){
-    const pts = computeSpendablePoints(state.selectedId);
-    const saved = piggyBalance(state.selectedId);
-    const earned = piggyEarnedTotal(state.selectedId);
+    const personId = state.selectedId;
+    const pts = computeSpendablePoints(personId);
+    const saved = piggyBalance(personId);
+    const earned = piggyEarnedTotal(personId);
     return `<div class="page-stats">`
       + `<div class="pts-available"><b>${pts}</b> pts to spend</div>`
-      + (earned > 0
+      + (piggyEligible(personId)
           ? `<div class="piggy-stats-row">`
             + `<div class="piggy-saved">&pound;${saved.toFixed(2)} saved</div>`
             + `<div class="piggy-earned-tag">${piggyBankSvg()}&pound;${earned.toFixed(2)} earned total</div>`
@@ -944,12 +1119,12 @@
       + `</div>`;
   }
 
-  // The withdraw form + ledger only appear once there's any money history at
-  // all — nothing to draw down or look back on for someone who hasn't earned
-  // anything yet.
+  // The withdraw form + ledger appear as soon as someone's eligible for the
+  // piggy bank at all — at £0.00 to start, not just after their first payout —
+  // so the feature is discoverable instead of invisible.
   function renderPiggySection(){
     const personId = state.selectedId;
-    if (piggyEarnedTotal(personId) <= 0) return '';
+    if (!piggyEligible(personId)) return '';
     const balance = piggyBalance(personId);
     const ledger = (state.people[personId].piggyLedger || []).slice().sort((a, b) => b.at.localeCompare(a.at));
     const rows = ledger.map((e) => {
@@ -1032,20 +1207,78 @@
     return `${d.toLocaleDateString('en-GB', { day:'numeric', month:'short' })}, ${time}`;
   }
 
-  function renderSettingsFilter(){
-    const filterId = state.settingsFilterId;
-    const allPill = `<div class="filter-pill" data-filter="all">`
-      + `<div class="switcher-avatar ${!filterId ? 'is-active' : ''}" style="background:#eef0f3;color:#3d434b;--ring-color:#3d434b;font-size:${!filterId ? '15px' : '13px'};">All</div>`
-      + `<div class="switcher-label ${!filterId ? 'is-active' : ''}">Everyone</div>`
+  function renderHabitForm(){
+    const draft = habitDraft || {};
+    const isDaily = draft.freq === 'daily';
+    return `<div class="habit-form">`
+      + `<div>`
+      +   `<div class="habit-form-label">Habit name</div>`
+      +   `<input type="text" id="habitNameInput" class="habit-form-input" value="${escapeHtml(draft.name || '')}" placeholder="e.g. Read 20 minutes" maxlength="60">`
+      + `</div>`
+      + `<div>`
+      +   `<div class="habit-form-label">Frequency</div>`
+      +   `<div class="habit-form-toggle">`
+      +     `<button class="habit-freq-btn ${isDaily ? 'active' : ''}" data-freq="daily">Daily</button>`
+      +     `<button class="habit-freq-btn ${!isDaily ? 'active' : ''}" data-freq="weekly">Weekly</button>`
+      +   `</div>`
+      + `</div>`
+      + (!isDaily
+          ? `<div>`
+            + `<div class="habit-form-label">Times per week</div>`
+            + `<div class="habit-stepper">`
+            +   `<button class="habit-step-btn" data-field="target" data-delta="-1">&minus;</button>`
+            +   `<div class="habit-step-value">${draft.target || 1}</div>`
+            +   `<button class="habit-step-btn" data-field="target" data-delta="1">+</button>`
+            + `</div>`
+            + `</div>`
+          : '')
+      + `<div>`
+      +   `<div class="habit-form-label">Points</div>`
+      +   `<div class="habit-stepper">`
+      +     `<button class="habit-step-btn" data-field="points" data-delta="-5">&minus;</button>`
+      +     `<div class="habit-step-value">${draft.points || 10}</div>`
+      +     `<button class="habit-step-btn" data-field="points" data-delta="5">+</button>`
+      +   `</div>`
+      + `</div>`
+      + `<div class="habit-form-actions">`
+      +   `<button class="habit-cancel-btn" id="habitCancelBtn">Cancel</button>`
+      +   `<button class="habit-save-btn" id="habitSaveBtn">Save</button>`
+      + `</div>`
       + `</div>`;
-    const peoplePills = ROSTER.map((p) => {
-      const active = filterId === p.id;
-      return `<div class="filter-pill" data-filter="${p.id}">`
-        + `<div class="switcher-avatar ${active ? 'is-active' : ''}" style="background:${p.color};--ring-color:${p.color};">${p.initial}</div>`
-        + `<div class="switcher-label ${active ? 'is-active' : ''}">${escapeHtml(p.name)}</div>`
+  }
+
+  // Only shows once a specific person is focused via the switcher on
+  // Settings — editing needs one person, so this stays empty for "everyone".
+  function renderHabitEditor(){
+    const personId = state.settingsFilterId;
+    if (!personId) return '';
+    const p = ROSTER.find((r) => r.id === personId);
+    const defs = habitDefsOf(personId);
+
+    const rows = defs.map((h, i) => {
+      if (habitEditingId === h.id) return renderHabitForm();
+      const freqLabel = h.freq === 'daily' ? 'Daily' : `Weekly &times;${h.target}`;
+      return `<div class="habit-editor-row">`
+        + `<div class="habit-editor-reorder">`
+        +   `<button class="habit-move-btn" data-habit="${h.id}" data-dir="-1" ${i === 0 ? 'disabled' : ''}>${chevronUpSvg()}</button>`
+        +   `<button class="habit-move-btn" data-habit="${h.id}" data-dir="1" ${i === defs.length - 1 ? 'disabled' : ''}>${chevronDownSvg()}</button>`
+        + `</div>`
+        + `<div class="habit-editor-info">`
+        +   `<div class="habit-editor-name">${escapeHtml(h.name)}</div>`
+        +   `<div class="habit-editor-meta">${freqLabel} &middot; ${h.points} pts</div>`
+        + `</div>`
+        + `<button class="habit-edit-btn" data-habit="${h.id}">${pencilSvg()}</button>`
+        + `<button class="habit-delete-btn" data-habit="${h.id}">${trashSvg()}</button>`
         + `</div>`;
     }).join('');
-    return allPill + peoplePills;
+
+    const addSection = habitEditingId === 'new' ? renderHabitForm() : `<button class="habit-add-btn" id="habitAddBtn">+ Add habit</button>`;
+
+    return `<div class="habit-editor">`
+      + `<div class="habit-editor-heading">Editing ${escapeHtml(p.name)}&rsquo;s habits</div>`
+      + `<div class="habit-editor-list">${rows}</div>`
+      + addSection
+      + `</div>`;
   }
 
   function renderActivityLog(){
@@ -1087,7 +1320,7 @@
     document.getElementById('rewardList').innerHTML = REWARDS.map((r) => renderRewardRow(r)).join('');
     document.getElementById('piggySection').innerHTML = renderPiggySection();
     document.getElementById('lbList').innerHTML = renderLeaderboard();
-    document.getElementById('settingsFilter').innerHTML = renderSettingsFilter();
+    document.getElementById('habitEditorSection').innerHTML = renderHabitEditor();
     document.getElementById('activityList').innerHTML = renderActivityLog();
     document.getElementById('tabHabits').innerHTML = circleCheckSvg(20) + '<span>Habits</span>';
     document.getElementById('tabRewards').innerHTML = giftSvg(20) + '<span>Rewards</span>';
@@ -1100,9 +1333,11 @@
     const habitRow = e.target.closest('.habit-row');
     if (habitRow) { toggleHabit(habitRow.dataset.person, habitRow.dataset.habit); return; }
     const pill = e.target.closest('.switcher-pill');
-    if (pill) { selectPerson(pill.dataset.person); return; }
-    const filterPill = e.target.closest('.filter-pill');
-    if (filterPill) { selectSettingsFilter(filterPill.dataset.filter); return; }
+    if (pill) {
+      if (currentPage === 'pageSettings') toggleSettingsFilter(pill.dataset.person);
+      else selectPerson(pill.dataset.person);
+      return;
+    }
     const redeemBtn = e.target.closest('.reward-row-btn');
     if (redeemBtn && !redeemBtn.disabled) { redeemReward(redeemBtn.dataset.reward); return; }
     const useBtn = e.target.closest('.wallet-use-btn');
@@ -1114,8 +1349,33 @@
       drawDownPiggy(parseFloat(amountEl.value), noteEl.value);
       return;
     }
+    const moveBtn = e.target.closest('.habit-move-btn');
+    if (moveBtn && !moveBtn.disabled) { moveHabitDef(moveBtn.dataset.habit, parseInt(moveBtn.dataset.dir, 10)); return; }
+    const habitEditBtn = e.target.closest('.habit-edit-btn');
+    if (habitEditBtn) { startHabitEdit(habitEditBtn.dataset.habit); return; }
+    const habitDeleteBtn = e.target.closest('.habit-delete-btn');
+    if (habitDeleteBtn) { deleteHabitDef(habitDeleteBtn.dataset.habit); return; }
+    const habitAddBtn = e.target.closest('#habitAddBtn');
+    if (habitAddBtn) { startHabitAdd(); return; }
+    const habitFreqBtn = e.target.closest('.habit-freq-btn');
+    if (habitFreqBtn) { setHabitDraftFreq(habitFreqBtn.dataset.freq); return; }
+    const habitStepBtn = e.target.closest('.habit-step-btn');
+    if (habitStepBtn) { stepHabitDraft(habitStepBtn.dataset.field, parseInt(habitStepBtn.dataset.delta, 10)); return; }
+    const habitCancelBtn = e.target.closest('#habitCancelBtn');
+    if (habitCancelBtn) { cancelHabitEdit(); return; }
+    const habitSaveBtn = e.target.closest('#habitSaveBtn');
+    if (habitSaveBtn) { saveHabitEdit(); return; }
     const tabBtn = e.target.closest('.tab-btn');
     if (tabBtn) { switchTab(tabBtn.dataset.page); }
+  });
+
+  // Kept separate from the click handler and deliberately does NOT call
+  // render(): re-rendering on every keystroke would rebuild the input and
+  // drop focus/cursor position mid-type.
+  document.addEventListener('input', (e) => {
+    if (e.target.id === 'habitNameInput' && habitDraft) {
+      habitDraft = { ...habitDraft, name: e.target.value };
+    }
   });
 
   let touchStartX = null;
