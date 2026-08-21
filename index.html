@@ -140,13 +140,19 @@
   .cal-weeks{ display:flex; flex-direction:column; gap:8px; }
   .cal-week{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; align-items:center; }
   .cal-week-divider{ width:1px; height:22px; background:var(--track); justify-self:center; align-self:center; }
-  .cal-cell-wrap{ display:flex; justify-content:center; position:relative; }
+  /* min-width:0 lets each grid column actually shrink below the cell's own
+     size — without it a fixed-size circle forces its whole column (and the
+     rest of the row after it) wider than the card, spilling into the next
+     card on layouts with several narrower cards side by side (iPad-width
+     grids in particular). width:100%+max-width+aspect-ratio then lets the
+     circle itself shrink to fit whatever width it's actually given. */
+  .cal-cell-wrap{ display:flex; justify-content:center; position:relative; min-width:0; }
   .cal-month-tag{
     position:absolute; top:-8px; left:50%; transform:translateX(-50%); line-height:1;
     font-size:7px; font-weight:800; color:var(--ink-faint);
     text-transform:uppercase; letter-spacing:0.02em; white-space:nowrap;
   }
-  .cal-cell{ position:relative; width:28px; height:28px; border-radius:999px; }
+  .cal-cell{ position:relative; width:100%; max-width:28px; aspect-ratio:1; border-radius:999px; }
   .cal-cell.clickable{ cursor:pointer; }
   .cal-cell-ring{ width:100%; height:100%; border-radius:999px; transform:rotate(-90deg); }
   .cal-cell-num{
