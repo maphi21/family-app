@@ -760,11 +760,19 @@
         delete s.people[p.id].piggyPocket;
         delete s.people[p.id].piggyReward;
       }
+      if (typeof s.people[p.id].bankedPoints !== 'number') s.people[p.id].bankedPoints = 0;
       if (typeof s.people[p.id].totalBanked !== 'number') s.people[p.id].totalBanked = s.people[p.id].bankedPoints;
       if (!s.people[p.id].rewardInventory || typeof s.people[p.id].rewardInventory !== 'object') s.people[p.id].rewardInventory = {};
       if (!s.people[p.id].dailyRatioHistory || typeof s.people[p.id].dailyRatioHistory !== 'object') s.people[p.id].dailyRatioHistory = {};
       if (!s.people[p.id].weeklyRatioHistory || typeof s.people[p.id].weeklyRatioHistory !== 'object') s.people[p.id].weeklyRatioHistory = {};
       if (!s.people[p.id].habitDayLog || typeof s.people[p.id].habitDayLog !== 'object') s.people[p.id].habitDayLog = {};
+      // These three drive rolloverIfNeeded()'s daily/weekly/birthday logic —
+      // a save missing any of them (an old backup predating one of these
+      // fields, most likely) previously crashed the whole app on load,
+      // since nothing backfilled them before rollover ran.
+      if (typeof s.people[p.id].lastResetDate !== 'string') s.people[p.id].lastResetDate = dateKey(new Date());
+      if (typeof s.people[p.id].weekAnchor !== 'string') s.people[p.id].weekAnchor = mondayKey(new Date());
+      if (s.people[p.id].bdayAwardedYear === undefined) s.people[p.id].bdayAwardedYear = null;
       // Weekly pocket-money target used to be fixed in ROSTER; editable now
       // from Settings, so it lives in state — seeded once from ROSTER.
       if (typeof s.people[p.id].pocketWeekly !== 'number') s.people[p.id].pocketWeekly = p.pocketWeekly;
@@ -774,7 +782,13 @@
       if (!Array.isArray(s.people[p.id].habitDefs)) {
         s.people[p.id].habitDefs = p.habits.map((h) => ({ id:h.id, name:h.name, freq:h.freq, target:h.target || 1, points:HABIT_POINTS }));
       }
+      if (!Array.isArray(s.people[p.id].habits)) s.people[p.id].habits = [];
       s.people[p.id].habitDefs.forEach((h) => {
+        // A habit def saved before `points`/`target` were part of the shape
+        // would otherwise feed NaN into every points/money calculation that
+        // reads them directly.
+        if (typeof h.points !== 'number') h.points = HABIT_POINTS;
+        if (typeof h.target !== 'number') h.target = 1;
         if (!s.people[p.id].habits.find((x) => x.id === h.id)) {
           s.people[p.id].habits.push({ id:h.id, done:false, count:0, streak:0 });
         }
@@ -800,6 +814,12 @@
   }
 
   let state = loadState();
+  // loadState() can migrate an old/partial save in memory (backfilling a
+  // missing field, converting legacy piggyPocket/piggyReward into ledger
+  // entries, seeding habitDefs from ROSTER, ...) — flush that immediately
+  // rather than leaving it to whatever happens to save next, so the
+  // migrated shape survives even if the tab closes before any interaction.
+  saveState();
   // Not persisted — a PIN unlocks Settings for the rest of this session only;
   // a fresh page load (or reload) re-locks it if a PIN is set.
   let settingsUnlocked = false;
