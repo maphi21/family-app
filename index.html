@@ -241,6 +241,12 @@
   .wallet-hero-label{ font-size:12.5px; font-weight:700; opacity:0.85; }
   .wallet-hero-balance{ font-size:40px; font-weight:800; letter-spacing:-0.02em; line-height:1.1; margin-top:4px; }
   .wallet-hero-earned{ font-size:12px; font-weight:600; opacity:0.85; margin-top:6px; }
+  .wallet-expected{
+    display:inline-flex; align-items:center; gap:6px;
+    background:#eaf9ef; color:#1f7643; border-radius:999px; padding:6px 14px 6px 10px;
+    font-size:12px; font-weight:700; margin-bottom:18px;
+  }
+  .wallet-expected svg{ flex-shrink:0; }
 
   .wallet-strip{ display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
   .wallet-label{ font-size:11.5px; font-weight:700; color:var(--ink-secondary); text-transform:uppercase; letter-spacing:0.04em; }
@@ -1085,8 +1091,10 @@
   // straight into the ledger. Gated behind the family's existing Settings
   // PIN (see openWalletAction/submitWalletPin) so a kid can't credit their
   // own wallet; reuses settingsUnlocked rather than its own flag so
-  // unlocking once (from here or from Settings) covers both for the rest
-  // of the session, instead of prompting twice.
+  // unlocking once (from here or from Settings) covers both while you stay
+  // on Settings/Wallet. Relocks itself right after one successful deposit
+  // (below), on top of switchTab's relock-on-leaving — one PIN entry
+  // authorizes exactly one payment, not an open-ended unlocked session.
   function addMoneyToPiggy(amount, note){
     const personId = state.selectedId;
     const p = ROSTER.find((r) => r.id === personId);
@@ -1099,6 +1107,7 @@
     piggyLedgerAdd(ps, amount, cleanNote || 'Added by a parent', null, dateKey(new Date()));
     logActivity(personId, `added &pound;${amount.toFixed(2)} to the piggy bank${cleanNote ? ` (${escapeHtml(cleanNote)})` : ''}`);
     saveState();
+    settingsUnlocked = false;
     walletAction = null;
     render();
     showToast(`£${amount.toFixed(2)} added for ${p.name}.`, 'success');
@@ -1499,6 +1508,11 @@
   function switchTab(pageId){
     currentPage = pageId;
     walletAction = null;
+    // Auto-relock: staying on Settings/Wallet keeps this session's PIN
+    // unlock in effect (so bouncing between the two doesn't re-prompt),
+    // but leaving for Habits, Rewards, or Ranking re-locks immediately
+    // instead of staying unlocked for the rest of the session.
+    if (pageId !== 'pageSettings' && pageId !== 'pageWallet') settingsUnlocked = false;
     document.body.classList.toggle('show-switcher', pageId !== 'pageHabits');
     document.querySelectorAll('.page').forEach((el) => el.classList.toggle('active', el.id === pageId));
     document.querySelectorAll('.tab-btn').forEach((el) => el.classList.toggle('active', el.dataset.page === pageId));
@@ -1882,12 +1896,20 @@
     const p = ROSTER.find((r) => r.id === personId);
     const saved = piggyBalance(personId);
     const earned = piggyEarnedTotal(personId);
+    // The live "building" estimate for the week in progress -- same figure
+    // that used to sit on the habit card as a text chip, now shown here
+    // instead since Wallet is the money-focused page. Only relevant to
+    // someone with a weekly allowance set; someone piggyEligible purely
+    // from a cashed-out reward has no ongoing weekly payout to expect.
+    const showExpected = pocketWeeklyOf(personId) > 0;
+    const expected = showExpected ? weeklyEstimate(personId) : 0;
     return `<div class="wallet-hero" style="background:${p.color};">`
       + `<div class="wallet-hero-icon">${piggyBankSvg(104)}</div>`
       + `<div class="wallet-hero-label">${escapeHtml(p.name)}&rsquo;s piggy bank</div>`
       + `<div class="wallet-hero-balance">&pound;${saved.toFixed(2)}</div>`
       + `<div class="wallet-hero-earned">&pound;${earned.toFixed(2)} earned total</div>`
-      + `</div>`;
+      + `</div>`
+      + (showExpected ? `<div class="wallet-expected">${piggyBankSvg(13)}&pound;${expected.toFixed(2)} expected this week</div>` : '');
   }
 
   // The action buttons + ledger appear as soon as someone's eligible for the
