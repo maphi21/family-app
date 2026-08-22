@@ -230,14 +230,17 @@
   .page-stats{ margin-bottom:18px; }
   .pts-available{ font-size:14px; font-weight:700; color:var(--ink); }
   .pts-available b{ font-weight:800; }
-  .piggy-stats-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:4px; }
-  .piggy-saved{ font-size:12.5px; font-weight:700; color:#1f7643; }
-  .piggy-earned-tag{
-    display:inline-flex; align-items:center; gap:5px;
-    background:#eaf9ef; color:#1f7643; border-radius:999px; padding:3px 10px 3px 7px;
-    font-size:10.5px; font-weight:700;
+  /* Bank-account style balance hero, in the person's own accent color
+     (same idea as their avatar/rings already carrying that color) instead
+     of a plain "£X saved" text line -- the big number is the point. */
+  .wallet-hero{
+    position:relative; overflow:hidden; border-radius:20px; padding:22px 22px 20px; margin-bottom:18px;
+    box-shadow:var(--shadow-card); color:#fff;
   }
-  .piggy-earned-tag svg{ flex-shrink:0; }
+  .wallet-hero-icon{ position:absolute; right:-14px; top:-16px; opacity:0.16; transform:rotate(8deg); }
+  .wallet-hero-label{ font-size:12.5px; font-weight:700; opacity:0.85; }
+  .wallet-hero-balance{ font-size:40px; font-weight:800; letter-spacing:-0.02em; line-height:1.1; margin-top:4px; }
+  .wallet-hero-earned{ font-size:12px; font-weight:600; opacity:0.85; margin-top:6px; }
 
   .wallet-strip{ display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
   .wallet-label{ font-size:11.5px; font-weight:700; color:var(--ink-secondary); text-transform:uppercase; letter-spacing:0.04em; }
@@ -279,8 +282,53 @@
   .reward-row-btn:active{ transform:scale(.96); }
   .reward-row-btn:disabled{ opacity:.4; cursor:not-allowed; }
 
-  .piggy-section{ margin-top:24px; padding-top:20px; border-top:1px solid var(--track); }
-  .piggy-section-label{ font-size:15px; font-weight:800; margin-bottom:12px; }
+  .piggy-section{ margin-top:0; }
+
+  /* Withdraw / Add money sit as two buttons, not an always-open form --
+     the form only appears once you've picked one, so the page reads as a
+     bank account (balance, two actions) rather than a form with a list
+     bolted underneath it. */
+  .wallet-actions{ display:flex; gap:10px; margin-bottom:18px; }
+  .wallet-action-btn{
+    flex:1; font-family:inherit; font-size:13px; font-weight:700;
+    border:none; border-radius:999px; padding:13px 18px; cursor:pointer; text-align:center;
+    transition:transform .12s ease;
+  }
+  .wallet-action-btn:active{ transform:scale(.96); }
+  .wallet-action-btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .wallet-action-btn.is-withdraw{ color:#fff; background:#2a9c58; }
+  .wallet-action-btn.is-add{
+    position:relative; color:var(--ink); background:#fff; border:1.5px solid var(--track);
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .wallet-action-btn.is-add svg{ flex-shrink:0; }
+  /* Only shown while this device hasn't unlocked the family PIN yet this
+     session -- once it has (same unlock Settings uses), Add money just
+     opens, so the lock badge would be misleading if it stuck around. */
+  .wallet-action-lock{
+    position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:999px;
+    background:var(--ink); color:#fff; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 0 2px var(--paper);
+  }
+
+  .wallet-form-card{
+    margin-bottom:18px; background:var(--surface-card); border-radius:20px; box-shadow:var(--shadow-card);
+    padding:18px 20px 20px;
+  }
+  .wallet-form-title{ display:flex; align-items:center; gap:7px; font-size:14px; font-weight:800; margin-bottom:14px; }
+  .wallet-form-title.is-money{ color:#1f7643; }
+  .wallet-form-close{
+    margin-left:auto; background:none; border:none; cursor:pointer; color:var(--ink-faint);
+    display:flex; padding:2px;
+  }
+  .wallet-form-card .withdraw-row{ margin-bottom:0; }
+  /* Same pin-gate anatomy the Settings lock screen uses, just inside a
+     card instead of filling the page, so it reads as the same lock. */
+  .pin-gate-card{
+    margin-bottom:18px; background:var(--surface-card); border-radius:20px; box-shadow:var(--shadow-card);
+    padding:20px 20px 22px;
+  }
+
   .withdraw-row{ display:flex; gap:8px; margin-bottom:18px; }
   .withdraw-input, .withdraw-note{
     font-family:inherit; color:var(--ink); border:1.5px solid var(--track); border-radius:999px;
@@ -299,13 +347,19 @@
   .ledger-label{ font-size:11.5px; font-weight:700; color:var(--ink-secondary); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px; }
   .ledger-list{ display:flex; flex-direction:column; gap:2px; max-height:260px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
   .ledger-row{
-    display:flex; align-items:center; justify-content:space-between; gap:12px;
-    padding:9px 2px; border-bottom:1px solid var(--track); font-size:12.5px;
+    display:flex; align-items:center; gap:12px;
+    padding:10px 2px; border-bottom:1px solid var(--track); font-size:12.5px;
   }
   .ledger-row:last-child{ border-bottom:none; }
+  .ledger-icon{
+    flex-shrink:0; width:32px; height:32px; border-radius:999px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .ledger-icon.is-in{ background:#eaf9ef; color:#1f7643; }
+  .ledger-icon.is-out{ background:#fdeceb; color:#c4402f; }
   .ledger-reason{ flex:1; min-width:0; font-weight:600; color:var(--ink); display:flex; flex-direction:column; gap:1px; }
   .ledger-date{ font-size:10.5px; font-weight:600; color:var(--ink-faint); }
-  .ledger-amount{ flex-shrink:0; font-weight:800; white-space:nowrap; }
+  .ledger-amount{ flex-shrink:0; font-weight:800; white-space:nowrap; font-size:13.5px; }
   .ledger-in{ color:#2a9c58; }
   .ledger-out{ color:#e84e3d; }
   .ledger-toggle-btn, .activity-toggle-btn{
@@ -961,6 +1015,13 @@
   // editor, activity log, security) are expanded. Each starts collapsed so
   // the page opens tidy, with its heading always visible as the toggle.
   let settingsSectionOpen = {};
+  // Ephemeral, not persisted — which panel is open below the Withdraw/Add
+  // money buttons on the Wallet page: null (just the two buttons),
+  // 'withdraw', 'addPin' (family PIN prompt), or 'addForm' (deposit form,
+  // PIN already verified this session). Reset whenever the selected person
+  // or page changes so a stale panel never carries over onto someone else's
+  // wallet or lingers after navigating away.
+  let walletAction = null;
   // Family-wide, not per-person — the settings-page ledger of everything
   // that's happened. Newest first; trimmed so storage doesn't grow forever.
   function logActivity(personId, msg){
@@ -1015,8 +1076,64 @@
     piggyLedgerAdd(ps, -amount, cleanNote || 'Withdrawn', null, dateKey(new Date()));
     logActivity(personId, `withdrew &pound;${amount.toFixed(2)} from the piggy bank${cleanNote ? ` (${escapeHtml(cleanNote)})` : ''}`);
     saveState();
+    walletAction = null;
     render();
     showToast(`£${amount.toFixed(2)} withdrawn for ${p.name}.`, 'success');
+  }
+
+  // Manual deposit — a parent logging a birthday gift, chore top-up, etc.
+  // straight into the ledger. Gated behind the family's existing Settings
+  // PIN (see openWalletAction/submitWalletPin) so a kid can't credit their
+  // own wallet; reuses settingsUnlocked rather than its own flag so
+  // unlocking once (from here or from Settings) covers both for the rest
+  // of the session, instead of prompting twice.
+  function addMoneyToPiggy(amount, note){
+    const personId = state.selectedId;
+    const p = ROSTER.find((r) => r.id === personId);
+    const ps = state.people[personId];
+    if (!(amount > 0)) {
+      showToast('Enter an amount to add.', 'danger');
+      return;
+    }
+    const cleanNote = (note || '').trim();
+    piggyLedgerAdd(ps, amount, cleanNote || 'Added by a parent', null, dateKey(new Date()));
+    logActivity(personId, `added &pound;${amount.toFixed(2)} to the piggy bank${cleanNote ? ` (${escapeHtml(cleanNote)})` : ''}`);
+    saveState();
+    walletAction = null;
+    render();
+    showToast(`£${amount.toFixed(2)} added for ${p.name}.`, 'success');
+  }
+
+  // Withdraw always opens straight to its form. Add money opens straight to
+  // its form too, UNLESS a family PIN is set and this session hasn't
+  // unlocked it yet — then it opens the PIN prompt first.
+  function openWalletAction(action){
+    if (walletAction === action || (action === 'add' && (walletAction === 'addPin' || walletAction === 'addForm'))) {
+      walletAction = null;
+    } else if (action === 'add') {
+      walletAction = (!state.settingsPin || settingsUnlocked) ? 'addForm' : 'addPin';
+    } else {
+      walletAction = action;
+    }
+    render();
+  }
+
+  function submitWalletPin(){
+    const input = document.getElementById('walletPinInput');
+    const val = (input.value || '').trim();
+    if (val && val === state.settingsPin) {
+      settingsUnlocked = true;
+      walletAction = 'addForm';
+      render();
+    } else {
+      showToast('Wrong PIN.', 'danger');
+      if (input) { input.value = ''; input.focus(); }
+    }
+  }
+
+  function closeWalletAction(){
+    walletAction = null;
+    render();
   }
 
   // Rolls yesterday's daily ticks and last week's weekly counts into banked
@@ -1114,6 +1231,7 @@
 
   function selectPerson(id){
     state.selectedId = id;
+    walletAction = null;
     saveState();
     render();
   }
@@ -1380,6 +1498,7 @@
   let currentPage = 'pageHabits';
   function switchTab(pageId){
     currentPage = pageId;
+    walletAction = null;
     document.body.classList.toggle('show-switcher', pageId !== 'pageHabits');
     document.querySelectorAll('.page').forEach((el) => el.classList.toggle('active', el.id === pageId));
     document.querySelectorAll('.tab-btn').forEach((el) => el.classList.toggle('active', el.dataset.page === pageId));
@@ -1425,6 +1544,18 @@
     return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">`
       + '<path d="M19 5c-1.5 0-2.8 1.1-3 2.5-3.6-1.4-11-.2-11 5 0 1.7.2 2.9 2 4.2V20h4v-1.5h3V20h4v-4c1-.4 1.7-1 2-2h2v-4h-2c-.2-1-.6-1.7-1-2z"/>'
       + '<circle cx="16.5" cy="10.5" r=".6" fill="currentColor"/><path d="M2 10.5v1.2h2.3"/></svg>';
+  }
+  function plusSvg(size){
+    const s = size || 12;
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>`;
+  }
+  function arrowUpSvg(size){
+    const s = size || 12;
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>`;
+  }
+  function arrowDownSvg(size){
+    const s = size || 12;
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>`;
   }
   function lockSvg(size){
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">`
@@ -1748,17 +1879,18 @@
   function renderPiggyStats(){
     const personId = state.selectedId;
     if (!piggyEligible(personId)) return '';
+    const p = ROSTER.find((r) => r.id === personId);
     const saved = piggyBalance(personId);
     const earned = piggyEarnedTotal(personId);
-    return `<div class="page-stats">`
-      + `<div class="piggy-stats-row">`
-      +   `<div class="piggy-saved">&pound;${saved.toFixed(2)} saved</div>`
-      +   `<div class="piggy-earned-tag">${piggyBankSvg()}&pound;${earned.toFixed(2)} earned total</div>`
-      + `</div>`
+    return `<div class="wallet-hero" style="background:${p.color};">`
+      + `<div class="wallet-hero-icon">${piggyBankSvg(104)}</div>`
+      + `<div class="wallet-hero-label">${escapeHtml(p.name)}&rsquo;s piggy bank</div>`
+      + `<div class="wallet-hero-balance">&pound;${saved.toFixed(2)}</div>`
+      + `<div class="wallet-hero-earned">&pound;${earned.toFixed(2)} earned total</div>`
       + `</div>`;
   }
 
-  // The withdraw form + ledger appear as soon as someone's eligible for the
+  // The action buttons + ledger appear as soon as someone's eligible for the
   // piggy bank at all — at £0.00 to start, not just after their first payout —
   // so the feature is discoverable instead of invisible.
   function renderPiggySection(){
@@ -1774,6 +1906,7 @@
       const d = new Date(e.at);
       const dateStr = Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
       return `<div class="ledger-row">`
+        + `<div class="ledger-icon ${isCredit ? 'is-in' : 'is-out'}">${isCredit ? arrowUpSvg(15) : arrowDownSvg(15)}</div>`
         + `<div class="ledger-reason">${escapeHtml(e.reason)}<span class="ledger-date">${dateStr}</span></div>`
         + `<div class="ledger-amount ${isCredit ? 'ledger-in' : 'ledger-out'}">${isCredit ? '+' : '&minus;'}&pound;${Math.abs(e.delta).toFixed(2)}</div>`
         + `</div>`;
@@ -1784,13 +1917,52 @@
     const cappedNote = (expanded && ledger.length > LEDGER_MAX_ROWS)
       ? `<div class="ledger-capped-note">Showing the most recent ${LEDGER_MAX_ROWS} of ${ledger.length}.</div>`
       : '';
+
+    // Only shown while this device hasn't unlocked the family PIN this
+    // session — see openWalletAction/submitWalletPin.
+    const addLocked = !!state.settingsPin && !settingsUnlocked;
+
+    let actionPanelHtml = '';
+    if (walletAction === 'withdraw') {
+      actionPanelHtml = `<div class="wallet-form-card">`
+        + `<div class="wallet-form-title">Withdraw<button class="wallet-form-close" data-action="close">${closeSvg()}</button></div>`
+        + `<div class="withdraw-row">`
+        +   `<input type="number" id="withdrawAmount" class="withdraw-input" placeholder="0.00" min="0.01" max="${balance}" step="0.01" autofocus>`
+        +   `<input type="text" id="withdrawNote" class="withdraw-note" placeholder="What for? (optional)" maxlength="60">`
+        +   `<button class="withdraw-btn" id="withdrawBtn">Withdraw</button>`
+        + `</div>`
+        + `</div>`;
+    } else if (walletAction === 'addPin') {
+      actionPanelHtml = `<div class="pin-gate-card">`
+        + `<div class="pin-gate">`
+        +   `<div class="pin-gate-icon">${lockSvg(20)}</div>`
+        +   `<div class="pin-gate-title">Enter PIN to add money</div>`
+        +   `<div class="pin-gate-sub">Same PIN that locks Settings.</div>`
+        +   `<input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" class="pin-input" id="walletPinInput" placeholder="PIN" autocomplete="off" autofocus>`
+        +   `<button class="pin-unlock-btn" id="walletPinBtn">Continue</button>`
+        + `</div>`
+        + `</div>`;
+    } else if (walletAction === 'addForm') {
+      actionPanelHtml = `<div class="wallet-form-card">`
+        + `<div class="wallet-form-title is-money">${plusSvg(14)} Add money<button class="wallet-form-close" data-action="close">${closeSvg()}</button></div>`
+        + `<div class="withdraw-row">`
+        +   `<input type="number" id="addMoneyAmount" class="withdraw-input" placeholder="0.00" min="0.01" step="0.01" autofocus>`
+        +   `<input type="text" id="addMoneyNote" class="withdraw-note" placeholder="What for? (optional)" maxlength="60">`
+        +   `<button class="withdraw-btn" id="addMoneyBtn">Add</button>`
+        + `</div>`
+        + `</div>`;
+    }
+
     return `<div class="piggy-section">`
-      + `<div class="piggy-section-label">Piggy bank</div>`
-      + `<div class="withdraw-row">`
-      +   `<input type="number" id="withdrawAmount" class="withdraw-input" placeholder="0.00" min="0.01" max="${balance}" step="0.01" ${balance > 0 ? '' : 'disabled'}>`
-      +   `<input type="text" id="withdrawNote" class="withdraw-note" placeholder="What for? (optional)" maxlength="60" ${balance > 0 ? '' : 'disabled'}>`
-      +   `<button class="withdraw-btn" id="withdrawBtn" ${balance > 0 ? '' : 'disabled'}>Withdraw</button>`
+      + `<div class="wallet-actions">`
+      +   `<button class="wallet-action-btn is-withdraw" id="walletWithdrawTrigger" ${balance > 0 ? '' : 'disabled'}>Withdraw</button>`
+      +   `<button class="wallet-action-btn is-add" id="walletAddTrigger">`
+      +     plusSvg(14)
+      +     `Add money`
+      +     (addLocked ? `<span class="wallet-action-lock">${lockSvg(10)}</span>` : '')
+      +   `</button>`
       + `</div>`
+      + actionPanelHtml
       + `<div class="ledger-label">History</div>`
       + `<div class="ledger-list">${rows}</div>`
       + toggleHtml
@@ -2124,6 +2296,21 @@
       drawDownPiggy(parseFloat(amountEl.value), noteEl.value);
       return;
     }
+    const walletWithdrawTrigger = e.target.closest('#walletWithdrawTrigger');
+    if (walletWithdrawTrigger && !walletWithdrawTrigger.disabled) { openWalletAction('withdraw'); return; }
+    const walletAddTrigger = e.target.closest('#walletAddTrigger');
+    if (walletAddTrigger) { openWalletAction('add'); return; }
+    const walletFormClose = e.target.closest('.wallet-form-close');
+    if (walletFormClose) { closeWalletAction(); return; }
+    const walletPinBtn = e.target.closest('#walletPinBtn');
+    if (walletPinBtn) { submitWalletPin(); return; }
+    const addMoneyBtn = e.target.closest('#addMoneyBtn');
+    if (addMoneyBtn) {
+      const amountEl = document.getElementById('addMoneyAmount');
+      const noteEl = document.getElementById('addMoneyNote');
+      addMoneyToPiggy(parseFloat(amountEl.value), noteEl.value);
+      return;
+    }
     const ledgerToggleBtn = e.target.closest('.ledger-toggle-btn');
     if (ledgerToggleBtn) {
       const pid = ledgerToggleBtn.dataset.person;
@@ -2182,6 +2369,7 @@
     if (e.key !== 'Enter') return;
     if (e.target.id === 'pinInput') { submitSettingsPin(); }
     else if (e.target.id === 'pinNewInput') { setSettingsPin(); }
+    else if (e.target.id === 'walletPinInput') { submitWalletPin(); }
   });
 
   document.addEventListener('change', (e) => {
