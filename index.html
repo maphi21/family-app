@@ -655,6 +655,7 @@
   const LEVEL_BASE_PTS = 150;
   const LEVEL_GROWTH = 1.25;
   const LEVEL_TITLES = ['Sock drawer sergeant', 'Duty deputy', 'Chore cadet', 'Tidy titan', 'Household hero', 'Domestic dynamo', 'Grand vizier of vacuuming'];
+  const PAGE_IDS = ['pageHabits', 'pageRewards', 'pageWallet', 'pageLeaderboard', 'pageSettings'];
 
   // pocketWeekly: £ target per week, scaled by that week's daily-habit
   // completion ratio (see weeklyRatioSoFar / rolloverIfNeeded). 0 = no allowance.
@@ -820,6 +821,10 @@
     s.settingsPin = (saved && typeof saved.settingsPin === 'string' && saved.settingsPin) ? saved.settingsPin : null;
     // ISO timestamp of the last JSON export, for the stale-backup nudge. null = never.
     s.lastExportAt = (saved && typeof saved.lastExportAt === 'string') ? saved.lastExportAt : null;
+    // Which tab a reload should land back on. Per-device like selectedId/
+    // settingsFilterId above (see applyRemoteState) — Dad's phone reopening
+    // on Wallet shouldn't jump to whatever tab Mum's iPad last had open.
+    s.currentPage = (saved && PAGE_IDS.includes(saved.currentPage)) ? saved.currentPage : 'pageHabits';
     return s;
   }
 
@@ -858,7 +863,12 @@
 
   function applyRemoteState(newState){
     syncApplyingRemote = true;
-    state = newState;
+    // currentPage/selectedId/settingsFilterId are "what is this device
+    // looking at right now" — per-device UI state, not shared family data.
+    // Take everything else from the incoming remote update, but keep this
+    // device's own values for those three, so another device syncing in
+    // doesn't yank you to a different tab or person mid-use.
+    state = { ...newState, currentPage: state.currentPage, selectedId: state.selectedId, settingsFilterId: state.settingsFilterId };
     saveState();
     syncApplyingRemote = false;
     rolloverIfNeeded();
@@ -1630,18 +1640,22 @@
     showToast(`${p.name} used ${reward.name}.`, 'success');
   }
 
-  let currentPage = 'pageHabits';
+  function syncPageDom(pageId){
+    document.body.classList.toggle('show-switcher', pageId !== 'pageHabits');
+    document.querySelectorAll('.page').forEach((el) => el.classList.toggle('active', el.id === pageId));
+    document.querySelectorAll('.tab-btn').forEach((el) => el.classList.toggle('active', el.dataset.page === pageId));
+  }
+
   function switchTab(pageId){
-    currentPage = pageId;
+    state.currentPage = pageId;
     walletAction = null;
     // Auto-relock: staying on Settings/Wallet keeps this session's PIN
     // unlock in effect (so bouncing between the two doesn't re-prompt),
     // but leaving for Habits, Rewards, or Ranking re-locks immediately
     // instead of staying unlocked for the rest of the session.
     if (pageId !== 'pageSettings' && pageId !== 'pageWallet') settingsUnlocked = false;
-    document.body.classList.toggle('show-switcher', pageId !== 'pageHabits');
-    document.querySelectorAll('.page').forEach((el) => el.classList.toggle('active', el.id === pageId));
-    document.querySelectorAll('.tab-btn').forEach((el) => el.classList.toggle('active', el.dataset.page === pageId));
+    syncPageDom(pageId);
+    saveState();
     render();
   }
 
@@ -1981,7 +1995,7 @@
 
   function renderSwitcher(){
     return ROSTER.map((p) => {
-      const active = currentPage === 'pageSettings' ? p.id === state.settingsFilterId : p.id === state.selectedId;
+      const active = state.currentPage === 'pageSettings' ? p.id === state.settingsFilterId : p.id === state.selectedId;
       return `<div class="switcher-pill" data-person="${p.id}">`
         + `<div class="switcher-avatar ${active ? 'is-active' : ''}" style="background:${p.color};--ring-color:${p.color};">${p.initial}</div>`
         + `<div class="switcher-label ${active ? 'is-active' : ''}">${escapeHtml(p.name)}</div>`
@@ -2429,7 +2443,7 @@
     }
     const pill = e.target.closest('.switcher-pill');
     if (pill) {
-      if (currentPage === 'pageSettings') toggleSettingsFilter(pill.dataset.person);
+      if (state.currentPage === 'pageSettings') toggleSettingsFilter(pill.dataset.person);
       else selectPerson(pill.dataset.person);
       return;
     }
@@ -2549,6 +2563,10 @@
     selectPerson(ROSTER[nextIdx].id);
   }, { passive:true });
 
+  // The page shell's HTML hardcodes Habits as the active tab; put the DOM
+  // in sync with whatever tab this device was actually last on before
+  // rendering, so a reload lands back where you left it.
+  syncPageDom(state.currentPage);
   rolloverIfNeeded();
   render();
   // Renders instantly from this device's local copy first (above), then
