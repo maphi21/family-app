@@ -97,20 +97,29 @@
   .points-stat{ font-size:9.5px; font-weight:600; color:var(--ink-faint); white-space:nowrap; }
   .points-stat b{ color:var(--ink-secondary); font-weight:800; }
 
-  .bday-chip, .level-badge, .piggy-chip{
+  /* Birthday chip gets its own full-width row, right under the header --
+     it no longer shares a row with the level badge. */
+  .bday-row{ display:flex; }
+
+  .bday-chip, .level-badge{
     display:inline-flex; align-items:center; gap:5px; align-self:flex-start;
     border-radius:999px; padding:4px 10px 4px 7px; font-size:10.5px; font-weight:700;
     max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .bday-chip svg, .level-badge svg, .piggy-chip svg{ flex-shrink:0; }
-  .piggy-chip{ background:#eaf9ef; color:#1f7643; }
-
-  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
-  /* Always render the birthday chip and piggy chip, just made invisible
-     (visibility:hidden, not removed) when that person doesn't have one, so
-     every card reserves the same space here and the rings below always
-     start at the same height regardless of who has what. */
+  .bday-chip svg, .level-badge svg{ flex-shrink:0; }
+  /* Always render the birthday chip, just made invisible (visibility:hidden,
+     not removed) when the person has no birthday coming up, so every card
+     reserves the same space here and the level/ring rows below always start
+     at the same height regardless of who has what. */
   .chip-placeholder{ visibility:hidden; }
+
+  /* Level name + level number share a line, same baseline pairing as the
+     Ranking page's existing name + "Lvl N" pattern -- center (not baseline)
+     aligned so the number sits centered against the badge pill, not low on
+     its text baseline. */
+  .level-row{ display:flex; align-items:center; gap:7px; }
+  .level-row .level-badge{ min-width:0; }
+  .level-num{ font-size:11px; font-weight:700; color:var(--ink-faint); flex-shrink:0; white-space:nowrap; }
 
   .level-block{ display:flex; flex-direction:column; gap:5px; }
   .level-bar-row{ display:flex; align-items:center; gap:8px; }
@@ -118,8 +127,11 @@
   .level-fill{ height:100%; border-radius:999px; transition:width .3s ease; }
   .level-caption{ font-size:9px; font-weight:700; color:var(--ink-faint); flex-shrink:0; white-space:nowrap; }
 
-  .ring-holder{ display:flex; justify-content:center; gap:14px; }
-  .ring-wrap{ position:relative; width:76px; height:76px; }
+  .ring-holder{ display:flex; align-items:center; justify-content:center; gap:14px; }
+  /* flex+max-width (not a fixed width) so the rings can shrink together
+     rather than overflow a narrow card -- same shrink-to-fit pattern as
+     the card grid and calendar cells. */
+  .ring-wrap{ position:relative; flex:1 1 76px; max-width:76px; aspect-ratio:1; min-width:0; }
   .ring-outer{ width:100%; height:100%; border-radius:999px; transform:rotate(-90deg); }
   .ring-inner{
     position:absolute; inset:6px; border-radius:999px; background:var(--surface-card);
@@ -127,6 +139,13 @@
   }
   .ring-value{ font-size:13px; font-weight:800; line-height:1; }
   .ring-label{ font-size:7px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-faint); margin-top:2px; }
+  /* Today's pocket money -- a small value in the gap between the two
+     rings, not a ring of its own: it's a supporting figure, not another
+     thing competing with "today" and "this week" for attention. Keeps
+     the old piggy-chip's green so it still always reads as "money".
+     flex-shrink:0 so it's the rings that give way on a narrow card, never
+     this text getting squeezed illegibly. */
+  .ring-gap-money{ font-size:11px; font-weight:800; color:#1f7643; white-space:nowrap; flex-shrink:0; }
 
   .habit-list{ display:flex; flex-direction:column; gap:6px; }
   .habit-group-label{ font-size:11px; font-weight:700; color:var(--ink-secondary); text-transform:uppercase; letter-spacing:0.05em; margin-top:8px; }
@@ -475,13 +494,14 @@
     .avatar{ width:56px; height:56px; font-size:20px; }
     .person-name{ font-size:20px; }
     .person-role{ font-size:13px; }
-    .bday-chip, .level-badge, .piggy-chip{ font-size:12.5px; padding:6px 14px 6px 10px; }
+    .bday-chip, .level-badge{ font-size:12.5px; padding:6px 14px 6px 10px; }
     .lb-info .level-badge{ font-size:10.5px; padding:4px 10px 4px 7px; }
     .ring-holder{ gap:18px; }
-    .ring-wrap{ width:110px; height:110px; }
+    .ring-wrap{ flex-basis:110px; max-width:110px; }
     .ring-inner{ inset:9px; }
     .ring-value{ font-size:20px; }
     .ring-label{ font-size:8px; }
+    .ring-gap-money{ font-size:14px; }
     .habit-row{ padding:13px 16px; border-radius:14px; }
     .habit-indicator{ width:24px; height:24px; }
     .habit-indicator--weekly{ min-width:24px; font-size:11px; }
@@ -1617,14 +1637,31 @@
     const rankBg = rank === 1 ? '#ffc93c' : '#eef0f3';
     const rankColor = rank === 1 ? '#22262b' : '#3d434b';
     const levelBg = tint(p.color, 0.14);
-    const showPiggy = pocketWeeklyOf(p.id) > 0;
-    const piggyEstimate = showPiggy ? weeklyEstimate(p.id) : 0;
     // Both chips always render — just invisible (not removed) when this
     // person doesn't have one — so every card reserves identical space here
-    // and the rings below always start at the same height, regardless of
-    // who actually has a birthday coming up or pocket money set.
+    // and the level/ring rows below always start at the same height,
+    // regardless of who actually has a birthday coming up.
     const bdayPlaceholder = showBday ? '' : ' chip-placeholder';
-    const piggyPlaceholder = showPiggy ? '' : ' chip-placeholder';
+
+    // Today's pocket money: unlike the weekly-allowance estimate (banked at
+    // rollover from daily habits only, see weeklyEstimate()), this is a
+    // live "how much have I earned today" reading, points-weighted across
+    // BOTH daily and weekly habits (a habit worth more points counts for
+    // more, same as it does everywhere else in the app) and applied to the
+    // daily share (weekly ÷ 7) of pocket money. Shown as a small value
+    // sitting in the gap between the two habit rings, not its own ring —
+    // it's a supporting figure, not another thing to visually compete with
+    // "today" and "this week".
+    const showMoney = pocketWeeklyOf(p.id) > 0;
+    const dailyPointsEarned = dailyDefs.reduce((sum, h) => sum + (habitStateOf(p.id, h.id).done ? h.points : 0), 0);
+    const dailyPointsPossible = dailyDefs.reduce((sum, h) => sum + h.points, 0);
+    const weeklyPointsEarned = weeklyDefs.reduce((sum, h) => sum + habitStateOf(p.id, h.id).count * h.points, 0);
+    const weeklyPointsPossible = weeklyDefs.reduce((sum, h) => sum + h.target * h.points, 0);
+    const todayMoneyPointsEarned = dailyPointsEarned + weeklyPointsEarned;
+    const todayMoneyPointsPossible = dailyPointsPossible + weeklyPointsPossible;
+    const todayMoneyRatio = todayMoneyPointsPossible ? todayMoneyPointsEarned / todayMoneyPointsPossible : 0;
+    const todayMoney = showMoney ? roundMoney((pocketWeeklyOf(p.id) / 7) * todayMoneyRatio) : 0;
+    const moneyGapHtml = showMoney ? `<div class="ring-gap-money">&pound;${todayMoney.toFixed(2)}</div>` : '';
 
     const habitsHtml = (dailyDefs.length ? `<div class="habit-group-label">Daily</div>${dailyDefs.map((h) => renderHabitRow(p, h)).join('')}` : '')
       + (weeklyDefs.length ? `<div class="habit-group-label">Weekly</div>${weeklyDefs.map((h) => renderHabitRow(p, h)).join('')}` : '');
@@ -1641,11 +1678,13 @@
       +     `<div class="points-stat">Now <b>${spendablePoints}</b></div>`
       +   `</div>`
       + `</div>`
-      + `<div class="chip-row">`
+      + `<div class="bday-row">`
       +   `<div class="bday-chip${bdayPlaceholder}" style="background:${bdayBg};color:${bdayColor};">${cakeSvg()}${formatBirthday(bday)}</div>`
-      +   `<div class="level-badge" style="background:${levelBg};color:${p.color};">${lv.level >= 3 ? medalSvg() : starSvg()}${escapeHtml(levelTitle)}</div>`
       + `</div>`
-      + `<div class="piggy-chip${piggyPlaceholder}">${piggyBankSvg()}&pound;${piggyEstimate.toFixed(2)} this week</div>`
+      + `<div class="level-row">`
+      +   `<div class="level-badge" style="background:${levelBg};color:${p.color};">${lv.level >= 3 ? medalSvg() : starSvg()}${escapeHtml(levelTitle)}</div>`
+      +   `<div class="level-num">Lvl ${lv.level}</div>`
+      + `</div>`
       + `<div class="level-block">`
       +   `<div class="level-bar-row">`
       +     `<div class="level-track"><div class="level-fill" style="width:${Math.round((lv.into / lv.span) * 100)}%;background:${p.color};"></div></div>`
@@ -1657,6 +1696,7 @@
       +     `<div class="ring-outer" style="background:${ringGradient(dailyPercent, p.color)};"></div>`
       +     `<div class="ring-inner"><div class="ring-value">${dailyDone}/${dailyTotal}</div><div class="ring-label">today</div></div>`
       +   `</div>`
+      +   moneyGapHtml
       +   `<div class="ring-wrap">`
       +     `<div class="ring-outer" style="background:${ringGradient(weeklyPercent, p.color)};"></div>`
       +     `<div class="ring-inner"><div class="ring-value">${weeklyDone}/${weeklyTotal}</div><div class="ring-label">this week</div></div>`
