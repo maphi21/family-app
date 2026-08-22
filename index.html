@@ -635,26 +635,23 @@
   'use strict';
 
   const STORAGE_KEY = 'familyHQ_profile_v1';
-  // Optional cross-device sync via Firebase. Paste the config object from
-  // your Firebase project's Settings > Your apps > (web app) here to turn
-  // it on. This value is meant to be public — it's not a secret credential,
-  // access is enforced by Firestore's security rules, not by hiding this —
-  // so it's safe to commit. Leave it null to run in local-only mode
+  // Optional cross-device sync via Supabase. Paste your project's URL and
+  // anon key here (Supabase dashboard: Settings > API) to turn it on. The
+  // anon key is meant to be public — it's not a secret credential, access
+  // is enforced by the table's Row Level Security policy, not by hiding
+  // this — so it's safe to commit. Leave it null to run in local-only mode
   // (today's behavior: each device keeps its own copy, nothing leaves it).
-  const firebaseConfig = null;
+  const supabaseConfig = null;
   /* Example, once you have a project:
-  const firebaseConfig = {
-    apiKey: "AIzaSy...",
-    authDomain: "your-project.firebaseapp.com",
-    projectId: "your-project",
-    storageBucket: "your-project.appspot.com",
-    messagingSenderId: "...",
-    appId: "...",
+  const supabaseConfig = {
+    url: "https://xxxxxxxxxxxxxxxxxxxx.supabase.co",
+    anonKey: "eyJhbGciOi...",
   };
   */
-  // Every family's data lives at this one fixed Firestore document — there's
-  // no multi-tenant concept here, just "this app, this family".
-  const FIRESTORE_DOC_PATH = ['state', 'familyHQ'];
+  // Every family's data lives in one fixed row of this table — there's no
+  // multi-tenant concept here, just "this app, this family".
+  const SUPABASE_TABLE = 'family_state';
+  const SUPABASE_ROW_ID = 'familyHQ';
   const HABIT_POINTS = 10;
   const BIRTHDAY_BONUS = 100;
   const SHOW_BDAY_WITHIN_DAYS = 60;
@@ -834,29 +831,30 @@
     scheduleSyncPush();
   }
 
-  // --- Optional Firebase sync --------------------------------------------
-  // Everything in this block is inert when firebaseConfig is null. When
+  // --- Optional Supabase sync ---------------------------------------------
+  // Everything in this block is inert when supabaseConfig is null. When
   // configured, this device's copy of `state` becomes a live mirror of one
-  // shared Firestore document: local writes push to it (debounced, so a
-  // burst of habit-ticking sends one write, not ten), and a listener pulls
-  // in whatever any other device just wrote. Last write wins if two devices
-  // change something within the same debounce window — there's no merge,
-  // just whichever push reaches Firestore last. Good enough for a family;
-  // not a general-purpose multi-user sync engine. A Firebase outage or a
-  // wrong/missing config must never break the app — it just keeps running
-  // exactly as it does with no config at all (each device's own copy).
-  let syncDocRef = null;
-  let syncSetDoc = null;
+  // shared row (id = SUPABASE_ROW_ID) in the family_state table: local
+  // writes push to it (debounced, so a burst of habit-ticking sends one
+  // write, not ten), and a Realtime subscription pulls in whatever any
+  // other device just wrote. Last write wins if two devices change
+  // something within the same debounce window — there's no merge, just
+  // whichever push reaches Supabase last. Good enough for a family; not a
+  // general-purpose multi-user sync engine. Supabase being unreachable, or
+  // a wrong/missing config, must never break the app — it just keeps
+  // running exactly as it does with no config at all (each device's own
+  // local copy).
+  let syncClient = null;
   let syncPushTimer = null;
   let syncApplyingRemote = false; // true while applying a just-received remote update, so it isn't immediately pushed straight back
   const SYNC_PUSH_DELAY_MS = 500;
 
   function scheduleSyncPush(){
-    if (!syncDocRef || syncApplyingRemote) return;
+    if (!syncClient || syncApplyingRemote) return;
     clearTimeout(syncPushTimer);
     syncPushTimer = setTimeout(() => {
-      syncSetDoc(syncDocRef, state).catch((e) => {
-        console.warn('Family HQ: cloud sync push failed (will retry on the next change).', e);
+      syncClient.from(SUPABASE_TABLE).upsert({ id: SUPABASE_ROW_ID, data: state }).then(({ error }) => {
+        if (error) console.warn('Family HQ: cloud sync push failed (will retry on the next change).', error);
       });
     }, SYNC_PUSH_DELAY_MS);
   }
@@ -870,40 +868,44 @@
     render();
   }
 
-  async function initFirebaseSync(){
-    if (!firebaseConfig) return; // local-only mode, nothing to do
+  async function initSupabaseSync(){
+    if (!supabaseConfig) return; // local-only mode, nothing to do
     try {
-      const sdkVersion = '10.12.2';
-      const [{ initializeApp }, { getAuth, signInAnonymously }, firestoreMod] = await Promise.all([
-        import(`https://www.gstatic.com/firebasejs/${sdkVersion}/firebase-app.js`),
-        import(`https://www.gstatic.com/firebasejs/${sdkVersion}/firebase-auth.js`),
-        import(`https://www.gstatic.com/firebasejs/${sdkVersion}/firebase-firestore.js`),
-      ]);
-      const { getFirestore, doc, getDoc, setDoc, onSnapshot } = firestoreMod;
+      const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+      const supabase = createClient(supabaseConfig.url, supabaseConfig.anonKey);
 
-      const app = initializeApp(firebaseConfig);
-      await signInAnonymously(getAuth(app));
-      const db = getFirestore(app);
-      const docRef = doc(db, ...FIRESTORE_DOC_PATH);
-
-      const snap = await getDoc(docRef);
-      if (snap.exists()) {
-        // Firestore already holds the family's data — it becomes this
-        // device's source of truth from here on.
-        applyRemoteState(snap.data());
-      } else {
-        // First device ever to connect this family to Firebase — whatever
-        // is on this device right now becomes the shared starting point.
-        await setDoc(docRef, state);
+      let { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        const { error: authError } = await supabase.auth.signInAnonymously();
+        if (authError) throw authError;
       }
 
-      syncDocRef = docRef;
-      syncSetDoc = setDoc;
+      const { data: row, error: readError } = await supabase
+        .from(SUPABASE_TABLE)
+        .select('data')
+        .eq('id', SUPABASE_ROW_ID)
+        .maybeSingle();
+      if (readError) throw readError;
 
-      onSnapshot(docRef, (snap) => {
-        if (!snap.exists() || snap.metadata.hasPendingWrites) return; // our own optimistic echo, not a real update
-        applyRemoteState(snap.data());
-      });
+      if (row) {
+        // Supabase already holds the family's data — it becomes this
+        // device's source of truth from here on.
+        applyRemoteState(row.data);
+      } else {
+        // First device ever to connect this family to Supabase — whatever
+        // is on this device right now becomes the shared starting point.
+        const { error: seedError } = await supabase.from(SUPABASE_TABLE).insert({ id: SUPABASE_ROW_ID, data: state });
+        if (seedError) throw seedError;
+      }
+
+      syncClient = supabase;
+
+      supabase
+        .channel('family_state_changes')
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: SUPABASE_TABLE, filter: `id=eq.${SUPABASE_ROW_ID}` }, (payload) => {
+          applyRemoteState(payload.new.data);
+        })
+        .subscribe();
     } catch (e) {
       console.warn('Family HQ: cloud sync unavailable, continuing with local storage only.', e);
     }
@@ -2544,7 +2546,7 @@
   // Renders instantly from this device's local copy first (above), then
   // upgrades to live cross-device sync in the background if configured —
   // never blocks the first paint on a network round trip.
-  initFirebaseSync();
+  initSupabaseSync();
 
   window.addEventListener('resize', syncTopBarHeight);
 
