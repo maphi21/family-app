@@ -641,13 +641,10 @@
   // is enforced by the table's Row Level Security policy, not by hiding
   // this — so it's safe to commit. Leave it null to run in local-only mode
   // (today's behavior: each device keeps its own copy, nothing leaves it).
-  const supabaseConfig = null;
-  /* Example, once you have a project:
   const supabaseConfig = {
-    url: "https://xxxxxxxxxxxxxxxxxxxx.supabase.co",
-    anonKey: "eyJhbGciOi...",
+    url: "https://qnxcwrgfhfzbbtxwmral.supabase.co",
+    anonKey: "sb_publishable_9RLg2B6Y8NnvzgNQJF_Xnw_OS3sAk5q",
   };
-  */
   // Every family's data lives in one fixed row of this table — there's no
   // multi-tenant concept here, just "this app, this family".
   const SUPABASE_TABLE = 'family_state';
