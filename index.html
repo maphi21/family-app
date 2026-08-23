@@ -43,6 +43,9 @@
   .top-bar{ max-width:1180px; margin:0 auto; padding:24px 20px 0; }
   header.top{ display:flex; flex-direction:column; gap:2px; margin-bottom:16px; }
   .eyebrow{ font-size:12px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-faint); }
+  .eyebrow-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .app-meta{ display:flex; align-items:center; gap:6px; cursor:pointer; padding:2px; }
+  .app-version{ font-size:10.5px; font-weight:700; color:var(--ink-faint); }
   .today{ font-size:16px; font-weight:600; color:var(--ink-secondary); }
 
   .switcher{ display:none; gap:8px; overflow-x:auto; padding:10px 6px 14px; }
@@ -592,7 +595,13 @@
 
 <div class="top-bar" id="topBar">
   <header class="top">
-    <div class="eyebrow">Phipps House</div>
+    <div class="eyebrow-row">
+      <div class="eyebrow">Phipps House</div>
+      <div class="app-meta" id="appMeta">
+        <span class="sync-dot" id="topSyncDot"></span>
+        <span class="app-version" id="appVersionLabel"></span>
+      </div>
+    </div>
     <div class="today" id="todayLabel">&nbsp;</div>
   </header>
   <div class="switcher" id="switcher"></div>
@@ -646,6 +655,11 @@
   'use strict';
 
   const STORAGE_KEY = 'familyHQ_profile_v1';
+  // Bump this by 1 on every change pushed to main — it's the only way to
+  // confirm a device has actually picked up a new deploy, since there's no
+  // build step to stamp a real version automatically. Shown top-right of
+  // the header, next to the cloud sync dot.
+  const APP_VERSION = 1;
   // Optional cross-device sync via Supabase. Paste your project's URL and
   // anon key here (Supabase dashboard: Settings > API) to turn it on. The
   // anon key is meant to be public — it's not a secret credential, access
@@ -2443,6 +2457,8 @@
 
   function render(){
     document.getElementById('todayLabel').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
+    document.getElementById('appVersionLabel').textContent = `v${APP_VERSION}`;
+    document.getElementById('topSyncDot').className = `sync-dot ${cloudSyncStatusInfo().dot}`;
     document.getElementById('switcher').innerHTML = renderSwitcher();
     document.getElementById('cards').innerHTML = ROSTER.map((p) => renderCard(p)).join('');
     document.getElementById('pageStats').innerHTML = renderPageStats();
@@ -2564,6 +2580,13 @@
     if (habitSaveBtn) { saveHabitEdit(); return; }
     const tabBtn = e.target.closest('.tab-btn');
     if (tabBtn) { switchTab(tabBtn.dataset.page); return; }
+    const appMeta = e.target.closest('#appMeta');
+    if (appMeta) {
+      switchTab('pageSettings');
+      settingsSectionOpen.backup = true;
+      render();
+      return;
+    }
     const pocketSaveBtn = e.target.closest('#pocketWeeklySaveBtn');
     if (pocketSaveBtn) { setPocketWeekly(); return; }
     const pinUnlockBtn = e.target.closest('#pinUnlockBtn');
