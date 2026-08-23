@@ -659,7 +659,7 @@
   // confirm a device has actually picked up a new deploy, since there's no
   // build step to stamp a real version automatically. Shown top-right of
   // the header, next to the cloud sync dot.
-  const APP_VERSION = 3;
+  const APP_VERSION = 4;
   // Optional cross-device sync via Supabase. Paste your project's URL and
   // anon key here (Supabase dashboard: Settings > API) to turn it on. The
   // anon key is meant to be public — it's not a secret credential, access
@@ -881,6 +881,16 @@
   let syncPushTimer = null;
   let syncApplyingRemote = false; // true while applying a just-received remote update, so it isn't immediately pushed straight back
   const SYNC_PUSH_DELAY_MS = 500;
+  // A random id for this browser tab's own pushes, so it can tell its own
+  // Realtime echo apart from a genuine update from another device. Without
+  // this: tick habit A (push scheduled for +500ms), tick habit B 50ms later
+  // (push rescheduled to include both) -- the *first* push still lands and
+  // Supabase echoes it straight back to this same device, but that echo only
+  // has habit A (captured before B was ticked). applyRemoteState() would
+  // overwrite the live state with that stale snapshot, visibly reverting B.
+  const syncClientId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : `c_${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`;
   // Ephemeral, not persisted — this device's own live read of its Supabase
   // connection, surfaced in Settings > Backup so "is sync actually working"
   // doesn't require opening the browser console. One of: 'off' (not
@@ -906,10 +916,19 @@
     if (!syncClient || syncApplyingRemote) return;
     clearTimeout(syncPushTimer);
     syncPushTimer = setTimeout(() => {
-      syncClient.from(SUPABASE_TABLE).upsert({ id: SUPABASE_ROW_ID, data: state }).then(({ error }) => {
+      syncClient.from(SUPABASE_TABLE).upsert({ id: SUPABASE_ROW_ID, data: { ...state, __syncWriter: syncClientId } }).then(({ error }) => {
         if (error) console.warn('Family HQ: cloud sync push failed (will retry on the next change).', error);
       });
     }, SYNC_PUSH_DELAY_MS);
+  }
+
+  // Strips the internal write-tag before a remote payload becomes local
+  // state, so it never leaks into localStorage or a future push.
+  function stripSyncWriter(data){
+    if (!data) return data;
+    const cleaned = { ...data };
+    delete cleaned.__syncWriter;
+    return cleaned;
   }
 
   function applyRemoteState(newState){
@@ -948,7 +967,7 @@
       if (row) {
         // Supabase already holds the family's data — it becomes this
         // device's source of truth from here on.
-        applyRemoteState(row.data);
+        applyRemoteState(stripSyncWriter(row.data));
       } else {
         // First device ever to connect this family to Supabase — whatever
         // is on this device right now becomes the shared starting point.
@@ -961,7 +980,13 @@
       supabase
         .channel('family_state_changes')
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: SUPABASE_TABLE, filter: `id=eq.${SUPABASE_ROW_ID}` }, (payload) => {
-          applyRemoteState(payload.new.data);
+          const incoming = payload.new && payload.new.data;
+          // Our own push, echoed straight back by Realtime -- we already
+          // have this (or something newer already queued to push). Applying
+          // it would revert any local edit made after this push was sent
+          // but before it landed. See syncClientId's comment above.
+          if (incoming && incoming.__syncWriter === syncClientId) return;
+          applyRemoteState(stripSyncWriter(incoming));
         })
         .subscribe((status, err) => {
           // Reads/writes go over plain REST and work independently of this
