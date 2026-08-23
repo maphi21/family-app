@@ -1848,8 +1848,10 @@
         const percent = c.total ? Math.round((c.done / c.total) * 100) : 0;
         const hasRecord = c.done !== null;
         // Today isn't editable here — it already has its own tap-to-toggle
-        // checkboxes in the habit list above; this cell is display-only.
-        const clickable = !isFuture && !isToday && hasRecord && c.total > 0;
+        // checkboxes in the habit list above; this cell is display-only. A
+        // past day with no record yet (app wasn't opened that day) is still
+        // clickable — the day panel just starts every habit unchecked.
+        const clickable = !isFuture && !isToday && c.total > 0;
 
         let ring = '#ffffff', border = 'none';
         if (isFuture) { border = '1.5px dashed #a8afb8'; }
