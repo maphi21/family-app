@@ -410,6 +410,13 @@
   .sync-dot{ flex-shrink:0; width:8px; height:8px; border-radius:999px; background:#a8afb8; }
   .sync-dot.is-good{ background:#2a9c58; }
   .sync-dot.is-warn{ background:#ffc93c; }
+  /* The actual error text, readable directly on-screen -- a phone with no
+     way to plug into a computer has no way to see the browser console. */
+  .sync-error-detail{
+    font-size:11px; font-family:ui-monospace, 'SF Mono', Menlo, monospace; color:var(--ink-faint);
+    background:var(--surface-sunken); border-radius:8px; padding:8px 10px; margin:-4px 0 14px;
+    word-break:break-word;
+  }
   .backup-reset-row{ margin-top:16px; padding-top:16px; border-top:1px solid var(--track); }
 
   .activity-list{
@@ -862,6 +869,18 @@
   // always Realtime not enabled on the table), 'error' (unreachable or
   // misconfigured, running local-only).
   let cloudSyncStatus = supabaseConfig ? 'connecting' : 'off';
+  // The actual error text for 'error'/'degraded', shown on-screen in
+  // Settings > Backup — a phone with no way to plug into a computer has no
+  // way to see the browser console, so this can't be console-only.
+  let cloudSyncErrorDetail = '';
+
+  function describeSyncError(e){
+    if (!e) return '';
+    const parts = [e.message || String(e)];
+    if (e.code) parts.push(`code: ${e.code}`);
+    if (e.hint) parts.push(`hint: ${e.hint}`);
+    return parts.join(' — ');
+  }
 
   function scheduleSyncPush(){
     if (!syncClient || syncApplyingRemote) return;
@@ -937,12 +956,14 @@
           } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
             console.warn(`Family HQ: live sync subscription ${status.toLowerCase().replace('_', ' ')} — changes will only show up on reload until this reconnects. Check that Realtime is enabled for the family_state table.`, err || '');
             cloudSyncStatus = 'degraded';
+            cloudSyncErrorDetail = `${status}${err ? ` — ${describeSyncError(err)}` : ''}`;
             render();
           }
         });
     } catch (e) {
       console.warn('Family HQ: cloud sync unavailable, continuing with local storage only.', e);
       cloudSyncStatus = 'error';
+      cloudSyncErrorDetail = describeSyncError(e);
       render();
     }
   }
@@ -2298,8 +2319,10 @@
 
   function renderBackupSectionBody(){
     const sync = cloudSyncStatusInfo();
+    const showDetail = (cloudSyncStatus === 'error' || cloudSyncStatus === 'degraded') && cloudSyncErrorDetail;
     return `<div class="backup-status">${lastExportLabel()}</div>`
       + `<div class="sync-status"><span class="sync-dot ${sync.dot}"></span>${sync.text}</div>`
+      + (showDetail ? `<div class="sync-error-detail">${escapeHtml(cloudSyncErrorDetail)}</div>` : '')
       + `<div class="withdraw-row">`
       +   `<button class="withdraw-btn" id="exportBackupBtn">Export backup</button>`
       +   `<button class="security-btn" id="importBackupBtn">Import backup</button>`
