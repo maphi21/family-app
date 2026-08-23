@@ -148,7 +148,7 @@
      the old piggy-chip's green so it still always reads as "money".
      flex-shrink:0 so it's the rings that give way on a narrow card, never
      this text getting squeezed illegibly. */
-  .ring-gap-money{ font-size:11px; font-weight:800; color:#1f7643; white-space:nowrap; flex-shrink:0; }
+  .ring-gap-money{ font-size:11px; font-weight:800; color:#1f7643; white-space:nowrap; flex-shrink:0; cursor:pointer; }
 
   .habit-list{ display:flex; flex-direction:column; gap:6px; }
   .habit-group-label{ font-size:11px; font-weight:700; color:var(--ink-secondary); text-transform:uppercase; letter-spacing:0.05em; margin-top:8px; }
@@ -830,8 +830,14 @@
         if (typeof h.points !== 'number') h.points = HABIT_POINTS;
         if (typeof h.target !== 'number') h.target = 1;
         if (!s.people[p.id].habits.find((x) => x.id === h.id)) {
-          s.people[p.id].habits.push({ id:h.id, done:false, count:0, streak:0 });
+          s.people[p.id].habits.push({ id:h.id, done:false, count:0, streak:0, lastTickedDate:null });
         }
+      });
+      // A save from before per-day weekly-tick gating existed won't have this
+      // field -- undefined already behaves like "not ticked today" so nothing
+      // breaks, but backfill it explicitly to match the rest of the shape.
+      s.people[p.id].habits.forEach((h) => {
+        if (typeof h.lastTickedDate === 'undefined') h.lastTickedDate = null;
       });
     });
     s.selectedId = (saved && saved.selectedId && ROSTER.some((p) => p.id === saved.selectedId))
@@ -1170,14 +1176,16 @@
 
   // Weekly pocket money, adapted from the original prototype: each day
   // contributes at most 1/7th of the week's allowance, so it builds up
-  // gradually rather than all-or-nothing. Only daily habits count toward the
-  // ratio — a weekly-target habit isn't a "today" concept, so it earns its
-  // own points but doesn't feed this. Past days come from the archived
+  // gradually rather than all-or-nothing. Past days come from the archived
   // history; today is read live so the estimate updates as habits are ticked;
-  // future days in the week simply haven't contributed yet.
+  // future days in the week simply haven't contributed yet. Weekly habits
+  // aren't a "today" concept, so they're folded in as one extra day-sized
+  // share on top of the 7 daily ones (same blend used at week rollover in
+  // rolloverIfNeeded) rather than being ignored entirely.
   function weeklyRatioSoFar(personId){
     const ps = state.people[personId];
     const dailyDefs = habitDefsOf(personId).filter((h) => h.freq === 'daily');
+    const weeklyDefs = habitDefsOf(personId).filter((h) => h.freq === 'weekly');
     const todayKeyStr = dateKey(new Date());
     let sum = 0;
     for (let i = 0; i < 7; i++) {
@@ -1188,7 +1196,10 @@
         sum += ps.dailyRatioHistory[d] || 0;
       }
     }
-    return sum / 7;
+    const weeklyTargetSum = weeklyDefs.reduce((total, h) => total + h.target, 0);
+    if (!weeklyTargetSum) return sum / 7;
+    const weeklyDoneSum = weeklyDefs.reduce((total, h) => total + habitStateOf(personId, h.id).count, 0);
+    return (sum + (weeklyDoneSum / weeklyTargetSum)) / 8;
   }
 
   // Live "building" estimate for the week in progress — shown on the profile
@@ -1373,24 +1384,31 @@
 
       if (ps.weekAnchor !== thisMonday) {
         const weeklyDefs = defs.filter((h) => h.freq === 'weekly');
+        const weeklyDoneSum = weeklyDefs.reduce((sum, h) => sum + habitStateOf(p.id, h.id).count, 0);
+        const weeklyTargetSum = weeklyDefs.reduce((sum, h) => sum + h.target, 0);
         if (weeklyDefs.length) {
-          const doneSum = weeklyDefs.reduce((sum, h) => sum + habitStateOf(p.id, h.id).count, 0);
-          const targetSum = weeklyDefs.reduce((sum, h) => sum + h.target, 0);
-          ps.weeklyRatioHistory[ps.weekAnchor] = targetSum ? doneSum / targetSum : 0;
+          ps.weeklyRatioHistory[ps.weekAnchor] = weeklyTargetSum ? weeklyDoneSum / weeklyTargetSum : 0;
         }
         weeklyDefs.forEach((h) => {
           const hs = habitStateOf(p.id, h.id);
           awardPoints(ps, hs.count * h.points);
           hs.streak = hs.count >= h.target ? hs.streak + 1 : 0;
           hs.count = 0;
+          hs.lastTickedDate = null;
         });
         const weeklyCutoff = addDaysKey(thisMonday, -63);
         Object.keys(ps.weeklyRatioHistory).forEach((k) => { if (k < weeklyCutoff) delete ps.weeklyRatioHistory[k]; });
         if (pocketWeeklyOf(p.id) > 0) {
-          let sum = 0;
-          for (let i = 0; i < 7; i++) sum += ps.dailyRatioHistory[addDaysKey(ps.weekAnchor, i)] || 0;
-          const payout = roundMoney(pocketWeeklyOf(p.id) * (sum / 7));
-          const pct = Math.round((sum / 7) * 100);
+          let dailySum = 0;
+          for (let i = 0; i < 7; i++) dailySum += ps.dailyRatioHistory[addDaysKey(ps.weekAnchor, i)] || 0;
+          // Blend in weekly-habit completion the same way weeklyRatioSoFar()
+          // does live during the week: the week's weekly habits count as one
+          // more day-sized share alongside the 7 daily ones, so a weekly
+          // habit ticked on the week's last day still moves the payout
+          // instead of being silently dropped like it used to be.
+          const combinedRatio = weeklyTargetSum ? (dailySum + (weeklyDoneSum / weeklyTargetSum)) / 8 : dailySum / 7;
+          const payout = roundMoney(pocketWeeklyOf(p.id) * combinedRatio);
+          const pct = Math.round(combinedRatio * 100);
           piggyLedgerAdd(ps, payout, `Weekly allowance (${pct}% of habits done)`, `payout:${p.id}:${ps.weekAnchor}`, ps.weekAnchor);
           if (payout > 0) logActivity(p.id, `earned &pound;${payout.toFixed(2)} weekly allowance (${pct}% of habits done)`);
         }
@@ -1420,8 +1438,22 @@
       hs.done = !hs.done;
       logActivity(personId, hs.done ? `marked <b>${escapeHtml(def.name)}</b> done` : `unmarked <b>${escapeHtml(def.name)}</b>`);
     } else {
-      hs.count = (hs.count + 1) % (def.target + 1);
-      logActivity(personId, `logged <b>${escapeHtml(def.name)}</b> (${hs.count}/${def.target} this week)`);
+      // A weekly habit only takes one tick per day -- ticking it again the
+      // same day undoes that tick instead of racking up the week's whole
+      // target in one sitting. Already hit target on an earlier day? Nothing
+      // left to do until the week rolls over.
+      const todayKeyStr = dateKey(new Date());
+      if (hs.lastTickedDate === todayKeyStr) {
+        hs.count = Math.max(0, hs.count - 1);
+        hs.lastTickedDate = null;
+        logActivity(personId, `undid today's <b>${escapeHtml(def.name)}</b> (${hs.count}/${def.target} this week)`);
+      } else if (hs.count < def.target) {
+        hs.count += 1;
+        hs.lastTickedDate = todayKeyStr;
+        logActivity(personId, `logged <b>${escapeHtml(def.name)}</b> (${hs.count}/${def.target} this week)`);
+      } else {
+        return; // already hit this week's target on an earlier day
+      }
     }
     saveState();
     render();
@@ -1599,7 +1631,7 @@
     if (habitEditingId === 'new') {
       const id = 'h_' + Date.now().toString(36);
       defs.push({ id, name, freq: habitDraft.freq, target: habitDraft.target, points: habitDraft.points });
-      state.people[personId].habits.push({ id, done:false, count:0, streak:0 });
+      state.people[personId].habits.push({ id, done:false, count:0, streak:0, lastTickedDate:null });
       logActivity(personId, `added a new habit: <b>${escapeHtml(name)}</b>`);
     } else {
       const h = defs.find((x) => x.id === habitEditingId);
@@ -2587,6 +2619,13 @@
       switchTab('pageSettings');
       settingsSectionOpen.backup = true;
       render();
+      return;
+    }
+    const moneyGap = e.target.closest('.ring-gap-money');
+    if (moneyGap) {
+      const card = moneyGap.closest('.card');
+      if (card) state.selectedId = card.dataset.person;
+      switchTab('pageWallet');
       return;
     }
     const pocketSaveBtn = e.target.closest('#pocketWeeklySaveBtn');
