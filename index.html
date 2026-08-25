@@ -669,7 +669,11 @@
   // confirm a device has actually picked up a new deploy, since there's no
   // build step to stamp a real version automatically. Shown top-right of
   // the header, next to the cloud sync dot.
-  const APP_VERSION = 6;
+  const APP_VERSION = 7;
+  // A brand-new profile (no saved data at all) starts locked with this PIN
+  // rather than wide open -- see migrateState's settingsPin comment. Change
+  // it from Settings > Security like any other PIN, any time.
+  const DEFAULT_SETTINGS_PIN = '1234';
   // Optional cross-device sync via Supabase. Paste your project's URL and
   // anon key here (Supabase dashboard: Settings > API) to turn it on. The
   // anon key is meant to be public — it's not a secret credential, access
@@ -887,8 +891,20 @@
     s.settingsFilterId = (saved && saved.settingsFilterId && ROSTER.some((p) => p.id === saved.settingsFilterId))
       ? saved.settingsFilterId
       : null;
-    // Family-wide PIN gating the Settings tab. null = no PIN set, page is open.
-    s.settingsPin = (saved && typeof saved.settingsPin === 'string' && saved.settingsPin) ? saved.settingsPin : null;
+    // Family-wide PIN gating the Settings tab (and adding wallet money).
+    // null = no PIN set, page is open. A genuinely brand-new profile (no
+    // saved data at all -- first ever load on this device, before anything
+    // has synced in either) ships locked with a default PIN rather than
+    // wide open until someone remembers to set one; an existing save's
+    // settingsPin is always respected as-is, including a family who
+    // deliberately removed theirs -- only the true first-run case defaults.
+    if (saved && typeof saved.settingsPin === 'string' && saved.settingsPin) {
+      s.settingsPin = saved.settingsPin;
+    } else if (!saved) {
+      s.settingsPin = DEFAULT_SETTINGS_PIN;
+    } else {
+      s.settingsPin = null;
+    }
     // ISO timestamp of the last JSON export, for the stale-backup nudge. null = never.
     s.lastExportAt = (saved && typeof saved.lastExportAt === 'string') ? saved.lastExportAt : null;
     // Which tab a reload should land back on. Per-device like selectedId/
