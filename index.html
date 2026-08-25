@@ -28,6 +28,10 @@
   *{
     box-sizing:border-box; -webkit-tap-highlight-color:transparent;
     user-select:none; -webkit-user-select:none;
+    /* Skip the ~300ms double-tap-to-zoom gesture delay iPad Safari applies
+       by default -- without this, a tap can visually "settle" into place a
+       moment after the touch, reading as the row shifting under the finger. */
+    touch-action:manipulation;
   }
   html{ -webkit-touch-callout:none; }
   input, textarea{ user-select:text; -webkit-user-select:text; }
@@ -158,7 +162,10 @@
     width:18px; height:18px; border-radius:6px; flex-shrink:0; border:2px solid transparent;
     display:flex; align-items:center; justify-content:center; color:#fff;
   }
-  .habit-indicator--weekly{ width:auto; min-width:18px; padding:0 5px; font-size:9px; font-weight:800; }
+  /* Fixed width (not auto) so the box doesn't resize by a pixel or two as
+     the count's digits change (e.g. "1/3" vs "10/12") -- an auto-width box
+     here shifted the habit name next to it on every tick. */
+  .habit-indicator--weekly{ width:34px; padding:0 4px; font-size:9px; font-weight:800; font-variant-numeric:tabular-nums; }
   .habit-name{ flex:1; min-width:0; font-size:11.5px; font-weight:600; line-height:1.3; }
   .habit-streak{ display:inline-flex; align-items:center; gap:2px; flex-shrink:0; font-size:9.5px; font-weight:700; color:#a67800; }
 
@@ -191,8 +198,11 @@
   .cal-cell.clickable{ cursor:pointer; }
   .cal-cell-ring{ width:100%; height:100%; border-radius:999px; transform:rotate(-90deg); }
   .cal-cell-num{
-    position:absolute; inset:3px; border-radius:999px; background:var(--surface-card);
-    display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;
+    /* Smaller inset (was 3px) thins the coloured ring's visible band and
+       grows the number's white backdrop, so a fully-coloured ring doesn't
+       crowd out the day number; font trimmed slightly to match. */
+    position:absolute; inset:2px; border-radius:999px; background:var(--surface-card);
+    display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:700;
   }
 
   .cal-day-panel{
@@ -578,7 +588,7 @@
     .ring-gap-money{ font-size:14px; }
     .habit-row{ padding:13px 16px; border-radius:14px; }
     .habit-indicator{ width:24px; height:24px; }
-    .habit-indicator--weekly{ min-width:24px; font-size:11px; }
+    .habit-indicator--weekly{ width:42px; font-size:11px; }
     .habit-name{ font-size:15px; }
     .habit-streak{ font-size:12px; }
     .habit-group-label{ font-size:13px; }
@@ -659,7 +669,7 @@
   // confirm a device has actually picked up a new deploy, since there's no
   // build step to stamp a real version automatically. Shown top-right of
   // the header, next to the cloud sync dot.
-  const APP_VERSION = 5;
+  const APP_VERSION = 6;
   // Optional cross-device sync via Supabase. Paste your project's URL and
   // anon key here (Supabase dashboard: Settings > API) to turn it on. The
   // anon key is meant to be public — it's not a secret credential, access
@@ -784,13 +794,15 @@
     return state.people[personId].pocketWeekly;
   }
 
-  function loadState(){
-    let saved = null;
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) saved = JSON.parse(raw);
-    } catch (e) { /* localStorage unavailable — fall through to fresh state */ }
-
+  // Backfills a raw, possibly-old-shaped saved profile into the current
+  // shape. Used by loadState() (localStorage) AND applyRemoteState() (a
+  // payload just pulled from Supabase) -- a remote payload can be just as
+  // old-shaped as a local one (written by a device on stale cached code, or
+  // the very first row ever seeded before a field like weeklyDayLog
+  // existed), and applying it straight into `state` without this used to
+  // skip every guard below, crashing the next weekly-habit tap the moment
+  // weeklyDayLogCount() read a `weeklyDayLog` that didn't exist.
+  function migrateState(saved){
     const s = { people:{}, selectedId:null, activityLog:(saved && Array.isArray(saved.activityLog)) ? saved.activityLog : [] };
     ROSTER.forEach((p) => {
       s.people[p.id] = (saved && saved.people && saved.people[p.id]) || defaultPersonState();
@@ -886,6 +898,15 @@
     return s;
   }
 
+  function loadState(){
+    let saved = null;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) saved = JSON.parse(raw);
+    } catch (e) { /* localStorage unavailable — fall through to fresh state */ }
+    return migrateState(saved);
+  }
+
   function saveState(){
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
     scheduleSyncPush();
@@ -960,12 +981,16 @@
 
   function applyRemoteState(newState){
     syncApplyingRemote = true;
+    // Run the incoming payload through the same backfilling loadState()
+    // gives local data — it can be just as old-shaped (see migrateState's
+    // comment) and skipping this used to crash on the next weekly-habit tap.
+    const migrated = migrateState(newState);
     // currentPage/selectedId/settingsFilterId are "what is this device
     // looking at right now" — per-device UI state, not shared family data.
     // Take everything else from the incoming remote update, but keep this
     // device's own values for those three, so another device syncing in
     // doesn't yank you to a different tab or person mid-use.
-    state = { ...newState, currentPage: state.currentPage, selectedId: state.selectedId, settingsFilterId: state.settingsFilterId };
+    state = { ...migrated, currentPage: state.currentPage, selectedId: state.selectedId, settingsFilterId: state.settingsFilterId };
     saveState();
     syncApplyingRemote = false;
     rolloverIfNeeded();
@@ -2369,13 +2394,19 @@
 
   function renderLeaderboard(){
     const ranked = [...ROSTER].sort((a, b) => computeTotalPoints(b.id) - computeTotalPoints(a.id));
-    const maxTotal = Math.max(1, ...ranked.map((p) => computeTotalPoints(p.id)));
     return ranked.map((p, i) => {
       const total = computeTotalPoints(p.id);
       const now = computeSpendablePoints(p.id);
       const rank = i + 1;
-      const barPct = Math.round((total / maxTotal) * 100);
       const lv = computeLevel(total);
+      // Progress toward THIS person's next level, not their total as a share
+      // of the family's current leader — the same measure the habit card's
+      // own level bar uses. A bar scaled to the leader's total stays nearly
+      // flat for anyone else, even as they climb level after level, since
+      // each level costs far less than the leader's total; scaling it to
+      // their own level instead makes it genuinely fill 0-100% every time
+      // they level up, whatever level anyone else is at.
+      const barPct = Math.round((lv.into / lv.span) * 100);
       const levelTitle = LEVEL_TITLES[Math.min(lv.level, LEVEL_TITLES.length) - 1];
       const levelBg = tint(p.color, 0.14);
       return `<div class="lb-row">`
