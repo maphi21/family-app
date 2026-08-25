@@ -659,7 +659,7 @@
   // confirm a device has actually picked up a new deploy, since there's no
   // build step to stamp a real version automatically. Shown top-right of
   // the header, next to the cloud sync dot.
-  const APP_VERSION = 4;
+  const APP_VERSION = 5;
   // Optional cross-device sync via Supabase. Paste your project's URL and
   // anon key here (Supabase dashboard: Settings > API) to turn it on. The
   // anon key is meant to be public — it's not a secret credential, access
@@ -747,6 +747,11 @@
                         // at week rollover. Feeds the calendar's weekly ring.
       habitDayLog: {}, // dateKey -> {habitId: done} — per-habit detail for past days, feeds
                         // the calendar and lets a past day be individually corrected.
+      weeklyDayLog: {}, // dateKey -> {habitId: true} — which specific day(s) this week a
+                        // weekly habit was ticked on (only truthy entries kept). Only the
+                        // live in-progress week is ever written or read; a habit's count for
+                        // that week is derived from this rather than stored independently, so
+                        // any of this week's days can be corrected via setWeeklyDoneOnDay.
       rewardInventory: {}, // rewardId -> how many bought-but-not-yet-used are owned
       lastResetDate: dateKey(today),
       weekAnchor: mondayKey(today),
@@ -806,6 +811,7 @@
       if (!s.people[p.id].dailyRatioHistory || typeof s.people[p.id].dailyRatioHistory !== 'object') s.people[p.id].dailyRatioHistory = {};
       if (!s.people[p.id].weeklyRatioHistory || typeof s.people[p.id].weeklyRatioHistory !== 'object') s.people[p.id].weeklyRatioHistory = {};
       if (!s.people[p.id].habitDayLog || typeof s.people[p.id].habitDayLog !== 'object') s.people[p.id].habitDayLog = {};
+      if (!s.people[p.id].weeklyDayLog || typeof s.people[p.id].weeklyDayLog !== 'object') s.people[p.id].weeklyDayLog = {};
       // These three drive rolloverIfNeeded()'s daily/weekly/birthday logic —
       // a save missing any of them (an old backup predating one of these
       // fields, most likely) previously crashed the whole app on load,
@@ -830,14 +836,35 @@
         if (typeof h.points !== 'number') h.points = HABIT_POINTS;
         if (typeof h.target !== 'number') h.target = 1;
         if (!s.people[p.id].habits.find((x) => x.id === h.id)) {
-          s.people[p.id].habits.push({ id:h.id, done:false, count:0, streak:0, lastTickedDate:null });
+          s.people[p.id].habits.push({ id:h.id, done:false, count:0, streak:0 });
         }
       });
-      // A save from before per-day weekly-tick gating existed won't have this
-      // field -- undefined already behaves like "not ticked today" so nothing
-      // breaks, but backfill it explicitly to match the rest of the shape.
-      s.people[p.id].habits.forEach((h) => {
-        if (typeof h.lastTickedDate === 'undefined') h.lastTickedDate = null;
+      // A weekly habit's count is now derived from weeklyDayLog rather than
+      // stored independently (see setWeeklyDoneOnDay), so it can be corrected
+      // day-by-day. A save from before weeklyDayLog existed (including the
+      // brief lastTickedDate-only version) has real progress this week with
+      // no day-by-day record behind it -- rather than silently zero it out,
+      // attribute it to the most recent day(s) of the live week so nothing
+      // already earned is lost. Which exact days get the credit is a guess,
+      // same accepted approximation used elsewhere for pre-migration data.
+      s.people[p.id].habitDefs.filter((h) => h.freq === 'weekly').forEach((h) => {
+        const hs = s.people[p.id].habits.find((x) => x.id === h.id);
+        if (!hs) return;
+        const weekAnchor = s.people[p.id].weekAnchor;
+        if (weeklyDayLogCount(s.people[p.id], h.id) === 0 && hs.count > 0) {
+          let cursor = (typeof hs.lastTickedDate === 'string' && hs.lastTickedDate >= weekAnchor)
+            ? hs.lastTickedDate
+            : dateKey(new Date());
+          let remaining = Math.min(hs.count, h.target);
+          while (remaining > 0 && cursor >= weekAnchor) {
+            if (!s.people[p.id].weeklyDayLog[cursor]) s.people[p.id].weeklyDayLog[cursor] = {};
+            s.people[p.id].weeklyDayLog[cursor][h.id] = true;
+            remaining--;
+            cursor = addDaysKey(cursor, -1);
+          }
+        }
+        hs.count = weeklyDayLogCount(s.people[p.id], h.id);
+        delete hs.lastTickedDate;
       });
     });
     s.selectedId = (saved && saved.selectedId && ROSTER.some((p) => p.id === saved.selectedId))
@@ -1125,11 +1152,13 @@
   }
 
   // Same idea as dayCompletion but for a whole Monday-anchored week: the
-  // live in-progress week reads straight off current habit counts, a past
-  // week reads its archived ratio (reinterpreted against today's weekly
-  // habit list, same accepted approximation dayCompletion makes), and a
-  // week with neither has no record. Not editable — no per-habit weekly
-  // detail is kept, only the aggregate.
+  // live in-progress week reads straight off current habit counts (which
+  // are themselves derived from weeklyDayLog — see weeklyDayLogCount — and
+  // correctable day-by-day via setWeeklyDoneOnDay), a past week reads its
+  // archived ratio (reinterpreted against today's weekly habit list, same
+  // accepted approximation dayCompletion makes), and a week with neither
+  // has no record. Only the live week is editable — no per-day detail is
+  // kept once a week rolls over, only the aggregate.
   function weekCompletion(personId, weekAnchorKeyStr){
     const ps = state.people[personId];
     const weeklyDefs = habitDefsOf(personId).filter((h) => h.freq === 'weekly');
@@ -1143,6 +1172,68 @@
       return { done: Math.round(ratio * total), total };
     }
     return { done: null, total }; // no record at all
+  }
+
+  // How many of the live week's 7 days have `habitId` marked done in
+  // ps.weeklyDayLog. This is a weekly habit's count, always — nothing else
+  // stores it independently, so correcting any day (including today, via
+  // toggleHabit) can never drift out of sync with what's displayed.
+  function weeklyDayLogCount(ps, habitId){
+    let n = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = addDaysKey(ps.weekAnchor, i);
+      if (ps.weeklyDayLog[d] && ps.weeklyDayLog[d][habitId]) n++;
+    }
+    return n;
+  }
+
+  function recomputeWeeklyCount(personId, habitId){
+    return weeklyDayLogCount(state.people[personId], habitId);
+  }
+
+  function weeklyDoneOnDay(personId, habitId, dateKeyStr){
+    const log = state.people[personId].weeklyDayLog[dateKeyStr];
+    return !!(log && log[habitId]);
+  }
+
+  // Sets whether a weekly habit was done on a specific day of the live
+  // week (today included — this is what toggleHabit calls for a weekly
+  // habit's row on the Habits page). Adjusts points by the resulting count
+  // delta and keeps hs.count in sync, so every other place that reads it
+  // (the habit row, the money-in-the-gap figure, streaks, payout) stays
+  // correct without needing to know weeklyDayLog exists. Returns whether
+  // anything actually changed, so callers can skip a pointless save/render.
+  function setWeeklyDoneOnDay(personId, habitId, dateKeyStr, newDone){
+    const ps = state.people[personId];
+    const def = habitDefOf(personId, habitId);
+    if (!def || def.freq !== 'weekly') return false;
+    if (dateKeyStr < ps.weekAnchor || dateKeyStr > addDaysKey(ps.weekAnchor, 6)) return false; // only the live week is editable
+    if (dateKeyStr > dateKey(new Date())) return false; // no future
+
+    if (weeklyDoneOnDay(personId, habitId, dateKeyStr) === newDone) return false;
+
+    const hs = habitStateOf(personId, habitId);
+    if (newDone && hs.count >= def.target) {
+      const p = ROSTER.find((r) => r.id === personId);
+      showToast(`${p ? p.name : 'They'} already hit this week's target for "${def.name}".`, 'danger');
+      return false;
+    }
+
+    if (!ps.weeklyDayLog[dateKeyStr]) ps.weeklyDayLog[dateKeyStr] = {};
+    if (newDone) ps.weeklyDayLog[dateKeyStr][habitId] = true;
+    else delete ps.weeklyDayLog[dateKeyStr][habitId];
+
+    const oldCount = hs.count;
+    hs.count = weeklyDayLogCount(ps, habitId);
+    awardPoints(ps, (hs.count - oldCount) * def.points);
+    ps.bankedPoints = Math.max(0, ps.bankedPoints);
+    ps.totalBanked = Math.max(0, ps.totalBanked);
+
+    const todayKeyStr = dateKey(new Date());
+    const dateLabel = parseDateKeyToDate(dateKeyStr).toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+    const prefix = dateKeyStr === todayKeyStr ? '' : `corrected ${dateLabel}: `;
+    logActivity(personId, `${prefix}${newDone ? 'logged' : 'undid'} <b>${escapeHtml(def.name)}</b> (${hs.count}/${def.target} this week)`);
+    return true;
   }
 
   // Walks backward from a day, counting consecutive done days — used to
@@ -1419,10 +1510,14 @@
           awardPoints(ps, hs.count * h.points);
           hs.streak = hs.count >= h.target ? hs.streak + 1 : 0;
           hs.count = 0;
-          hs.lastTickedDate = null;
         });
         const weeklyCutoff = addDaysKey(thisMonday, -63);
         Object.keys(ps.weeklyRatioHistory).forEach((k) => { if (k < weeklyCutoff) delete ps.weeklyRatioHistory[k]; });
+        // The day-by-day detail behind the week that just ended is only
+        // ever read against its own weekAnchor (weeklyDayLogCount), so it's
+        // already inert the moment weekAnchor advances below -- purged here
+        // just so it doesn't accumulate forever.
+        Object.keys(ps.weeklyDayLog).forEach((k) => { if (k < weeklyCutoff) delete ps.weeklyDayLog[k]; });
         if (pocketWeeklyOf(p.id) > 0) {
           let dailySum = 0;
           for (let i = 0; i < 7; i++) dailySum += ps.dailyRatioHistory[addDaysKey(ps.weekAnchor, i)] || 0;
@@ -1458,27 +1553,18 @@
 
   function toggleHabit(personId, habitId){
     const def = habitDefOf(personId, habitId);
-    const hs = habitStateOf(personId, habitId);
     if (def.freq === 'daily') {
+      const hs = habitStateOf(personId, habitId);
       hs.done = !hs.done;
       logActivity(personId, hs.done ? `marked <b>${escapeHtml(def.name)}</b> done` : `unmarked <b>${escapeHtml(def.name)}</b>`);
     } else {
       // A weekly habit only takes one tick per day -- ticking it again the
       // same day undoes that tick instead of racking up the week's whole
-      // target in one sitting. Already hit target on an earlier day? Nothing
-      // left to do until the week rolls over.
+      // target in one sitting. setWeeklyDoneOnDay shows a toast and reports
+      // no change if the target's already been hit on an earlier day.
       const todayKeyStr = dateKey(new Date());
-      if (hs.lastTickedDate === todayKeyStr) {
-        hs.count = Math.max(0, hs.count - 1);
-        hs.lastTickedDate = null;
-        logActivity(personId, `undid today's <b>${escapeHtml(def.name)}</b> (${hs.count}/${def.target} this week)`);
-      } else if (hs.count < def.target) {
-        hs.count += 1;
-        hs.lastTickedDate = todayKeyStr;
-        logActivity(personId, `logged <b>${escapeHtml(def.name)}</b> (${hs.count}/${def.target} this week)`);
-      } else {
-        return; // already hit this week's target on an earlier day
-      }
+      const wasDoneToday = weeklyDoneOnDay(personId, habitId, todayKeyStr);
+      if (!setWeeklyDoneOnDay(personId, habitId, todayKeyStr, !wasDoneToday)) return;
     }
     saveState();
     render();
@@ -1656,7 +1742,7 @@
     if (habitEditingId === 'new') {
       const id = 'h_' + Date.now().toString(36);
       defs.push({ id, name, freq: habitDraft.freq, target: habitDraft.target, points: habitDraft.points });
-      state.people[personId].habits.push({ id, done:false, count:0, streak:0, lastTickedDate:null });
+      state.people[personId].habits.push({ id, done:false, count:0, streak:0 });
       logActivity(personId, `added a new habit: <b>${escapeHtml(name)}</b>`);
     } else {
       const h = defs.find((x) => x.id === habitEditingId);
@@ -1907,8 +1993,12 @@
         // Today isn't editable here — it already has its own tap-to-toggle
         // checkboxes in the habit list above; this cell is display-only. A
         // past day with no record yet (app wasn't opened that day) is still
-        // clickable — the day panel just starts every habit unchecked.
-        const clickable = !isFuture && !isToday && c.total > 0;
+        // clickable — the day panel just starts every habit unchecked. A day
+        // with no DAILY habits at all is still clickable if it falls in the
+        // live week and this person has weekly habits, so those can be
+        // corrected too (see renderCalendarDayPanel).
+        const isInLiveWeek = k >= liveWeekAnchor && k <= addDaysKey(liveWeekAnchor, 6);
+        const clickable = !isFuture && !isToday && (c.total > 0 || (hasWeekly && isInLiveWeek));
 
         let ring = '#ffffff', border = 'none';
         if (isFuture) { border = '1.5px dashed #a8afb8'; }
@@ -1964,19 +2054,32 @@
   }
 
   // Shows only while a past/today day is expanded for this person — lets
-  // each daily habit be corrected for that specific day.
+  // each daily habit be corrected for that specific day, plus (if the day
+  // falls in the live week) each weekly habit too — past weeks only keep
+  // an aggregate ratio, so weekly rows only ever show for the current week.
   function renderCalendarDayPanel(p){
     const dateKeyStr = expandedCalendarDay[p.id];
     if (!dateKeyStr) return '';
+    const ps = state.people[p.id];
     const c = dayCompletion(p.id, dateKeyStr);
     const date = parseDateKeyToDate(dateKeyStr);
     const label = date.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
     const dailyDefs = habitDefsOf(p.id).filter((h) => h.freq === 'daily');
-    const log = state.people[p.id].habitDayLog[dateKeyStr];
+    const log = ps.habitDayLog[dateKeyStr];
 
-    const rows = dailyDefs.map((h) => {
+    const dailyRows = dailyDefs.map((h) => {
       const done = log ? !!log[h.id] : false;
-      return `<div class="cal-day-row" data-person="${p.id}" data-date="${dateKeyStr}" data-habit="${h.id}">`
+      return `<div class="cal-day-row" data-person="${p.id}" data-date="${dateKeyStr}" data-habit="${h.id}" data-freq="daily">`
+        + `<div class="cal-day-check" style="background:${done ? p.color : 'transparent'};border-color:${done ? 'transparent' : '#a8afb8'};">${done ? checkSvg() : ''}</div>`
+        + `<div class="cal-day-name">${escapeHtml(h.name)}</div>`
+        + `</div>`;
+    }).join('');
+
+    const isInLiveWeek = dateKeyStr >= ps.weekAnchor && dateKeyStr <= addDaysKey(ps.weekAnchor, 6);
+    const weeklyDefs = isInLiveWeek ? habitDefsOf(p.id).filter((h) => h.freq === 'weekly') : [];
+    const weeklyRows = weeklyDefs.map((h) => {
+      const done = weeklyDoneOnDay(p.id, h.id, dateKeyStr);
+      return `<div class="cal-day-row" data-person="${p.id}" data-date="${dateKeyStr}" data-habit="${h.id}" data-freq="weekly">`
         + `<div class="cal-day-check" style="background:${done ? p.color : 'transparent'};border-color:${done ? 'transparent' : '#a8afb8'};">${done ? checkSvg() : ''}</div>`
         + `<div class="cal-day-name">${escapeHtml(h.name)}</div>`
         + `</div>`;
@@ -1987,8 +2090,10 @@
       +   `<div class="cal-day-panel-title">${label}</div>`
       +   `<button class="cal-day-panel-close" data-person="${p.id}">${closeSvg()}</button>`
       + `</div>`
-      + (!c.editable ? `<div class="cal-day-note">From before this device tracked which habits &mdash; edit to set it.</div>` : '')
-      + rows
+      + (!c.editable && dailyDefs.length ? `<div class="cal-day-note">From before this device tracked which habits &mdash; edit to set it.</div>` : '')
+      + (dailyDefs.length && weeklyDefs.length ? `<div class="habit-group-label">Daily</div>` : '')
+      + dailyRows
+      + (weeklyDefs.length ? `${dailyDefs.length ? `<div class="habit-group-label">Weekly</div>` : ''}${weeklyRows}` : '')
       + `</div>`;
   }
 
@@ -2561,11 +2666,16 @@
     if (calClose) { expandedCalendarDay[calClose.dataset.person] = null; render(); return; }
     const calDayRow = e.target.closest('.cal-day-row');
     if (calDayRow) {
-      const { person, date, habit } = calDayRow.dataset;
-      const log = state.people[person].habitDayLog[date];
-      const current = log ? !!log[habit] : false;
-      setHabitDoneOnDay(person, habit, date, !current);
-      saveState();
+      const { person, date, habit, freq } = calDayRow.dataset;
+      let changed = true;
+      if (freq === 'weekly') {
+        changed = setWeeklyDoneOnDay(person, habit, date, !weeklyDoneOnDay(person, habit, date));
+      } else {
+        const log = state.people[person].habitDayLog[date];
+        const current = log ? !!log[habit] : false;
+        setHabitDoneOnDay(person, habit, date, !current);
+      }
+      if (changed) saveState();
       render();
       return;
     }
