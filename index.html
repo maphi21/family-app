@@ -669,7 +669,7 @@
   // confirm a device has actually picked up a new deploy, since there's no
   // build step to stamp a real version automatically. Shown top-right of
   // the header, next to the cloud sync dot.
-  const APP_VERSION = 7;
+  const APP_VERSION = 8;
   // A brand-new profile (no saved data at all) starts locked with this PIN
   // rather than wide open -- see migrateState's settingsPin comment. Change
   // it from Settings > Security like any other PIN, any time.
@@ -1293,6 +1293,35 @@
     return streak;
   }
 
+  // Recomputes and re-applies an already-paid week's pocket-money payout
+  // from its current dailyRatioHistory/weeklyRatioHistory -- the exact
+  // formula rolloverIfNeeded() uses when a week first rolls over. Called
+  // after setHabitDoneOnDay corrects a past day, since that day's week may
+  // already have been paid out based on what was, at the time, wrong data.
+  // Only touches a week that actually has a prior payout on record (never
+  // invents a new one for a week pocket money didn't apply to), and skips
+  // silently if the recomputed amount is unchanged or pocket money is
+  // currently off -- a historical payout made under an old rate is left as
+  // earned rather than clawed back just because the rate later changed.
+  function recomputeWeeklyPayout(personId, weekAnchorKey){
+    const ps = state.people[personId];
+    const id = `payout:${personId}:${weekAnchorKey}`;
+    const old = ps.piggyLedger.find((e) => e.id === id);
+    if (!old || pocketWeeklyOf(personId) <= 0) return;
+
+    let dailySum = 0;
+    for (let i = 0; i < 7; i++) dailySum += ps.dailyRatioHistory[addDaysKey(weekAnchorKey, i)] || 0;
+    const hasWeeklyRecord = weekAnchorKey in ps.weeklyRatioHistory;
+    const combinedRatio = hasWeeklyRecord ? (dailySum + ps.weeklyRatioHistory[weekAnchorKey]) / 8 : dailySum / 7;
+    const payout = roundMoney(pocketWeeklyOf(personId) * combinedRatio);
+    if (payout === old.delta) return;
+
+    const pct = Math.round(combinedRatio * 100);
+    piggyLedgerAdd(ps, payout, `Weekly allowance (${pct}% of habits done)`, id, weekAnchorKey);
+    const dateLabel = parseDateKeyToDate(weekAnchorKey).toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+    logActivity(personId, `corrected the week of ${dateLabel}&rsquo;s allowance to &pound;${payout.toFixed(2)} (${pct}% of habits done)`);
+  }
+
   // Corrects a single habit's done state on a past day. Adjusts points by
   // exactly the delta (a correction, not a spend — see totalBanked's note)
   // and re-derives the habit's streak from history rather than nudging the
@@ -1324,6 +1353,10 @@
 
     const dateLabel = parseDateKeyToDate(dateKeyStr).toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
     logActivity(personId, `corrected ${dateLabel}: ${newDone ? 'marked' : 'unmarked'} <b>${escapeHtml(def.name)}</b>`);
+
+    // If this day's week has already been paid out, that payout was based
+    // on what was, until now, wrong data -- bring it in line.
+    recomputeWeeklyPayout(personId, mondayKey(parseDateKeyToDate(dateKeyStr)));
   }
 
   function parseDateKeyToDate(k){
