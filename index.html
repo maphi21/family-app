@@ -561,6 +561,59 @@
 
   footer.note{ max-width:1180px; margin:32px auto 0; padding:0 20px; font-size:11.5px; color:var(--ink-faint); text-align:center; }
 
+  /* Bigger, easier-to-tap controls -- covers phones AND iPad (iPad mini
+     portrait is 768px, one pixel outside the old 767px-only breakpoint, so
+     it was falling through to mouse-sized desktop controls). Sizing only:
+     the single-card mobile LAYOUT below stays phone-only, since iPad's
+     everyone-at-once grid is still the right layout, just with friendlier
+     hit targets. Kids especially benefit from a bigger, harder-to-miss
+     target, so several of these go past the old mobile sizes too. */
+  @media (max-width:1024px){
+    /* Bigger checkboxes and text need more room, or names wrap awkwardly
+       inside the old 260px card -- widen it to use the space the grid was
+       already leaving spare at these widths. */
+    .card{ flex-basis:260px; max-width:340px; }
+
+    .avatar{ width:60px; height:60px; font-size:22px; }
+    .person-name{ font-size:20px; }
+    .person-role{ font-size:13px; }
+    .bday-chip, .level-badge{ font-size:13px; padding:7px 15px 7px 11px; }
+    .lb-info .level-badge{ font-size:11px; padding:5px 11px 5px 8px; }
+    .ring-holder{ gap:20px; }
+    .ring-wrap{ flex-basis:120px; max-width:120px; }
+    .ring-inner{ inset:10px; }
+    .ring-value{ font-size:22px; }
+    .ring-label{ font-size:9px; }
+    .ring-gap-money{ font-size:15px; }
+
+    /* The habit checkbox is the single most-tapped control in the whole
+       app -- sized well past the old mobile bump, closer to Apple's 44px
+       minimum touch target, with the whole row growing to match so it
+       still reads as one big, obviously-tappable pill. */
+    .habit-row{ padding:18px 20px; border-radius:18px; gap:12px; }
+    .habit-indicator{ width:36px; height:36px; border-radius:10px; }
+    .habit-indicator--weekly{ width:58px; font-size:14px; }
+    .habit-name{ font-size:17px; }
+    .habit-streak{ font-size:14px; }
+    .habit-group-label{ font-size:14px; }
+
+    .reward-row-btn{ padding:16px 22px; font-size:15px; }
+    .wallet-action-btn{ padding:17px 20px; font-size:15px; }
+    .withdraw-input, .withdraw-note, .withdraw-btn{ padding-top:14px; padding-bottom:14px; }
+
+    /* Bottom tab bar and person switcher are visible at every width (not
+       just phones), so they need the same treatment. */
+    .tab-btn{ padding:12px 4px; font-size:12px; gap:4px; }
+    .tab-btn svg{ transform:scale(1.3); }
+    .switcher-avatar{ max-width:68px; font-size:24px; }
+    .switcher-label{ font-size:12px; }
+
+    /* Calendar day circles -- kids correcting a past day need a real
+       target too, not a 28px dot. */
+    .cal-cell{ max-width:36px; }
+    .cal-cell-num{ font-size:11px; }
+  }
+
   @media (max-width:767px){
     .top-bar{
       position:fixed; top:0; left:0; right:0; z-index:60;
@@ -575,29 +628,8 @@
     .card{ display:none; }
     .card.is-selected{ display:flex; max-width:none; }
 
-    .avatar{ width:56px; height:56px; font-size:20px; }
-    .person-name{ font-size:20px; }
-    .person-role{ font-size:13px; }
-    .bday-chip, .level-badge{ font-size:12.5px; padding:6px 14px 6px 10px; }
-    .lb-info .level-badge{ font-size:10.5px; padding:4px 10px 4px 7px; }
-    .ring-holder{ gap:18px; }
-    .ring-wrap{ flex-basis:110px; max-width:110px; }
-    .ring-inner{ inset:9px; }
-    .ring-value{ font-size:20px; }
-    .ring-label{ font-size:8px; }
-    .ring-gap-money{ font-size:14px; }
-    .habit-row{ padding:13px 16px; border-radius:14px; }
-    .habit-indicator{ width:24px; height:24px; }
-    .habit-indicator--weekly{ width:42px; font-size:11px; }
-    .habit-name{ font-size:15px; }
-    .habit-streak{ font-size:12px; }
-    .habit-group-label{ font-size:13px; }
-
-    .reward-row-btn{ padding-top:11px; padding-bottom:11px; }
-
     .withdraw-row{ flex-direction:column; }
     .withdraw-input{ width:100%; }
-    .withdraw-input, .withdraw-note, .withdraw-btn{ padding-top:12px; padding-bottom:12px; }
   }
 </style>
 </head>
@@ -669,7 +701,7 @@
   // confirm a device has actually picked up a new deploy, since there's no
   // build step to stamp a real version automatically. Shown top-right of
   // the header, next to the cloud sync dot.
-  const APP_VERSION = 8;
+  const APP_VERSION = 9;
   // A brand-new profile (no saved data at all) starts locked with this PIN
   // rather than wide open -- see migrateState's settingsPin comment. Change
   // it from Settings > Security like any other PIN, any time.
